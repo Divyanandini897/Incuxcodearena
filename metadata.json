@@ -1,0 +1,6 @@
+{
+  "name": "LeetCode Platform",
+  "description": "A highly optimized, LeetCode-inspired problem dashboard and split-screen code workspace layout with a professional dark mode archetype.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
