@@ -15,7 +15,8 @@ import {
   Calendar, 
   BookOpen, 
   Award, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronLeft,
   Flame, 
   SlidersHorizontal, 
   Bell, 
@@ -28,22 +29,26 @@ import {
   Clock
 } from 'lucide-react';
 import { Problem, Difficulty } from '../types';
-import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data';
+import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data/data';
 
 interface DashboardProps {
   solvedProblemIds: number[];
   onSelectProblem: (id: number) => void;
 }
 
+const PROBLEMS_PER_PAGE = 50;
+
 export default function Dashboard({ solvedProblemIds, onSelectProblem }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Topics');
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [companySearch, setCompanySearch] = useState('');
-  const [sortBy, setSortBy] = useState<'id' | 'acceptance' | 'difficulty'>('id');
+  const [sortBy, setSortBy] = useState<'id' | 'title' | 'acceptance' | 'difficulty'>('id');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [favoriteLocked, setFavoriteLocked] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Banners for custom learning tracks
   const banners = [
@@ -87,38 +92,59 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
     return days;
   }, []);
 
-  // Filter & Sort logic
+  // Filter & Sort logic — resets page to 1 on any change
   const filteredProblems = useMemo(() => {
+    setCurrentPage(1);
     return PROBLEMS_DATA.filter((prob) => {
-      // 1. Text search
-      const matchesSearch = prob.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            prob.id.toString() === searchTerm;
-      
+      // 1. Text search (by title or numeric ID)
+      const matchesSearch = prob.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            prob.id.toString() === searchTerm.trim();
+
       // 2. Topic tag
       const matchesTopic = !selectedTopic || prob.topics.includes(selectedTopic);
 
-      // 3. Category toolbar
+      // 3. Difficulty filter
+      const matchesDifficulty = !selectedDifficulty || prob.difficulty === selectedDifficulty;
+
+      // 4. Category toolbar
       const matchesCategory = selectedCategory === 'All Topics' || prob.category === selectedCategory;
 
-      // 4. Company tag
+      // 5. Company tag
       const matchesCompany = !selectedCompany || prob.companies.some(c => c.name === selectedCompany);
 
-      return matchesSearch && matchesTopic && matchesCategory && matchesCompany;
+      return matchesSearch && matchesTopic && matchesDifficulty && matchesCategory && matchesCompany;
     }).sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'id') {
         comparison = a.id - b.id;
+      } else if (sortBy === 'title') {
+        comparison = a.title.localeCompare(b.title);
       } else if (sortBy === 'acceptance') {
         const rateA = parseFloat(a.acceptance);
         const rateB = parseFloat(b.acceptance);
         comparison = rateA - rateB;
       } else if (sortBy === 'difficulty') {
-        const diffWeight = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
-        comparison = diffWeight[a.difficulty] - diffWeight[b.difficulty];
+        const diffWeight: Record<string, number> = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+        comparison = (diffWeight[a.difficulty] ?? 0) - (diffWeight[b.difficulty] ?? 0);
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [searchTerm, selectedTopic, selectedCategory, selectedCompany, sortBy, sortOrder]);
+  }, [searchTerm, selectedTopic, selectedDifficulty, selectedCategory, selectedCompany, sortBy, sortOrder]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE));
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    return filteredProblems.slice(start, start + PROBLEMS_PER_PAGE);
+  }, [filteredProblems, currentPage]);
+
+  // Page range helper — always show at most 7 page buttons
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 4) return [1, 2, 3, 4, 5, -1, totalPages];
+    if (currentPage >= totalPages - 3) return [1, -1, totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, -1, currentPage - 1, currentPage, currentPage + 1, -2, totalPages];
+  }, [currentPage, totalPages]);
 
   const solvedCount = useMemo(() => {
     return PROBLEMS_DATA.filter(p => solvedProblemIds.includes(p.id)).length;
@@ -130,7 +156,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
     );
   }, [companySearch]);
 
-  const handleSort = (field: 'id' | 'acceptance' | 'difficulty') => {
+  const handleSort = (field: 'id' | 'title' | 'acceptance' | 'difficulty') => {
     if (sortBy === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -281,35 +307,71 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
         </div>
 
         {/* Search & Sub-Filters Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#121212]/40 p-1.5 rounded-xl border border-[#1e1e1e]">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
-            <input 
-              type="text" 
-              placeholder="Search questions by index or title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] focus:border-[#3e3e3e] focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-[#f5f5f5] placeholder-[#707070] transition-colors"
-            />
+        <div className="flex flex-col gap-3">
+          {/* Row 1: Search input + solved counter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#121212]/40 p-1.5 rounded-xl border border-[#1e1e1e]">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+              <input
+                id="problem-search"
+                type="text"
+                placeholder="Search by title or problem number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-[#0a0a0a] border border-[#1e1e1e] focus:border-[#3e3e3e] focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-[#f5f5f5] placeholder-[#707070] transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 font-mono text-xs shrink-0">
+              <div className="flex items-center gap-1.5 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e] text-[#a0a0a0]">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{solvedCount}<span className="text-[#505050]">/{PROBLEMS_DATA.length}</span> Solved</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e] text-[#a0a0a0]">
+                <span className="text-[#505050]">{filteredProblems.length} results</span>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex items-center justify-between sm:justify-end gap-3 font-mono text-xs text-[#a0a0a0]">
-            <button 
-              onClick={() => handleSort('acceptance')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all ${
-                sortBy === 'acceptance' ? 'bg-[#1e1e1e] border-[#2e2e2e] text-[#f5f5f5]' : 'border-transparent hover:bg-[#1e1e1e]/40'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#707070]" />
-              <span>Sort by Acc</span>
-              {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
-            </button>
 
-            <div className="h-4 w-px bg-[#1e1e1e]" />
+          {/* Row 2: Difficulty filter pills */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono text-[#505050] uppercase tracking-wider">Difficulty:</span>
+            {([null, 'Easy', 'Medium', 'Hard'] as (string | null)[]).map((diff) => {
+              const isActive = selectedDifficulty === diff;
+              const color = diff === 'Easy' ? { text: '#00b8a3', bg: '#00b8a310', border: '#00b8a330' }
+                          : diff === 'Medium' ? { text: '#ffb800', bg: '#ffb80010', border: '#ffb80030' }
+                          : diff === 'Hard' ? { text: '#ff2d55', bg: '#ff2d5510', border: '#ff2d5530' }
+                          : { text: '#a0a0a0', bg: '#1e1e1e', border: '#2e2e2e' };
+              return (
+                <button
+                  key={diff ?? 'all'}
+                  id={`difficulty-filter-${diff ?? 'all'}`}
+                  onClick={() => setSelectedDifficulty(isActive ? null : diff)}
+                  className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all"
+                  style={{
+                    color: isActive ? color.text : '#707070',
+                    backgroundColor: isActive ? color.bg : 'transparent',
+                    border: `1px solid ${isActive ? color.border : '#2e2e2e'}`,
+                  }}
+                >
+                  {diff ?? 'All'}
+                </button>
+              );
+            })}
 
-            <div className="flex items-center gap-1 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e]">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{solvedCount}/{PROBLEMS_DATA.length} Solved</span>
+            {/* Acceptance sort shortcut */}
+            <div className="ml-auto">
+              <button
+                onClick={() => handleSort('acceptance')}
+                className={`flex items-center gap-1.5 text-[11px] font-mono px-3 py-1 rounded-full border transition-all ${
+                  sortBy === 'acceptance'
+                    ? 'bg-[#1e1e1e] border-[#3e3e3e] text-[#f5f5f5]'
+                    : 'border-[#2e2e2e] text-[#707070] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40'
+                }`}
+              >
+                <SlidersHorizontal className="w-3 h-3" />
+                <span>Sort: Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -321,28 +383,27 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
               <thead>
                 <tr className="border-b border-[#1e1e1e] bg-[#121212]/50 text-[#707070] font-mono select-none">
                   <th className="py-3.5 pl-4 w-12 text-center">Status</th>
-                  <th className="py-3.5 px-4 w-20 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('id')}>
-                    Index {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  <th className="py-3.5 px-4 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('id')}>
+                    Title {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-3.5 px-4">Title</th>
                   <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('acceptance')}>
                     Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('difficulty')}>
                     Difficulty {sortBy === 'difficulty' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-3.5 pr-4 w-16 text-center">Action</th>
+                  <th className="py-3.5 px-4 w-48 text-left">Category / Topic</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e1e1e]">
                 {filteredProblems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#707070] font-mono">
+                    <td colSpan={5} className="py-12 text-center text-[#707070] font-mono">
                       No problems found matching your filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredProblems.map((prob) => {
+                  paginatedProblems.map((prob) => {
                     const isSolved = solvedProblemIds.includes(prob.id) || prob.solved;
                     
                     return (
@@ -358,34 +419,35 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                             <div className="w-4 h-4 rounded-full border border-[#2e2e2e] mx-auto" />
                           )}
                         </td>
-                        <td className="py-4 px-4 font-mono text-[#a0a0a0]">{prob.id}</td>
-                        <td className="py-4 px-4 font-medium text-[#f5f5f5] group-hover:text-emerald-400 transition-colors">
-                          {prob.title}
+                        <td className="py-4 px-4 font-medium text-[#f5f5f5] group-hover:text-blue-400 hover:underline transition-colors">
+                          <span className="text-[#a0a0a0] font-mono mr-1.5">{prob.id}.</span>
+                          <span>{prob.title}</span>
                         </td>
                         <td className="py-4 px-4 font-mono text-[#a0a0a0]">{prob.acceptance}</td>
                         <td className="py-4 px-4">
                           <span 
-                            className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                            className="font-semibold text-xs"
                             style={{
-                              backgroundColor: 
-                                prob.difficulty === 'Easy' ? '#00b8a315' : 
-                                prob.difficulty === 'Medium' ? '#ffb80015' : '#ff2d5515',
                               color: 
                                 prob.difficulty === 'Easy' ? '#00b8a3' : 
-                                prob.difficulty === 'Medium' ? '#ffb800' : '#ff2d55',
-                              border: `1px solid ${
-                                prob.difficulty === 'Easy' ? '#00b8a325' : 
-                                prob.difficulty === 'Medium' ? '#ffb80025' : '#ff2d5525'
-                              }`
+                                prob.difficulty === 'Medium' ? '#ffb800' : '#ff2d55'
                             }}
                           >
                             {prob.difficulty}
                           </span>
                         </td>
-                        <td className="py-4 pr-4 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors p-1 rounded">
-                            {isSolved ? <Unlock className="w-3.5 h-3.5 text-[#00b8a3]" /> : <Lock className="w-3.5 h-3.5" />}
-                          </button>
+                        <td className="py-4 px-4">
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            <span className="text-[10px] text-[#707070] font-mono mr-1">{prob.category}</span>
+                            {prob.topics.slice(0, 2).map((t) => (
+                              <span key={t} className="text-[10px] bg-[#1e1e1e] text-[#a0a0a0] px-1.5 py-0.5 rounded">
+                                {t}
+                              </span>
+                            ))}
+                            {prob.topics.length > 2 && (
+                              <span className="text-[10px] text-[#505050]">+{prob.topics.length - 2}</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -395,6 +457,65 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
             </table>
           </div>
         </div>
+
+        {/* ── Pagination Bar ── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-1 py-3 font-mono text-xs text-[#707070]">
+            {/* Left: range label */}
+            <span>
+              Showing{' '}
+              <span className="text-[#f5f5f5]">
+                {(currentPage - 1) * PROBLEMS_PER_PAGE + 1}–{Math.min(currentPage * PROBLEMS_PER_PAGE, filteredProblems.length)}
+              </span>{' '}
+              of <span className="text-[#f5f5f5]">{filteredProblems.length}</span>
+            </span>
+
+            {/* Right: page buttons */}
+            <div className="flex items-center gap-1">
+              {/* Prev */}
+              <button
+                id="pagination-prev"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
+              </button>
+
+              {/* Page number buttons */}
+              {pageNumbers.map((page, idx) =>
+                page < 0 ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 select-none">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    id={`pagination-page-${page}`}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg border transition-all ${
+                      currentPage === page
+                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
+                        : 'border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              {/* Next */}
+              <button
+                id="pagination-next"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* 4. Interactive Widgets (Right Panel - 20% Width) */}

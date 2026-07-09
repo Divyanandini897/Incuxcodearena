@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Workspace from '@/src/components/Workspace';
-import { PROBLEMS_DATA } from '@/src/data';
+import { PROBLEMS_DATA } from '@/src/data/data';
 
 export default function ProblemPage() {
   const params = useParams();
