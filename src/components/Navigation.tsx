@@ -6,65 +6,69 @@
  */
 
 import React from 'react';
-import { Search, Bell, Flame } from 'lucide-react';
+import { Flame, Award, Home } from 'lucide-react';
+import { useGameState, getXpForNextLevel } from '@/src/lib/gameState';
+import Link from 'next/link';
 
 interface NavigationProps {
   streakCount?: number;
 }
 
-export default function Navigation({ streakCount = 124 }: NavigationProps) {
+export default function Navigation({ streakCount = 5 }: NavigationProps) {
+  const { level, xp } = useGameState();
+  const xpNeeded = getXpForNextLevel(level);
+  const xpPercentage = Math.min(100, Math.floor((xp / xpNeeded) * 100));
+
   return (
-    <header className="h-14 border-b border-[#1e1e1e] bg-[#0c0c0c] flex items-center justify-between px-6 select-none font-sans">
+    <header className="h-16 border-b border-border-card bg-bg-card shadow-sm flex items-center justify-between px-8 select-none font-sans sticky top-0 z-40">
       
       {/* Left Section: Platform logo and primary navigation links */}
-      <div className="flex items-center gap-8">
-        {/* Minimalist Logo */}
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-base font-black tracking-widest text-[#f5f5f5] uppercase bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-            CODE<span className="text-emerald-400">NODE</span>
+      <div className="flex items-center gap-10">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="font-mono text-lg font-black tracking-widest text-text-main uppercase bg-primary/10 px-3.5 py-1.5 rounded border border-primary/20 hover:scale-[1.02] transition-transform">
+            CODE<span className="text-primary">NODE</span>
           </span>
-        </div>
+        </Link>
 
-        {/* Primary Navigation Text Links */}
-        <nav className="hidden md:flex items-center gap-6 text-xs font-medium">
-          <a href="#problems" className="text-[#f5f5f5] font-semibold transition-colors">Problems</a>
-          <a href="#contest" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Contest</a>
-          <a href="#discuss" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Discuss</a>
-          <a href="#interview" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Interview</a>
+        {/* Primary Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-bold">
+          <Link href="/" className="text-text-main hover:text-primary transition-colors flex items-center gap-2">
+            <Home className="w-4.5 h-4.5" />
+            <span>Dashboard</span>
+          </Link>
+          <Link href="/profile" className="text-text-muted hover:text-primary transition-colors flex items-center gap-2">
+            <Award className="w-4.5 h-4.5" />
+            <span>My Profile</span>
+          </Link>
         </nav>
       </div>
 
-      {/* Right Section: Global search input, bell, streak tracking, avatar */}
-      <div className="flex items-center gap-5">
+      {/* Right Section: Level Bar and streak tracking */}
+      <div className="flex items-center gap-6">
         
-        {/* Streak Tracking Meter */}
-        <div 
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[11px] font-bold"
-          title="Daily problem solving streak!"
-        >
-          <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20 animate-pulse" />
-          <span>{streakCount} d</span>
+        {/* XP Level Progress Bar */}
+        <div className="hidden sm:flex flex-col items-end gap-1.5 max-w-[200px] w-44 font-mono text-xs">
+          <div className="flex justify-between w-full font-bold text-text-main">
+            <span>LEVEL {level}</span>
+            <span className="text-text-muted">{xp}/{xpNeeded} XP</span>
+          </div>
+          <div className="w-full h-3 bg-bg-base rounded-full overflow-hidden border border-border-card p-[1px]">
+            <div 
+              className="h-full bg-gradient-to-r from-primary to-accent-secondary transition-all duration-500 rounded-full" 
+              style={{ width: `${xpPercentage}%` }}
+            />
+          </div>
         </div>
 
-        {/* Notification Bell */}
-        <button 
-          className="relative text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors p-1 rounded-lg hover:bg-[#1e1e1e] cursor-pointer"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-          </span>
-        </button>
+        <div className="h-6 w-px bg-border-card hidden sm:block" />
 
-        {/* User Profile Avatar Placeholder */}
-        <div className="flex items-center gap-2 pl-2 border-l border-[#1e1e1e]">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 p-[1.5px] cursor-pointer hover:opacity-80 transition-opacity">
-            <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center text-[10px] font-bold text-emerald-400">
-              HN
-            </div>
-          </div>
+        {/* Streak Tracking Meter */}
+        <div 
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 font-mono text-xs font-bold shadow-sm"
+          title="Daily problem solving streak!"
+        >
+          <Flame className="w-4 h-4 text-amber-500 fill-amber-500/15" />
+          <span>{streakCount} Day Streak</span>
         </div>
 
       </div>
