@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, unlink, mkdtemp } from 'fs/promises';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { PROBLEMS_DATA } from '@/src/data';
+import { GoogleGenAI, Type } from '@google/genai';
+import { PROBLEMS_DATA } from '@/src/data/data';
 
 const execFileAsync = promisify(execFile);
 const TIMEOUT_MS = 5000;
