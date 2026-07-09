@@ -52,7 +52,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
       desc: 'Master key patterns in 15 days.',
       track: 'Data Structures & Algorithms',
       color: 'from-emerald-950/40 to-slate-900/40 border-emerald-800/30',
-      tagColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      tagColor: 'bg-emerald-500/10 text-green border-emerald-500/20'
     },
     {
       title: 'System Design Blueprint',
@@ -143,35 +143,35 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-56px)] font-sans">
       
       {/* 2. Sidebar Navigation (Left Panel - 20% Width) */}
-      <aside className="lg:col-span-2 flex flex-col gap-6 text-sm border-r border-[#1e1e1e] pr-4" id="sidebar_nav">
+      <aside className="lg:col-span-2 flex flex-col gap-6 text-sm border-r border-border pr-4" id="sidebar_nav">
         {/* Section A: Main Utilities */}
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider px-3 mb-2">Navigation</p>
+          <p className="text-xs font-mono text-secondary uppercase tracking-wider px-3 mb-2">Navigation</p>
           <button 
             onClick={() => { setSelectedTopic(null); setSelectedCompany(null); setSelectedCategory('All Topics'); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${!selectedTopic && !selectedCompany && selectedCategory === 'All Topics' ? 'bg-[#1e1e1e] text-[#f5f5f5] font-medium' : 'text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40'}`}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${!selectedTopic && !selectedCompany && selectedCategory === 'All Topics' ? 'bg-elevated text-primary font-medium' : 'text-secondary hover:text-primary hover:bg-elevated/40'}`}
           >
-            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <BookOpen className="w-4 h-4 text-green" />
             <span>Library</span>
           </button>
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40">
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary hover:text-primary hover:bg-elevated/40">
             <Compass className="w-4 h-4" />
             <span>Quest</span>
           </button>
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40">
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary hover:text-primary hover:bg-elevated/40">
             <Layers className="w-4 h-4" />
             <span>Explore</span>
           </button>
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40">
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary hover:text-primary hover:bg-elevated/40">
             <Award className="w-4 h-4" />
             <span>Study Plan</span>
           </button>
         </div>
 
         {/* Section B: My Lists */}
-        <div className="flex flex-col gap-1 border-t border-[#1e1e1e] pt-4">
-          <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider px-3 mb-2">My Lists</p>
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#1e1e1e]/20 text-[#f5f5f5]">
+        <div className="flex flex-col gap-1 border-t border-border pt-4">
+          <p className="text-xs font-mono text-secondary uppercase tracking-wider px-3 mb-2">My Lists</p>
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-elevated/20 text-primary">
             <div className="flex items-center gap-3">
               <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500/20" />
               <span>Favorites</span>
@@ -179,29 +179,29 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
             <button 
               onClick={() => setFavoriteLocked(!favoriteLocked)} 
               title={favoriteLocked ? "Lock folder" : "Unlock folder"}
-              className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors"
+              className="text-secondary hover:text-primary transition-colors"
             >
-              {favoriteLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5 text-emerald-400" />}
+              {favoriteLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5 text-green" />}
             </button>
           </div>
         </div>
 
         {/* Section C: Saved By Me / Custom Filters */}
-        <div className="flex flex-col gap-1 border-t border-[#1e1e1e] pt-4">
-          <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider px-3 mb-2">Custom Filters</p>
+        <div className="flex flex-col gap-1 border-t border-border pt-4">
+          <p className="text-xs font-mono text-secondary uppercase tracking-wider px-3 mb-2">Custom Filters</p>
           <button 
             onClick={() => { setSelectedCompany('Deloitte'); setSelectedTopic(null); }}
-            className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedCompany === 'Deloitte' ? 'bg-emerald-950/30 text-emerald-400 font-medium border border-emerald-800/30' : 'text-[#a0a0a0] hover:text-[#f5f5f5]'}`}
+            className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedCompany === 'Deloitte' ? 'bg-emerald-950/30 text-green font-medium border border-emerald-800/30' : 'text-secondary hover:text-primary'}`}
           >
             <span className="truncate">Deloitte Prep</span>
-            <span className="text-[10px] font-mono bg-[#1e1e1e] px-1.5 py-0.5 rounded text-[#a0a0a0]">32</span>
+            <span className="text-[10px] font-mono bg-elevated px-1.5 py-0.5 rounded text-secondary">32</span>
           </button>
           <button 
             onClick={() => { setSelectedCompany('Google'); setSelectedTopic(null); }}
-            className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedCompany === 'Google' ? 'bg-[#1e1e1e] text-[#f5f5f5] font-medium' : 'text-[#a0a0a0] hover:text-[#f5f5f5]'}`}
+            className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedCompany === 'Google' ? 'bg-elevated text-primary font-medium' : 'text-secondary hover:text-primary'}`}
           >
             <span className="truncate">Google Track</span>
-            <span className="text-[10px] font-mono bg-[#1e1e1e] px-1.5 py-0.5 rounded text-[#a0a0a0]">2318</span>
+            <span className="text-[10px] font-mono bg-elevated px-1.5 py-0.5 rounded text-secondary">2318</span>
           </button>
         </div>
       </aside>
@@ -213,26 +213,26 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
           {banners.map((ban, idx) => (
             <div 
               key={idx}
-              className={`flex flex-col justify-between p-4 rounded-xl border bg-gradient-to-br ${ban.color} transition-all duration-300 hover:scale-[1.01] hover:border-[#3e3e3e]`}
+              className={`flex flex-col justify-between p-4 rounded-xl border bg-gradient-to-br ${ban.color} transition-all duration-300 hover:scale-[1.01] hover:border-hover`}
             >
               <div>
                 <span className={`inline-block text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border ${ban.tagColor} mb-2`}>
                   {ban.track}
                 </span>
-                <h3 className="text-sm font-semibold text-[#f5f5f5] tracking-tight">{ban.title}</h3>
-                <p className="text-xs text-[#a0a0a0] mt-1 line-clamp-2">{ban.desc}</p>
+                <h3 className="text-sm font-semibold text-primary tracking-tight">{ban.title}</h3>
+                <p className="text-xs text-secondary mt-1 line-clamp-2">{ban.desc}</p>
               </div>
-              <div className="flex items-center gap-1 text-xs text-[#f5f5f5] font-medium mt-4 group cursor-pointer">
+              <div className="flex items-center gap-1 text-xs text-primary font-medium mt-4 group cursor-pointer">
                 <span>Start Learning</span>
-                <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 text-[#a0a0a0]" />
+                <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 text-secondary" />
               </div>
             </div>
           ))}
         </div>
 
         {/* Topic Tags Filtering Block */}
-        <div className="flex flex-col gap-2 bg-[#121212] p-4 rounded-xl border border-[#1e1e1e]">
-          <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider mb-1">Filter by Topic</p>
+        <div className="flex flex-col gap-2 bg-card p-4 rounded-xl border border-border">
+          <p className="text-xs font-mono text-secondary uppercase tracking-wider mb-1">Filter by Topic</p>
           <div className="flex flex-wrap gap-2 max-h-[88px] overflow-y-auto pr-1">
             {TOPIC_TAGS.map((tag) => (
               <button
@@ -243,13 +243,13 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 }}
                 className={`text-xs px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   selectedTopic === tag.name 
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
-                    : 'bg-[#1e1e1e]/60 text-[#a0a0a0] hover:text-[#f5f5f5] border border-transparent hover:border-[#2e2e2e]'
+                    ? 'bg-emerald-500/10 text-green border border-emerald-500/30' 
+                    : 'bg-elevated/60 text-secondary hover:text-primary border border-transparent hover:border-border-light'
                 }`}
               >
                 <span>{tag.name}</span>
                 <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
-                  selectedTopic === tag.name ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#1e1e1e] text-[#707070]'
+                  selectedTopic === tag.name ? 'bg-emerald-500/20 text-emerald-300' : 'bg-elevated text-muted'
                 }`}>{tag.count}</span>
               </button>
             ))}
@@ -257,14 +257,14 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
         </div>
 
         {/* Categorization Toolbar */}
-        <div className="flex items-center justify-between border-b border-[#1e1e1e] pb-1">
+        <div className="flex items-center justify-between border-b border-border pb-1">
           <div className="flex items-center gap-2 overflow-x-auto pr-2 scrollbar-none">
             {['All Topics', 'Algorithms', 'Database', 'Shell', 'Concurrency'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`relative text-xs px-3 py-2.5 transition-colors whitespace-nowrap ${
-                  selectedCategory === cat ? 'text-[#f5f5f5] font-medium' : 'text-[#a0a0a0] hover:text-[#f5f5f5]'
+                  selectedCategory === cat ? 'text-primary font-medium' : 'text-secondary hover:text-primary'
                 }`}
               >
                 {cat}
@@ -281,63 +281,63 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
         </div>
 
         {/* Search & Sub-Filters Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#121212]/40 p-1.5 rounded-xl border border-[#1e1e1e]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card/40 p-1.5 rounded-xl border border-border">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input 
               type="text" 
               placeholder="Search questions by index or title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] focus:border-[#3e3e3e] focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-[#f5f5f5] placeholder-[#707070] transition-colors"
+              className="w-full bg-page border border-border focus:border-hover focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-primary placeholder-muted transition-colors"
             />
           </div>
           
-          <div className="flex items-center justify-between sm:justify-end gap-3 font-mono text-xs text-[#a0a0a0]">
+          <div className="flex items-center justify-between sm:justify-end gap-3 font-mono text-xs text-secondary">
             <button 
               onClick={() => handleSort('acceptance')}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all ${
-                sortBy === 'acceptance' ? 'bg-[#1e1e1e] border-[#2e2e2e] text-[#f5f5f5]' : 'border-transparent hover:bg-[#1e1e1e]/40'
+                sortBy === 'acceptance' ? 'bg-elevated border-border-light text-primary' : 'border-transparent hover:bg-elevated/40'
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#707070]" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-muted" />
               <span>Sort by Acc</span>
               {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
             </button>
 
-            <div className="h-4 w-px bg-[#1e1e1e]" />
+            <div className="h-4 w-px bg-elevated" />
 
-            <div className="flex items-center gap-1 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e]">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="flex items-center gap-1 bg-elevated/60 px-3 py-2 rounded-lg border border-border">
+              <Clock className="w-3.5 h-3.5 text-green" />
               <span>{solvedCount}/{PROBLEMS_DATA.length} Solved</span>
             </div>
           </div>
         </div>
 
         {/* Problems Data Grid (Tabular Structure) */}
-        <div className="overflow-hidden rounded-xl border border-[#1e1e1e] bg-[#0c0c0c]" id="problems_grid">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface" id="problems_grid">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[#1e1e1e] bg-[#121212]/50 text-[#707070] font-mono select-none">
+                <tr className="border-b border-border bg-card/50 text-muted font-mono select-none">
                   <th className="py-3.5 pl-4 w-12 text-center">Status</th>
-                  <th className="py-3.5 px-4 w-20 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('id')}>
+                  <th className="py-3.5 px-4 w-20 cursor-pointer hover:text-primary" onClick={() => handleSort('id')}>
                     Index {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="py-3.5 px-4">Title</th>
-                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('acceptance')}>
+                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-primary" onClick={() => handleSort('acceptance')}>
                     Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('difficulty')}>
+                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-primary" onClick={() => handleSort('difficulty')}>
                     Difficulty {sortBy === 'difficulty' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="py-3.5 pr-4 w-16 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e1e1e]">
+              <tbody className="divide-y divide-border">
                 {filteredProblems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#707070] font-mono">
+                    <td colSpan={6} className="py-12 text-center text-muted font-mono">
                       No problems found matching your filters.
                     </td>
                   </tr>
@@ -349,33 +349,33 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                       <tr 
                         key={prob.id}
                         onClick={() => onSelectProblem(prob.id)}
-                        className="hover:bg-[#121212]/70 active:bg-[#1a1a1a] transition-colors cursor-pointer group"
+                        className="hover:bg-card/70 active:bg-active transition-colors cursor-pointer group"
                       >
                         <td className="py-4 pl-4 text-center">
                           {isSolved ? (
-                            <CheckCircle className="w-4 h-4 text-[#00b8a3] mx-auto fill-[#00b8a3]/10" />
+                            <CheckCircle className="w-4 h-4 text-green mx-auto fill-green/10" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border border-[#2e2e2e] mx-auto" />
+                            <div className="w-4 h-4 rounded-full border border-border-light mx-auto" />
                           )}
                         </td>
-                        <td className="py-4 px-4 font-mono text-[#a0a0a0]">{prob.id}</td>
-                        <td className="py-4 px-4 font-medium text-[#f5f5f5] group-hover:text-emerald-400 transition-colors">
+                        <td className="py-4 px-4 font-mono text-secondary">{prob.id}</td>
+                        <td className="py-4 px-4 font-medium text-primary group-hover:text-green transition-colors">
                           {prob.title}
                         </td>
-                        <td className="py-4 px-4 font-mono text-[#a0a0a0]">{prob.acceptance}</td>
+                        <td className="py-4 px-4 font-mono text-secondary">{prob.acceptance}</td>
                         <td className="py-4 px-4">
                           <span 
                             className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
                             style={{
                               backgroundColor: 
-                                prob.difficulty === 'Easy' ? '#00b8a315' : 
-                                prob.difficulty === 'Medium' ? '#ffb80015' : '#ff2d5515',
+                                prob.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
+                                prob.difficulty === 'Medium' ? 'var(--color-medium-bg)' : 'var(--color-hard-bg)',
                               color: 
-                                prob.difficulty === 'Easy' ? '#00b8a3' : 
-                                prob.difficulty === 'Medium' ? '#ffb800' : '#ff2d55',
+                                prob.difficulty === 'Easy' ? 'var(--color-easy)' : 
+                                prob.difficulty === 'Medium' ? 'var(--color-medium)' : 'var(--color-hard)',
                               border: `1px solid ${
-                                prob.difficulty === 'Easy' ? '#00b8a325' : 
-                                prob.difficulty === 'Medium' ? '#ffb80025' : '#ff2d5525'
+                                prob.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
+                                prob.difficulty === 'Medium' ? 'var(--color-medium-border)' : 'var(--color-hard-border)'
                               }`
                             }}
                           >
@@ -383,8 +383,8 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                           </span>
                         </td>
                         <td className="py-4 pr-4 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors p-1 rounded">
-                            {isSolved ? <Unlock className="w-3.5 h-3.5 text-[#00b8a3]" /> : <Lock className="w-3.5 h-3.5" />}
+                          <button className="text-secondary hover:text-primary transition-colors p-1 rounded">
+                            {isSolved ? <Unlock className="w-3.5 h-3.5 text-green" /> : <Lock className="w-3.5 h-3.5" />}
                           </button>
                         </td>
                       </tr>
@@ -401,16 +401,16 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
       <aside className="lg:col-span-2 flex flex-col gap-6" id="widgets_panel">
         
         {/* Calendar Module (Matrix Tracker July 2026) */}
-        <div className="bg-[#121212] rounded-xl border border-[#1e1e1e] p-4 flex flex-col gap-3">
+        <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <div className="flex items-center gap-1.5 text-[#f5f5f5]">
-              <Calendar className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-1.5 text-primary">
+              <Calendar className="w-4 h-4 text-green" />
               <span>July 2026</span>
             </div>
-            <span className="text-[10px] font-mono text-[#a0a0a0]">Daily Challenge</span>
+            <span className="text-[10px] font-mono text-secondary">Daily Challenge</span>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono text-[#707070]">
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono text-muted">
             <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
           </div>
 
@@ -428,8 +428,8 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                     isToday 
                       ? 'bg-emerald-500 text-black font-bold ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/20' 
                       : isPast
-                        ? 'text-[#f5f5f5] hover:bg-[#1e1e1e]' 
-                        : 'text-[#707070] hover:bg-[#1e1e1e]/40'
+                        ? 'text-primary hover:bg-elevated' 
+                        : 'text-muted hover:bg-elevated/40'
                   }`}
                   title={isToday ? "Active Daily Challenge Day!" : ""}
                 >
@@ -447,16 +447,16 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
         </div>
 
         {/* Trending Companies Module */}
-        <div className="bg-[#121212] rounded-xl border border-[#1e1e1e] p-4 flex flex-col gap-3">
-          <p className="text-xs font-semibold text-[#f5f5f5] tracking-tight">Trending Companies</p>
+        <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
+          <p className="text-xs font-semibold text-primary tracking-tight">Trending Companies</p>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#707070]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
             <input 
               type="text" 
               placeholder="Search company..."
               value={companySearch}
               onChange={(e) => setCompanySearch(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] focus:border-[#2e2e2e] focus:outline-none rounded-lg pl-8 pr-3 py-1.5 text-[10px] text-[#f5f5f5] placeholder-[#707070] transition-colors"
+              className="w-full bg-page border border-border focus:border-border-light focus:outline-none rounded-lg pl-8 pr-3 py-1.5 text-[10px] text-primary placeholder-muted transition-colors"
             />
           </div>
 
@@ -470,18 +470,18 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 }}
                 className={`text-[10px] px-2 py-1 rounded transition-all flex items-center gap-1 ${
                   selectedCompany === comp.name 
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
-                    : 'bg-[#1e1e1e] text-[#a0a0a0] hover:text-[#f5f5f5] border border-transparent hover:border-[#2e2e2e]'
+                    ? 'bg-emerald-500/15 text-green border border-emerald-500/30' 
+                    : 'bg-elevated text-secondary hover:text-primary border border-transparent hover:border-border-light'
                 }`}
               >
                 <span>{comp.name}</span>
                 <span className={`text-[9px] font-mono ${
-                  selectedCompany === comp.name ? 'text-emerald-300' : 'text-[#707070]'
+                  selectedCompany === comp.name ? 'text-emerald-300' : 'text-muted'
                 }`}>{comp.frequency}</span>
               </button>
             ))}
             {filteredCompanies.length === 0 && (
-              <p className="text-[10px] text-[#707070] font-mono text-center w-full py-2">No matches</p>
+              <p className="text-[10px] text-muted font-mono text-center w-full py-2">No matches</p>
             )}
           </div>
         </div>

@@ -68,7 +68,7 @@ export default function Workspace({
   const [hasDownvoted, setHasDownvoted] = useState(false);
 
   // IDE Editor State
-  const [language, setLanguage] = useState('C++');
+  const [language, setLanguage] = useState('JavaScript');
   const [userCode, setUserCode] = useState('');
   const [lineNumbers, setLineNumbers] = useState<number[]>([1]);
   const [isSaving, setIsSaving] = useState(false);
@@ -291,28 +291,28 @@ export default function Workspace({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col h-[calc(100vh-56px)] select-none bg-[#0a0a0a] overflow-hidden"
+      className="flex flex-col h-[calc(100vh-56px)] select-none bg-page overflow-hidden"
     >
       
       {/* Mini Workspace Header Bar */}
-      <div className="flex items-center justify-between border-b border-[#1e1e1e] bg-[#0c0c0c] px-4 py-2 text-xs font-sans">
+      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2 text-xs font-sans">
         <div className="flex items-center gap-3">
           <button 
             onClick={onBackToDashboard}
-            className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1e1e1e] text-[#a0a0a0] hover:text-[#f5f5f5] transition-all font-mono"
+            className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-elevated text-secondary hover:text-primary transition-all font-mono"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Problem List</span>
           </button>
-          <div className="h-4 w-px bg-[#1e1e1e]" />
-          <span className="font-semibold text-[#f5f5f5] tracking-tight truncate max-w-[200px] md:max-w-none">
+          <div className="h-4 w-px bg-elevated" />
+          <span className="font-semibold text-primary tracking-tight truncate max-w-[200px] md:max-w-none">
             {problem.id}. {problem.title}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">
-            Standard Environment
+            JS / Python
           </span>
         </div>
       </div>
@@ -322,18 +322,18 @@ export default function Workspace({
         
         {/* Left Column: Problem Specification Workspace */}
         <div 
-          className="h-full flex flex-col bg-[#0f0f0f] relative border-r border-[#1e1e1e]"
+          className="h-full flex flex-col bg-panel relative border-r border-border"
           style={{ width: isIdeFullscreen ? '0%' : `${splitPercent}%`, display: isIdeFullscreen ? 'none' : 'flex' }}
         >
           {/* Flat Navigation Tabs */}
-          <div className="flex items-center justify-between border-b border-[#1e1e1e] bg-[#0c0c0c] px-4 text-xs font-mono">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-4 text-xs font-mono">
             <div className="flex items-center gap-4">
               {(['Description', 'Editorial', 'Solutions', 'Submissions'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`py-3 relative transition-colors ${
-                    activeTab === tab ? 'text-[#f5f5f5] font-medium' : 'text-[#707070] hover:text-[#f5f5f5]'
+                    activeTab === tab ? 'text-primary font-medium' : 'text-muted hover:text-primary'
                   }`}
                 >
                   {tab}
@@ -362,7 +362,7 @@ export default function Workspace({
                 >
                   {/* Metadata Header */}
                   <div className="flex flex-col gap-3">
-                    <h1 className="text-xl font-bold text-[#f5f5f5] tracking-tight">
+                    <h1 className="text-xl font-bold text-primary tracking-tight">
                       {problem.id}. {problem.title}
                     </h1>
 
@@ -371,14 +371,14 @@ export default function Workspace({
                         className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border"
                         style={{
                           backgroundColor: 
-                            problem.difficulty === 'Easy' ? '#00b8a310' : 
-                            problem.difficulty === 'Medium' ? '#ffb80010' : '#ff2d5510',
+                            problem.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
+                            problem.difficulty === 'Medium' ? 'var(--color-medium-bg)' : 'var(--color-hard-bg)',
                           color: 
-                            problem.difficulty === 'Easy' ? '#00b8a3' : 
-                            problem.difficulty === 'Medium' ? '#ffb800' : '#ff2d55',
+                            problem.difficulty === 'Easy' ? 'var(--color-easy)' : 
+                            problem.difficulty === 'Medium' ? 'var(--color-medium)' : 'var(--color-hard)',
                           borderColor: 
-                            problem.difficulty === 'Easy' ? '#00b8a320' : 
-                            problem.difficulty === 'Medium' ? '#ffb80020' : '#ff2d5520',
+                            problem.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
+                            problem.difficulty === 'Medium' ? 'var(--color-medium-border)' : 'var(--color-hard-border)',
                         }}
                       >
                         {problem.difficulty}
@@ -388,15 +388,15 @@ export default function Workspace({
                       <div className="relative">
                         <button 
                           onClick={() => { setShowTopics(!showTopics); setShowCompanies(false); }}
-                          className="flex items-center gap-1 text-[10px] bg-[#1e1e1e] hover:bg-[#2e2e2e] transition-colors text-[#a0a0a0] hover:text-[#f5f5f5] px-2.5 py-1 rounded"
+                          className="flex items-center gap-1 text-[10px] bg-elevated hover:bg-hover transition-colors text-secondary hover:text-primary px-2.5 py-1 rounded"
                         >
                           <span>Topics</span>
                           <ChevronDown className="w-3 h-3" />
                         </button>
                         {showTopics && (
-                          <div className="absolute top-7 left-0 bg-[#121212] border border-[#2e2e2e] rounded shadow-xl p-2.5 z-30 flex flex-wrap gap-1.5 w-52">
+                          <div className="absolute top-7 left-0 bg-card border border-border-light rounded shadow-xl p-2.5 z-30 flex flex-wrap gap-1.5 w-52">
                             {problem.topics.map((t) => (
-                              <span key={t} className="text-[10px] bg-[#1e1e1e] text-[#a0a0a0] px-2 py-0.5 rounded">
+                              <span key={t} className="text-[10px] bg-elevated text-secondary px-2 py-0.5 rounded">
                                 {t}
                               </span>
                             ))}
@@ -408,15 +408,15 @@ export default function Workspace({
                       <div className="relative">
                         <button 
                           onClick={() => { setShowCompanies(!showCompanies); setShowTopics(false); }}
-                          className="flex items-center gap-1 text-[10px] bg-[#1e1e1e] hover:bg-[#2e2e2e] transition-colors text-[#a0a0a0] hover:text-[#f5f5f5] px-2.5 py-1 rounded"
+                          className="flex items-center gap-1 text-[10px] bg-elevated hover:bg-hover transition-colors text-secondary hover:text-primary px-2.5 py-1 rounded"
                         >
                           <span>Companies</span>
                           <ChevronDown className="w-3 h-3" />
                         </button>
                         {showCompanies && (
-                          <div className="absolute top-7 left-0 bg-[#121212] border border-[#2e2e2e] rounded shadow-xl p-2.5 z-30 flex flex-col gap-1.5 w-48 font-mono text-[10px]">
+                          <div className="absolute top-7 left-0 bg-card border border-border-light rounded shadow-xl p-2.5 z-30 flex flex-col gap-1.5 w-48 font-mono text-[10px]">
                             {problem.companies.map((c) => (
-                              <div key={c.name} className="flex justify-between items-center text-[#a0a0a0]">
+                              <div key={c.name} className="flex justify-between items-center text-secondary">
                                 <span>{c.name}</span>
                                 <span className="text-emerald-400">Freq {c.frequency}</span>
                               </div>
@@ -458,10 +458,10 @@ export default function Workspace({
                   </AnimatePresence>
 
                   {/* Description Markdown Render Box */}
-                  <div className="text-xs text-[#d0d0d0] leading-relaxed flex flex-col gap-4">
+                  <div className="text-xs text-body leading-relaxed flex flex-col gap-4">
                     {problem.description.split('\n\n').map((paragraph, i) => {
                       // Simple inline monospace parsing for prompt text `s` or indices
-                      const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-[#1e1e1e] px-1.5 py-0.5 rounded text-emerald-400 text-[10px]">$1</code>');
+                      const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-elevated px-1.5 py-0.5 rounded text-green text-[10px]">$1</code>');
                       return (
                         <p 
                           key={i} 
@@ -473,23 +473,23 @@ export default function Workspace({
 
                   {/* Examples Execution Blocks */}
                   <div className="flex flex-col gap-4">
-                    <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider">Example Executions</p>
+                    <p className="text-xs font-mono text-secondary uppercase tracking-wider">Example Executions</p>
                     {problem.examples.map((ex, idx) => (
                       <div 
                         key={idx}
-                        className="bg-[#121212] border border-[#1e1e1e] rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
+                        className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
                       >
                         <p className="font-semibold text-emerald-400">Example {idx + 1}:</p>
-                        <div className="grid grid-cols-1 gap-1 text-[#b0b0b0] pl-2 border-l-2 border-[#2e2e2e]">
+                        <div className="grid grid-cols-1 gap-1 text-secondary pl-2 border-l-2 border-border-light">
                           <div>
-                            <span className="text-[#707070]">Input:</span> {ex.input}
+                            <span className="text-muted">Input:</span> {ex.input}
                           </div>
                           <div>
-                            <span className="text-[#707070]">Output:</span> {ex.output}
+                            <span className="text-muted">Output:</span> {ex.output}
                           </div>
                           {ex.explanation && (
                             <div className="mt-1 leading-relaxed">
-                              <span className="text-[#707070]">Explanation:</span> {ex.explanation}
+                              <span className="text-muted">Explanation:</span> {ex.explanation}
                             </div>
                           )}
                         </div>
@@ -508,17 +508,17 @@ export default function Workspace({
                   exit={{ opacity: 0, y: -4 }}
                   className="flex flex-col gap-5 text-sm"
                 >
-                  <h2 className="text-lg font-bold text-[#f5f5f5]">Official Editorial Analysis</h2>
+                  <h2 className="text-lg font-bold text-primary">Official Editorial Analysis</h2>
                   {isLoadingEditorial ? (
-                    <div className="flex flex-col items-center justify-center py-16 gap-3 text-xs text-[#a0a0a0] font-mono">
+                    <div className="flex flex-col items-center justify-center py-16 gap-3 text-xs text-secondary font-mono">
                       <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
                       <span>Synthesizing optimal strategy from server...</span>
                     </div>
                   ) : editorialData ? (
-                    <div className="flex flex-col gap-6 text-xs text-[#c0c0c0] leading-relaxed">
+                    <div className="flex flex-col gap-6 text-xs text-body leading-relaxed">
                       
                       <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex flex-col gap-2">
-                        <h3 className="font-semibold text-[#f5f5f5] text-sm">Optimal Intuiton</h3>
+                        <h3 className="font-semibold text-primary text-sm">Optimal Intuiton</h3>
                         <div className="text-xs leading-relaxed flex flex-col gap-3">
                           {editorialData.approach.split('\n\n').map((para, i) => (
                             <p key={i}>{para}</p>
@@ -526,21 +526,21 @@ export default function Workspace({
                         </div>
                       </div>
 
-                      <div className="border border-[#1e1e1e] rounded-xl p-4 bg-[#121212]/50 flex flex-col gap-2 font-mono">
-                        <h3 className="font-semibold text-[#f5f5f5] text-xs uppercase tracking-wider text-[#a0a0a0]">Complexity Bound</h3>
+                      <div className="border border-border rounded-xl p-4 bg-card/50 flex flex-col gap-2 font-mono">
+                        <h3 className="font-semibold text-primary text-xs uppercase tracking-wider text-secondary">Complexity Bound</h3>
                         <p dangerouslySetInnerHTML={{ __html: editorialData.complexity.replace(/\$([^\$]+)\$/g, '<code class="text-emerald-400">$1</code>') }} />
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <h3 className="font-semibold text-[#f5f5f5]">Optimal Solution Code ({language})</h3>
-                        <pre className="p-4 bg-[#0c0c0c] border border-[#1e1e1e] rounded-xl overflow-x-auto text-[#00b8a3] font-mono">
+                        <h3 className="font-semibold text-primary">Optimal Solution Code ({language})</h3>
+                        <pre className="p-4 bg-surface border border-border rounded-xl overflow-x-auto text-green font-mono">
                           {editorialData.codeSolution}
                         </pre>
                       </div>
 
                     </div>
                   ) : (
-                    <p className="text-xs text-[#707070] font-mono">Failed to retrieve editorial strategists. Check server configurations.</p>
+                    <p className="text-xs text-muted font-mono">Failed to retrieve editorial strategists. Check server configurations.</p>
                   )}
                 </motion.div>
               )}
@@ -553,33 +553,33 @@ export default function Workspace({
                   exit={{ opacity: 0, y: -4 }}
                   className="flex flex-col gap-5 text-sm"
                 >
-                  <h2 className="text-lg font-bold text-[#f5f5f5]">Community Solutions</h2>
+                  <h2 className="text-lg font-bold text-primary">Community Solutions</h2>
                   
                   <div className="flex flex-col gap-4">
-                    <div className="border border-[#1e1e1e] bg-[#121212]/50 p-4 rounded-xl flex flex-col gap-2 text-xs">
+                    <div className="border border-border bg-card/50 p-4 rounded-xl flex flex-col gap-2 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#f5f5f5]">🚀 Sliding Window [O(N)] - C++ Beats 98% Runtime</span>
+                        <span className="font-semibold text-primary">🚀 Sliding Window [O(N)] - C++ Beats 98% Runtime</span>
                         <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">Optimal</span>
                       </div>
-                      <p className="text-[#a0a0a0] leading-relaxed">
+                      <p className="text-secondary leading-relaxed">
                         A highly clean one-pass scan tracking occurrences using an array map for maximum memory cache locality.
                       </p>
-                      <div className="flex items-center gap-4 text-[#707070] mt-2 font-mono text-[10px]">
+                      <div className="flex items-center gap-4 text-muted mt-2 font-mono text-[10px]">
                         <span>By code_wizard</span>
                         <span>👍 4,210 upvotes</span>
                         <span>💬 322 comments</span>
                       </div>
                     </div>
 
-                    <div className="border border-[#1e1e1e] bg-[#121212]/50 p-4 rounded-xl flex flex-col gap-2 text-xs">
+                    <div className="border border-border bg-card/50 p-4 rounded-xl flex flex-col gap-2 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#f5f5f5]">🐍 Python3 Simple Sliding Window & Set [Detailed Comments]</span>
-                        <span className="text-[10px] font-mono text-[#a0a0a0] bg-[#1e1e1e] px-1.5 py-0.2 rounded">Python</span>
+                        <span className="font-semibold text-primary">🐍 Python3 Simple Sliding Window & Set [Detailed Comments]</span>
+                        <span className="text-[10px] font-mono text-secondary bg-elevated px-1.5 py-0.2 rounded">Python</span>
                       </div>
-                      <p className="text-[#a0a0a0] leading-relaxed">
+                      <p className="text-secondary leading-relaxed">
                         Easy to understand Python loop keeping elements inside a standard set utility, shrinking left dynamically.
                       </p>
-                      <div className="flex items-center gap-4 text-[#707070] mt-2 font-mono text-[10px]">
+                      <div className="flex items-center gap-4 text-muted mt-2 font-mono text-[10px]">
                         <span>By py_compiler</span>
                         <span>👍 1,984 upvotes</span>
                         <span>💬 84 comments</span>
@@ -597,10 +597,10 @@ export default function Workspace({
                   exit={{ opacity: 0, y: -4 }}
                   className="flex flex-col gap-4 text-sm font-mono"
                 >
-                  <h2 className="text-lg font-bold text-[#f5f5f5] font-sans">Submission History</h2>
+                  <h2 className="text-lg font-bold text-primary font-sans">Submission History</h2>
 
                   {submissionHistory.length === 0 ? (
-                    <div className="py-12 text-center text-[#707070]">
+                    <div className="py-12 text-center text-muted">
                       No submissions sent in this session yet.
                     </div>
                   ) : (
@@ -608,7 +608,7 @@ export default function Workspace({
                       {submissionHistory.map((sub, i) => (
                         <div 
                           key={i}
-                          className="border border-[#1e1e1e] bg-[#121212]/40 p-4 rounded-xl flex items-center justify-between text-xs"
+                          className="border border-border bg-card/40 p-4 rounded-xl flex items-center justify-between text-xs"
                         >
                           <div className="flex flex-col gap-1">
                             <span 
@@ -616,15 +616,15 @@ export default function Workspace({
                             >
                               {sub.status}
                             </span>
-                            <span className="text-[#707070] text-[10px]">{sub.timestamp} • Language: {sub.language}</span>
+                            <span className="text-muted text-[10px]">{sub.timestamp} • Language: {sub.language}</span>
                           </div>
 
-                          <div className="flex items-center gap-4 text-[10px] text-[#a0a0a0]">
+                          <div className="flex items-center gap-4 text-[10px] text-secondary">
                             <div>
-                              <span className="text-[#707070]">Runtime:</span> {sub.runtime}
+                              <span className="text-muted">Runtime:</span> {sub.runtime}
                             </div>
                             <div>
-                              <span className="text-[#707070]">Memory:</span> {sub.memory}
+                              <span className="text-muted">Memory:</span> {sub.memory}
                             </div>
                           </div>
                         </div>
@@ -638,12 +638,12 @@ export default function Workspace({
           </div>
 
           {/* Footer Status Bar Left */}
-          <div className="border-t border-[#1e1e1e] bg-[#0c0c0c] px-4 py-3 flex items-center justify-between text-xs text-[#707070]">
+          <div className="border-t border-border bg-surface px-4 py-3 flex items-center justify-between text-xs text-muted">
             <div className="flex items-center gap-4 font-mono">
               <button 
                 onClick={handleUpvote}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-                  hasUpvoted ? 'text-emerald-400 bg-emerald-500/10' : 'hover:text-[#f5f5f5] hover:bg-[#1e1e1e]'
+                  hasUpvoted ? 'text-emerald-400 bg-emerald-500/10' : 'hover:text-primary hover:bg-elevated'
                 }`}
               >
                 <ThumbsUp className="w-3.5 h-3.5" />
@@ -653,7 +653,7 @@ export default function Workspace({
               <button 
                 onClick={handleDownvote}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-                  hasDownvoted ? 'text-rose-500 bg-rose-500/10' : 'hover:text-[#f5f5f5] hover:bg-[#1e1e1e]'
+                  hasDownvoted ? 'text-rose-500 bg-rose-500/10' : 'hover:text-primary hover:bg-elevated'
                 }`}
               >
                 <ThumbsDown className="w-3.5 h-3.5" />
@@ -679,46 +679,46 @@ export default function Workspace({
 
         {/* 2. Resizable Vertical Divider handle */}
         <div 
-          className="w-1.5 bg-[#121212] hover:bg-emerald-500/40 active:bg-emerald-500 cursor-col-resize transition-colors z-20 flex items-center justify-center"
+          className="w-1.5 bg-card hover:bg-emerald-500/40 active:bg-emerald-500 cursor-col-resize transition-colors z-20 flex items-center justify-center"
           onMouseDown={handleMouseDown}
           style={{ display: isIdeFullscreen ? 'none' : 'flex' }}
         >
-          <div className="w-px h-6 bg-[#2e2e2e]" />
+          <div className="w-px h-6 bg-hover" />
         </div>
 
         {/* Right Column: Code IDE & Sandbox Terminal */}
         <div 
-          className="h-full flex flex-col bg-[#0a0a0a]"
+          className="h-full flex flex-col bg-page"
           style={{ width: isIdeFullscreen ? '100%' : `${100 - splitPercent}%` }}
         >
           
           {/* IDE Workspace Header */}
-          <div className="flex items-center justify-between border-b border-[#1e1e1e] bg-[#0c0c0c] px-4 py-2 text-xs">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2 text-xs">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <select 
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="bg-[#121212] border border-[#2e2e2e] focus:outline-none rounded text-xs text-[#f5f5f5] px-3 py-1 pr-6 cursor-pointer appearance-none font-mono"
-                >
-                  {['C++', 'Python', 'Java', 'JavaScript', 'Go'].map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#707070] pointer-events-none" />
+                  <select 
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="bg-card border border-border-light focus:outline-none rounded text-xs text-primary px-3 py-1 pr-6 cursor-pointer appearance-none font-mono"
+                  >
+                    {['JavaScript', 'Python', 'C++', 'Java', 'Go'].map(lang => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
               </div>
 
-              <span className="text-[10px] font-mono text-[#707070]">
+              <span className="text-[10px] font-mono text-muted">
                 {isSaving ? 'Saving...' : 'Auto Saved'}
               </span>
             </div>
 
             {/* Layout controls */}
-            <div className="flex items-center gap-1 text-[#707070]">
+            <div className="flex items-center gap-1 text-muted">
               <button 
                 onClick={handleResetSnippet}
                 title="Reset code template"
-                className="hover:text-[#f5f5f5] hover:bg-[#1e1e1e] p-1.5 rounded transition-colors cursor-pointer"
+                className="hover:text-primary hover:bg-elevated p-1.5 rounded transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
@@ -726,14 +726,14 @@ export default function Workspace({
               <button 
                 onClick={() => setIsIdeFullscreen(!isIdeFullscreen)}
                 title={isIdeFullscreen ? "Exit Fullscreen" : "Fullscreen Code IDE"}
-                className="hover:text-[#f5f5f5] hover:bg-[#1e1e1e] p-1.5 rounded transition-colors cursor-pointer"
+                className="hover:text-primary hover:bg-elevated p-1.5 rounded transition-colors cursor-pointer"
               >
                 {isIdeFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-emerald-400" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
 
               <button 
                 title="Workspace settings"
-                className="hover:text-[#f5f5f5] hover:bg-[#1e1e1e] p-1.5 rounded transition-colors cursor-pointer"
+                className="hover:text-primary hover:bg-elevated p-1.5 rounded transition-colors cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
               </button>
@@ -741,10 +741,10 @@ export default function Workspace({
           </div>
 
           {/* Code Input Console Window (With sequential vertical line numbers) */}
-          <div className="flex-1 overflow-hidden relative flex text-sm font-mono bg-[#050505]" id="code_ide">
+          <div className="flex-1 overflow-hidden relative flex text-sm font-mono bg-code" id="code_ide">
             
             {/* Sequential Line Numbering System */}
-            <div className="w-12 bg-[#080808] text-[#444444] text-right pr-3 select-none py-4 border-r border-[#151515] flex flex-col overflow-hidden">
+            <div className="w-12 bg-line-num text-line-text text-right pr-3 select-none py-4 border-r border-border-subtle flex flex-col overflow-hidden">
               {lineNumbers.map((num) => (
                 <div key={num} className="h-[21px] leading-[21px] text-[11px] pr-0.5">
                   {num}
@@ -757,28 +757,28 @@ export default function Workspace({
               value={userCode}
               onChange={(e) => setUserCode(e.target.value)}
               spellCheck={false}
-              className="flex-1 bg-transparent text-[#00ffcc] focus:outline-none resize-none p-4 leading-[21px] text-[13px] font-mono h-full overflow-y-auto"
-              style={{ caretColor: '#00ffcc' }}
+              className="flex-1 bg-transparent text-code-text focus:outline-none resize-none p-4 leading-[21px] text-[13px] font-mono h-full overflow-y-auto"
+              style={{ caretColor: 'var(--color-code-text)' }}
               placeholder="// Write your code here..."
             />
           </div>
 
           {/* Collapsible Execution Console Terminal */}
           <div 
-            className="border-t border-[#1e1e1e] bg-[#0c0c0c] flex flex-col overflow-hidden"
+            className="border-t border-border bg-surface flex flex-col overflow-hidden"
             style={{ height: isTerminalExpanded ? '260px' : '40px' }}
           >
             {/* Headers for Console panel */}
             <div 
               onClick={() => setIsTerminalExpanded(!isTerminalExpanded)}
-              className="flex items-center justify-between px-4 h-10 border-b border-[#1e1e1e] hover:bg-[#121212] transition-colors cursor-pointer select-none text-xs"
+              className="flex items-center justify-between px-4 h-10 border-b border-border hover:bg-card transition-colors cursor-pointer select-none text-xs"
             >
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-[#f5f5f5] font-mono">
-                  <Terminal className="w-4 h-4 text-[#a0a0a0]" />
+                <div className="flex items-center gap-1.5 text-primary font-mono">
+                  <Terminal className="w-4 h-4 text-secondary" />
                   <span>Terminal</span>
                 </div>
-                <div className="h-3 w-px bg-[#2e2e2e]" />
+                <div className="h-3 w-px bg-hover" />
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                   {(['Testcase', 'Test Result'] as const).map((tab) => (
                     <button
@@ -788,7 +788,7 @@ export default function Workspace({
                         setIsTerminalExpanded(true);
                       }}
                       className={`font-mono transition-colors py-1 ${
-                        activeConsoleTab === tab ? 'text-[#f5f5f5] font-semibold' : 'text-[#707070] hover:text-[#f5f5f5]'
+                        activeConsoleTab === tab ? 'text-primary font-semibold' : 'text-muted hover:text-primary'
                       }`}
                     >
                       {tab}
@@ -799,34 +799,34 @@ export default function Workspace({
 
               <div>
                 {isTerminalExpanded ? (
-                  <ChevronDown className="w-4 h-4 text-[#707070]" />
+                  <ChevronDown className="w-4 h-4 text-muted" />
                 ) : (
-                  <ChevronUp className="w-4 h-4 text-[#707070]" />
+                  <ChevronUp className="w-4 h-4 text-muted" />
                 )}
               </div>
             </div>
 
             {/* Interactive Terminal Inner Content */}
             {isTerminalExpanded && (
-              <div className="flex-1 p-4 overflow-y-auto bg-[#070707] text-xs font-mono">
+              <div className="flex-1 p-4 overflow-y-auto bg-term text-xs font-mono">
                 {activeConsoleTab === 'Testcase' ? (
                   <div className="flex flex-col gap-3">
-                    <span className="text-[#707070]">Enter testcase parameters:</span>
+                    <span className="text-muted">Enter testcase parameters:</span>
                     <textarea
                       value={customTestcaseInput}
                       onChange={(e) => setCustomTestcaseInput(e.target.value)}
-                      placeholder="e.g. nums = [2,7,11,15]\ntarget = 9"
+                      placeholder='[2,7,11,15]&#10;9'
                       spellCheck={false}
-                      className="w-full h-24 bg-[#121212] border border-[#2e2e2e] focus:border-[#3e3e3e] focus:outline-none rounded-lg p-3 text-emerald-400 placeholder-[#444444]"
+                      className="w-full h-24 bg-card border border-border-light focus:border-hover focus:outline-none rounded-lg p-3 text-emerald-400 placeholder-line-text"
                     />
-                    <span className="text-[10px] text-[#555555]">
-                      Note: Custom inputs will be fed to the program compiler when clicking "Run".
+                    <span className="text-[10px] text-muted">
+                      Each line is one function argument in JSON format.
                     </span>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
                     {isEvaluating ? (
-                      <div className="flex flex-col items-center justify-center py-10 gap-3 text-[#a0a0a0]">
+                      <div className="flex flex-col items-center justify-center py-10 gap-3 text-secondary">
                         <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
                         <span>Compiling code snippet & grading results...</span>
                       </div>
@@ -834,7 +834,7 @@ export default function Workspace({
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-[#707070]">Status:</span>
+                            <span className="text-muted">Status:</span>
                             <span 
                               className={`text-sm font-bold uppercase tracking-wider ${
                                 evaluationResult.status === 'Accepted' ? 'text-emerald-400' : 'text-rose-500'
@@ -845,7 +845,7 @@ export default function Workspace({
                           </div>
 
                           {evaluationResult.status === 'Accepted' && (
-                            <div className="flex items-center gap-3 text-[#a0a0a0] text-[10px]">
+                            <div className="flex items-center gap-3 text-secondary text-[10px]">
                               <span>Runtime: <strong className="text-emerald-400 font-mono">{evaluationResult.runtime}</strong></span>
                               <span>Memory: <strong className="text-emerald-400 font-mono">{evaluationResult.memory}</strong></span>
                             </div>
@@ -870,33 +870,33 @@ export default function Workspace({
                               <div 
                                 key={index} 
                                 className={`border rounded-lg p-3 ${
-                                  tr.passed ? 'border-[#1e1e1e] bg-[#121212]/30' : 'border-rose-900/20 bg-rose-950/5'
+                                  tr.passed ? 'border-border bg-card/30' : 'border-rose-900/20 bg-rose-950/5'
                                 }`}
                               >
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="font-semibold text-xs text-[#a0a0a0]">Testcase {index + 1}:</span>
+                                  <span className="font-semibold text-xs text-secondary">Testcase {index + 1}:</span>
                                   <span className={`text-[10px] font-bold ${tr.passed ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {tr.passed ? '✓ PASSED' : '✗ FAILED'}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px]">
-                                  <div className="bg-[#121212] p-2 rounded">
-                                    <span className="text-[#707070] block text-[9px] mb-0.5 uppercase font-mono">Input:</span>
-                                    <span className="text-[#d0d0d0]">{tr.input}</span>
+                                  <div className="bg-card p-2 rounded">
+                                    <span className="text-muted block text-[9px] mb-0.5 uppercase font-mono">Input:</span>
+                                    <span className="text-body">{tr.input}</span>
                                   </div>
-                                  <div className="bg-[#121212] p-2 rounded">
-                                    <span className="text-[#707070] block text-[9px] mb-0.5 uppercase font-mono">Expected:</span>
+                                  <div className="bg-card p-2 rounded">
+                                    <span className="text-muted block text-[9px] mb-0.5 uppercase font-mono">Expected:</span>
                                     <span className="text-emerald-400">{tr.expected}</span>
                                   </div>
-                                  <div className="bg-[#121212] p-2 rounded">
-                                    <span className="text-[#707070] block text-[9px] mb-0.5 uppercase font-mono">Actual:</span>
+                                  <div className="bg-card p-2 rounded">
+                                    <span className="text-muted block text-[9px] mb-0.5 uppercase font-mono">Actual:</span>
                                     <span className={tr.passed ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{tr.actual}</span>
                                   </div>
                                 </div>
 
                                 {tr.stdout && (
-                                  <div className="mt-2 text-[10px] text-[#707070] border-t border-[#1e1e1e] pt-1 font-mono">
-                                    <span className="text-[#555] block">stdout:</span>
+                                  <div className="mt-2 text-[10px] text-muted border-t border-border pt-1 font-mono">
+                                    <span className="text-muted block">stdout:</span>
                                     {tr.stdout}
                                   </div>
                                 )}
@@ -906,8 +906,8 @@ export default function Workspace({
                         )}
                       </div>
                     ) : (
-                      <div className="py-8 text-center text-[#555555]">
-                        Compile & Execute your script using "Run" or "Submit".
+                      <div className="py-8 text-center text-muted">
+                        Compile and run your code using "Run" or "Submit".
                       </div>
                     )}
                   </div>
@@ -916,10 +916,10 @@ export default function Workspace({
             )}
 
             {/* Footer Action Toolbar */}
-            <div className="border-t border-[#1e1e1e] bg-[#0c0c0c] px-4 py-2 flex items-center justify-between text-xs h-12">
+            <div className="border-t border-border bg-surface px-4 py-2 flex items-center justify-between text-xs h-12">
               <button 
                 onClick={() => setIsTerminalExpanded(!isTerminalExpanded)}
-                className="flex items-center gap-1.5 text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors"
+                className="flex items-center gap-1.5 text-secondary hover:text-primary transition-colors"
               >
                 <span>Console</span>
                 {isTerminalExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
@@ -929,9 +929,9 @@ export default function Workspace({
                 <button 
                   onClick={() => handleEvaluate('run')}
                   disabled={isEvaluating}
-                  className="flex items-center gap-1.5 bg-[#1e1e1e] hover:bg-[#2e2e2e] active:bg-[#121212] transition-colors text-[#f5f5f5] px-4 py-2 rounded-lg font-mono font-semibold cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-elevated hover:bg-hover active:bg-card transition-colors text-primary px-4 py-2 rounded-lg font-mono font-semibold cursor-pointer disabled:opacity-50"
                 >
-                  <Play className="w-3.5 h-3.5 fill-[#f5f5f5]" />
+                  <Play className="w-3.5 h-3.5 fill-primary" />
                   <span>Run</span>
                 </button>
 
