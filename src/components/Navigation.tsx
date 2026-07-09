@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Search, Bell, Flame } from 'lucide-react';
+import { Bell, Flame } from 'lucide-react';
 
 interface NavigationProps {
   streakCount?: number;
@@ -14,23 +14,23 @@ interface NavigationProps {
 
 export default function Navigation({ streakCount = 124 }: NavigationProps) {
   return (
-    <header className="h-14 border-b border-[#1e1e1e] bg-[#0c0c0c] flex items-center justify-between px-6 select-none font-sans">
+    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-6 select-none font-sans">
       
       {/* Left Section: Platform logo and primary navigation links */}
       <div className="flex items-center gap-8">
         {/* Minimalist Logo */}
         <div className="flex items-center gap-2">
-          <span className="font-mono text-base font-black tracking-widest text-[#f5f5f5] uppercase bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+          <span className="font-mono text-base font-black tracking-widest text-primary uppercase bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
             CODE<span className="text-emerald-400">NODE</span>
           </span>
         </div>
 
         {/* Primary Navigation Text Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-medium">
-          <a href="#problems" className="text-[#f5f5f5] font-semibold transition-colors">Problems</a>
-          <a href="#contest" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Contest</a>
-          <a href="#discuss" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Discuss</a>
-          <a href="#interview" className="text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors">Interview</a>
+          <a href="#problems" className="text-primary font-semibold transition-colors">Problems</a>
+          <a href="#contest" className="text-secondary hover:text-primary transition-colors">Contest</a>
+          <a href="#discuss" className="text-secondary hover:text-primary transition-colors">Discuss</a>
+          <a href="#interview" className="text-secondary hover:text-primary transition-colors">Interview</a>
         </nav>
       </div>
 
@@ -48,7 +48,7 @@ export default function Navigation({ streakCount = 124 }: NavigationProps) {
 
         {/* Notification Bell */}
         <button 
-          className="relative text-[#a0a0a0] hover:text-[#f5f5f5] transition-colors p-1 rounded-lg hover:bg-[#1e1e1e] cursor-pointer"
+          className="relative text-secondary hover:text-primary transition-colors p-1 rounded-lg hover:bg-elevated cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
@@ -59,9 +59,9 @@ export default function Navigation({ streakCount = 124 }: NavigationProps) {
         </button>
 
         {/* User Profile Avatar Placeholder */}
-        <div className="flex items-center gap-2 pl-2 border-l border-[#1e1e1e]">
+        <div className="flex items-center gap-2 pl-2 border-l border-border">
           <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 p-[1.5px] cursor-pointer hover:opacity-80 transition-opacity">
-            <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center text-[10px] font-bold text-emerald-400">
+            <div className="w-full h-full rounded-full bg-page flex items-center justify-center text-[10px] font-bold text-emerald-400">
               HN
             </div>
           </div>

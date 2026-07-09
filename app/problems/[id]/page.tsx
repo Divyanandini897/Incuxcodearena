@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Workspace from '@/src/components/Workspace';
-import { PROBLEMS_DATA } from '@/src/data';
+import { PROBLEMS_DATA } from '@/src/data/data';
 
 export default function ProblemPage() {
   const params = useParams();
@@ -32,7 +32,7 @@ export default function ProblemPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] flex flex-col antialiased">
+    <div className="min-h-screen bg-page text-primary flex flex-col antialiased">
       <Workspace
         problemId={problemId}
         problems={PROBLEMS_DATA}

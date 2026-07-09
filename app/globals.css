@@ -4,6 +4,80 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-page: #0a0a0a;
+  --color-surface: #0c0c0c;
+  --color-card: #121212;
+  --color-elevated: #1e1e1e;
+  --color-hover: #2e2e2e;
+  --color-code: #050505;
+  --color-line-num: #080808;
+  --color-term: #070707;
+
+  --color-primary: #f5f5f5;
+  --color-secondary: #a0a0a0;
+  --color-muted: #707070;
+  --color-body: #d0d0d0;
+  --color-code-text: #00ffcc;
+  --color-panel: #0f0f0f;
+  --color-active: #1a1a1a;
+  --color-line-text: #444444;
+  --color-border-subtle: #151515;
+
+  --color-border: #1e1e1e;
+  --color-border-light: #2e2e2e;
+
+  --color-green: #00b8a3;
+  --color-amber: #ffb800;
+  --color-rose: #ff2d55;
+
+  --color-easy: #00b8a3;
+  --color-easy-bg: #00b8a315;
+  --color-easy-border: #00b8a325;
+  --color-medium: #ffb800;
+  --color-medium-bg: #ffb80015;
+  --color-medium-border: #ffb80025;
+  --color-hard: #ff2d55;
+  --color-hard-bg: #ff2d5515;
+  --color-hard-border: #ff2d5525;
+}
+
+[data-theme="light"] {
+  --color-page: #ffffff;
+  --color-surface: #f8f8f8;
+  --color-card: #ffffff;
+  --color-elevated: #e8e8e8;
+  --color-hover: #d0d0d0;
+  --color-code: #fafafa;
+  --color-line-num: #f0f0f0;
+  --color-term: #f5f5f5;
+
+  --color-primary: #1a1a1a;
+  --color-secondary: #555555;
+  --color-muted: #888888;
+  --color-body: #333333;
+  --color-code-text: #0066cc;
+  --color-panel: #f0f0f0;
+  --color-active: #e0e0e0;
+  --color-line-text: #aaaaaa;
+  --color-border-subtle: #e8e8e8;
+
+  --color-border: #e0e0e0;
+  --color-border-light: #cccccc;
+
+  --color-green: #00a892;
+  --color-amber: #cc9200;
+  --color-rose: #cc2244;
+
+  --color-easy: #00a892;
+  --color-easy-bg: #00a89215;
+  --color-easy-border: #00a89225;
+  --color-medium: #cc9200;
+  --color-medium-bg: #cc920015;
+  --color-medium-border: #cc920025;
+  --color-hard: #cc2244;
+  --color-hard-bg: #cc224415;
+  --color-hard-border: #cc224425;
 }
 
 ::-webkit-scrollbar {
@@ -12,11 +86,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: var(--color-page);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2e2e2e;
+  background: var(--color-hover);
   border-radius: 3px;
 }
 

@@ -26,7 +26,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] flex flex-col antialiased">
+    <div className="min-h-screen bg-page text-primary flex flex-col antialiased">
       <Navigation streakCount={streakCount} />
       <div className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         <Dashboard
