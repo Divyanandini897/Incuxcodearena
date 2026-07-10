@@ -8,7 +8,7 @@
 import React, { useMemo, useState } from 'react';
 import Navigation from '@/src/components/Navigation';
 import { useGameState, getXpForNextLevel } from '@/src/lib/gameState';
-import { PROBLEMS_DATA } from '@/src/data';
+import { PROBLEMS_DATA } from '@/src/data/data';
 import CompanionPet from '@/src/components/dashboard/CompanionPet';
 import { 
   Award, 

@@ -13,18 +13,22 @@ import {
   SlidersHorizontal, 
   Compass, 
   Sparkles, 
-  Coins
+  Coins,
+  ChevronLeft,
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { Problem, Difficulty } from '../types';
-import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data';
+import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data/data';
 import { useGameState } from '../lib/gameState';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 interface DashboardProps {
   solvedProblemIds: number[];
   onSelectProblem: (id: number) => void;
 }
+
+const PROBLEMS_PER_PAGE = 50;
 
 const CAREER_ROLES = [
   {
@@ -56,11 +60,13 @@ const CAREER_ROLES = [
 export default function Dashboard({ solvedProblemIds, onSelectProblem }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Topics');
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [companySearch, setCompanySearch] = useState('');
-  const [sortBy, setSortBy] = useState<'id' | 'acceptance' | 'difficulty'>('id');
+  const [sortBy, setSortBy] = useState<'id' | 'title' | 'acceptance' | 'difficulty'>('id');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const router = useRouter();
 
@@ -76,16 +82,19 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
   const filteredProblems = useMemo(() => {
     return PROBLEMS_DATA.filter((prob) => {
       const matchesSearch = prob.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            prob.id.toString() === searchTerm;
+                            prob.id.toString() === searchTerm.trim();
       const matchesTopic = !selectedTopic || prob.topics.includes(selectedTopic);
+      const matchesDifficulty = !selectedDifficulty || prob.difficulty === selectedDifficulty;
       const matchesCategory = selectedCategory === 'All Topics' || prob.category === selectedCategory;
       const matchesCompany = !selectedCompany || prob.companies.some(c => c.name === selectedCompany);
 
-      return matchesSearch && matchesTopic && matchesCategory && matchesCompany;
+      return matchesSearch && matchesTopic && matchesDifficulty && matchesCategory && matchesCompany;
     }).sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'id') {
         comparison = a.id - b.id;
+      } else if (sortBy === 'title') {
+        comparison = a.title.localeCompare(b.title);
       } else if (sortBy === 'acceptance') {
         comparison = parseFloat(a.acceptance) - parseFloat(b.acceptance);
       } else if (sortBy === 'difficulty') {
@@ -94,7 +103,21 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [searchTerm, selectedTopic, selectedCategory, selectedCompany, sortBy, sortOrder]);
+  }, [searchTerm, selectedTopic, selectedDifficulty, selectedCategory, selectedCompany, sortBy, sortOrder]);
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE));
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    return filteredProblems.slice(start, start + PROBLEMS_PER_PAGE);
+  }, [filteredProblems, currentPage]);
+
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 4) return [1, 2, 3, 4, 5, -1, totalPages];
+    if (currentPage >= totalPages - 3) return [1, -1, totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, -1, currentPage - 1, currentPage, currentPage + 1, -2, totalPages];
+  }, [currentPage, totalPages]);
 
   // Companies frequency listing
   const filteredCompanies = useMemo(() => {
@@ -103,12 +126,20 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
     );
   }, [companySearch]);
 
-  const sortedProblems = filteredProblems;
-
   const getDifficultyType = (difficulty: Difficulty) => {
     if (difficulty === 'Easy') return { name: 'Easy', color: 'text-primary' };
     if (difficulty === 'Medium') return { name: 'Medium', color: 'text-amber-500' };
     return { name: 'Hard', color: 'text-red-500' };
+  };
+
+  const handleSort = (field: 'id' | 'title' | 'acceptance' | 'difficulty') => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setCurrentPage(1);
   };
 
   return (
@@ -148,7 +179,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
           </div>
         )}
 
-        {/* Career Journeys Grid */}
+        {/* Career Role Journeys Grid */}
         <div className="flex flex-col gap-3">
           <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Career Role Journeys</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -218,6 +249,35 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
           </div>
         </div>
 
+        {/* Topic Tags Filtering Block */}
+        <div className="flex flex-col gap-2 bg-bg-card p-4 rounded-xl border border-border-card/60 glow-border">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-wider mb-1 font-bold">Filter by Topic</p>
+          <div className="flex flex-wrap gap-2 max-h-[88px] overflow-y-auto pr-1">
+            {TOPIC_TAGS.map((tag) => {
+              const isActive = selectedTopic === tag.name;
+              return (
+                <button
+                  key={tag.name}
+                  onClick={() => {
+                    setSelectedTopic(isActive ? null : tag.name);
+                    setCurrentPage(1);
+                  }}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer font-bold ${
+                    isActive 
+                      ? 'bg-primary/20 text-primary border border-primary/30 font-extrabold' 
+                      : 'bg-bg-base/60 text-text-muted hover:text-text-main border border-transparent hover:border-border-card'
+                  }`}
+                >
+                  <span>{tag.name}</span>
+                  <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
+                    isActive ? 'bg-primary/20 text-primary' : 'bg-bg-card text-text-muted/60 border border-border-card/30'
+                  }`}>{tag.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Categorization Toolbar tabs */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-card p-5 rounded-xl border border-border-card glow-border">
           <div className="flex flex-wrap items-center gap-3">
@@ -228,6 +288,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                   setSelectedCategory(category);
                   setSelectedCompany(null);
                   setSelectedTopic(null);
+                  setCurrentPage(1);
                 }}
                 className={`text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer font-extrabold tracking-tight ${
                   selectedCategory === category 
@@ -247,9 +308,50 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 type="text"
                 placeholder="Search question name or number..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full bg-bg-base border border-border-card focus:border-primary/40 focus:outline-none rounded-lg pl-10 pr-4 py-2.5 text-xs text-text-main placeholder-text-muted/50 transition-colors font-semibold"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Search & Sub-Filters Toolbar (Difficulty buttons & Stats) */}
+        <div className="flex flex-col gap-3 bg-bg-card p-4 rounded-xl border border-border-card/60 glow-border">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider font-extrabold">Difficulty:</span>
+            {([null, 'Easy', 'Medium', 'Hard'] as (string | null)[]).map((diff) => {
+              const isActive = selectedDifficulty === diff;
+              const color = diff === 'Easy' ? { text: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/30' }
+                          : diff === 'Medium' ? { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
+                          : diff === 'Hard' ? { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' }
+                          : { text: 'text-text-muted', bg: 'bg-bg-base', border: 'border-border-card' };
+              return (
+                <button
+                  key={diff ?? 'all'}
+                  onClick={() => {
+                    setSelectedDifficulty(isActive ? null : diff);
+                    setCurrentPage(1);
+                  }}
+                  className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                    isActive ? `${color.text} ${color.bg} ${color.border}` : 'border-border-card text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {diff ?? 'All'}
+                </button>
+              );
+            })}
+
+            <div className="ml-auto flex items-center gap-2 font-mono text-xs shrink-0">
+              <div className="flex items-center gap-1.5 bg-bg-base px-3 py-1.5 rounded-lg border border-border-card/50 text-text-muted font-bold">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span>{solvedProblemIds.length}<span className="text-text-muted/50">/{PROBLEMS_DATA.length}</span> Solved</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-bg-base px-3 py-1.5 rounded-lg border border-border-card/50 text-text-muted font-bold">
+                <span>{filteredProblems.length} results</span>
+              </div>
             </div>
           </div>
         </div>
@@ -261,21 +363,27 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
               <thead>
                 <tr className="border-b border-border-card/85 bg-bg-base/40 text-text-muted text-[11px] font-mono font-bold uppercase tracking-wider select-none">
                   <th className="py-4.5 px-4 w-16 text-center">Status</th>
-                  <th className="py-4.5 px-4">Title</th>
-                  <th className="py-4.5 px-4 w-32">Acceptance</th>
-                  <th className="py-4.5 px-4 w-36">Difficulty</th>
+                  <th className="py-4.5 px-4 cursor-pointer hover:text-text-main transition-colors" onClick={() => handleSort('title')}>
+                    Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="py-4.5 px-4 w-32 cursor-pointer hover:text-text-main transition-colors" onClick={() => handleSort('acceptance')}>
+                    Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="py-4.5 px-4 w-36 cursor-pointer hover:text-text-main transition-colors" onClick={() => handleSort('difficulty')}>
+                    Difficulty {sortBy === 'difficulty' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th className="py-4.5 pr-4 w-28 text-center">Reward</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-card/45 text-xs select-none">
-                {sortedProblems.length === 0 ? (
+                {paginatedProblems.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-muted font-mono">
                       No problems found matching active filters.
                     </td>
                   </tr>
                 ) : (
-                  sortedProblems.map((prob) => {
+                  paginatedProblems.map((prob) => {
                     const isSolved = solvedProblemIds.includes(prob.id);
                     const diffTag = getDifficultyType(prob.difficulty);
                     
@@ -298,9 +406,13 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                         
                         {/* Title Column */}
                         <td className="py-5 px-4 font-extrabold text-text-main text-base group-hover:text-primary transition-colors">
-                          {prob.title}
+                          <span className="text-text-muted/65 font-mono mr-1">{prob.id}.</span>
+                          <span>{prob.title}</span>
                           <div className="flex gap-2 mt-1.5 select-none font-semibold">
-                            {prob.topics.slice(0, 3).map(tag => (
+                            <span className="text-[10px] font-mono text-text-muted bg-bg-base px-2 py-0.5 rounded border border-border-card/50 uppercase">
+                              {prob.category}
+                            </span>
+                            {prob.topics.slice(0, 2).map(tag => (
                               <span key={tag} className="text-[10px] font-mono text-text-muted bg-bg-base px-2 py-0.5 rounded border border-border-card/50">
                                 {tag}
                               </span>
@@ -333,9 +445,65 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
             </table>
           </div>
         </div>
+
+        {/* Pagination Bar */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-1 py-3 font-mono text-xs text-text-muted select-none mt-4">
+            {/* Left: range label */}
+            <span>
+              Showing{' '}
+              <span className="text-text-main font-bold">
+                {(currentPage - 1) * PROBLEMS_PER_PAGE + 1}–{Math.min(currentPage * PROBLEMS_PER_PAGE, filteredProblems.length)}
+              </span>{' '}
+              of <span className="text-text-main font-bold">{filteredProblems.length}</span>
+            </span>
+
+            {/* Right: page buttons */}
+            <div className="flex items-center gap-1">
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border-card/65 bg-bg-card text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer font-bold"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
+              </button>
+
+              {/* Page number buttons */}
+              {pageNumbers.map((page, idx) =>
+                page < 0 ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 select-none">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg border transition-all cursor-pointer font-bold ${
+                      currentPage === page
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'border-border-card/65 hover:bg-bg-base/40 text-text-muted hover:text-text-main'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              {/* Next */}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border-card/65 bg-bg-card text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer font-bold"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* 2. Sidebar Panel (3/12 Width) - Study Tracks & Target Companies */}
+      {/* 2. Sidebar Panel (3/12 Width) - Top Company Prep & Target Companies */}
       <aside className="lg:col-span-3 flex flex-col gap-8 text-sm" id="sidebar_nav">
         
         {/* Top Company Prep (In place of study track) */}
@@ -349,7 +517,8 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                   key={companyName}
                   onClick={() => { 
                     setSelectedCompany(isActive ? null : companyName); 
-                    setSelectedTopic(null); 
+                    setSelectedTopic(null);
+                    setCurrentPage(1);
                   }}
                   className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all cursor-pointer text-sm font-bold ${
                     isActive 
@@ -388,6 +557,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 onClick={() => {
                   setSelectedCompany(selectedCompany === comp.name ? null : comp.name);
                   setSelectedTopic(null);
+                  setCurrentPage(1);
                 }}
                 className={`text-xs px-3 py-1.5 rounded transition-all flex items-center gap-1.5 cursor-pointer font-bold ${
                   selectedCompany === comp.name 
