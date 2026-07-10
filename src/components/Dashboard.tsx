@@ -309,39 +309,39 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
         {/* Search & Sub-Filters Toolbar */}
         <div className="flex flex-col gap-3">
           {/* Row 1: Search input + solved counter */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#121212]/40 p-1.5 rounded-xl border border-[#1e1e1e]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-card/40 p-1.5 rounded-xl border border-border">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
               <input
                 id="problem-search"
                 type="text"
                 placeholder="Search by title or problem number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#1e1e1e] focus:border-[#3e3e3e] focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-[#f5f5f5] placeholder-[#707070] transition-colors"
+                className="w-full bg-page border border-border focus:border-border-focus focus:outline-none rounded-lg pl-10 pr-4 py-2 text-xs text-primary placeholder-muted transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-2 font-mono text-xs shrink-0">
-              <div className="flex items-center gap-1.5 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e] text-[#a0a0a0]">
+              <div className="flex items-center gap-1.5 bg-elevated/60 px-3 py-2 rounded-lg border border-border text-secondary">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{solvedCount}<span className="text-[#505050]">/{PROBLEMS_DATA.length}</span> Solved</span>
+                <span>{solvedCount}<span className="text-dim">/{PROBLEMS_DATA.length}</span> Solved</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-[#1e1e1e]/60 px-3 py-2 rounded-lg border border-[#1e1e1e] text-[#a0a0a0]">
-                <span className="text-[#505050]">{filteredProblems.length} results</span>
+              <div className="flex items-center gap-1.5 bg-elevated/60 px-3 py-2 rounded-lg border border-border text-secondary">
+                <span className="text-dim">{filteredProblems.length} results</span>
               </div>
             </div>
           </div>
 
           {/* Row 2: Difficulty filter pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono text-[#505050] uppercase tracking-wider">Difficulty:</span>
+            <span className="text-[10px] font-mono text-dim uppercase tracking-wider">Difficulty:</span>
             {([null, 'Easy', 'Medium', 'Hard'] as (string | null)[]).map((diff) => {
               const isActive = selectedDifficulty === diff;
-              const color = diff === 'Easy' ? { text: '#00b8a3', bg: '#00b8a310', border: '#00b8a330' }
-                          : diff === 'Medium' ? { text: '#ffb800', bg: '#ffb80010', border: '#ffb80030' }
-                          : diff === 'Hard' ? { text: '#ff2d55', bg: '#ff2d5510', border: '#ff2d5530' }
-                          : { text: '#a0a0a0', bg: '#1e1e1e', border: '#2e2e2e' };
+              const color = diff === 'Easy' ? { text: 'var(--color-easy)', bg: 'var(--color-easy-bg)', border: 'var(--color-easy-border)' }
+                          : diff === 'Medium' ? { text: 'var(--color-medium)', bg: 'var(--color-medium-bg)', border: 'var(--color-medium-border)' }
+                          : diff === 'Hard' ? { text: 'var(--color-hard)', bg: 'var(--color-hard-bg)', border: 'var(--color-hard-border)' }
+                          : { text: 'var(--color-secondary)', bg: 'var(--color-elevated)', border: 'var(--color-hover)' };
               return (
                 <button
                   key={diff ?? 'all'}
@@ -349,9 +349,9 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                   onClick={() => setSelectedDifficulty(isActive ? null : diff)}
                   className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all"
                   style={{
-                    color: isActive ? color.text : '#707070',
+                    color: isActive ? color.text : 'var(--color-muted)',
                     backgroundColor: isActive ? color.bg : 'transparent',
-                    border: `1px solid ${isActive ? color.border : '#2e2e2e'}`,
+                    border: `1px solid ${isActive ? color.border : 'var(--color-hover)'}`,
                   }}
                 >
                   {diff ?? 'All'}
@@ -365,8 +365,8 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 onClick={() => handleSort('acceptance')}
                 className={`flex items-center gap-1.5 text-[11px] font-mono px-3 py-1 rounded-full border transition-all ${
                   sortBy === 'acceptance'
-                    ? 'bg-[#1e1e1e] border-[#3e3e3e] text-[#f5f5f5]'
-                    : 'border-[#2e2e2e] text-[#707070] hover:text-[#f5f5f5] hover:bg-[#1e1e1e]/40'
+                    ? 'bg-elevated border-border-focus text-primary'
+                    : 'border-hover text-muted hover:text-primary hover:bg-elevated/40'
                 }`}
               >
                 <SlidersHorizontal className="w-3 h-3" />
@@ -383,10 +383,10 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
               <thead>
                 <tr className="border-b border-border bg-card/50 text-muted font-mono select-none">
                   <th className="py-3.5 pl-4 w-12 text-center">Status</th>
-                  <th className="py-3.5 px-4 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('id')}>
+                  <th className="py-3.5 px-4 cursor-pointer hover:text-primary" onClick={() => handleSort('id')}>
                     Title {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-[#f5f5f5]" onClick={() => handleSort('acceptance')}>
+                  <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-primary" onClick={() => handleSort('acceptance')}>
                     Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="py-3.5 px-4 w-28 cursor-pointer hover:text-primary" onClick={() => handleSort('difficulty')}>
@@ -398,7 +398,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
               <tbody className="divide-y divide-border">
                 {filteredProblems.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-[#707070] font-mono">
+                    <td colSpan={5} className="py-12 text-center text-muted font-mono">
                       No problems found matching your filters.
                     </td>
                   </tr>
@@ -419,33 +419,29 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                             <div className="w-4 h-4 rounded-full border border-border-light mx-auto" />
                           )}
                         </td>
-                        <td className="py-4 px-4 font-medium text-[#f5f5f5] group-hover:text-blue-400 hover:underline transition-colors">
-                          <span className="text-[#a0a0a0] font-mono mr-1.5">{prob.id}.</span>
+                        <td className="py-4 px-4 font-medium text-primary group-hover:text-blue-400 hover:underline transition-colors">
+                          <span className="text-secondary font-mono mr-1.5">{prob.id}.</span>
                           <span>{prob.title}</span>
                         </td>
                         <td className="py-4 px-4 font-mono text-secondary">{prob.acceptance}</td>
                         <td className="py-4 px-4">
-                          <span 
-                            className="font-semibold text-xs"
-                            style={{
-                              color: 
-                                prob.difficulty === 'Easy' ? '#00b8a3' : 
-                                prob.difficulty === 'Medium' ? '#ffb800' : '#ff2d55'
-                            }}
-                          >
+                          <span className={`font-semibold text-xs ${
+                            prob.difficulty === 'Easy' ? 'text-easy' : 
+                            prob.difficulty === 'Medium' ? 'text-medium' : 'text-hard'
+                          }`}>
                             {prob.difficulty}
                           </span>
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex flex-wrap gap-1.5 items-center">
-                            <span className="text-[10px] text-[#707070] font-mono mr-1">{prob.category}</span>
+                            <span className="text-[10px] text-muted font-mono mr-1">{prob.category}</span>
                             {prob.topics.slice(0, 2).map((t) => (
-                              <span key={t} className="text-[10px] bg-[#1e1e1e] text-[#a0a0a0] px-1.5 py-0.5 rounded">
+                              <span key={t} className="text-[10px] bg-elevated text-secondary px-1.5 py-0.5 rounded">
                                 {t}
                               </span>
                             ))}
                             {prob.topics.length > 2 && (
-                              <span className="text-[10px] text-[#505050]">+{prob.topics.length - 2}</span>
+                              <span className="text-[10px] text-dim">+{prob.topics.length - 2}</span>
                             )}
                           </div>
                         </td>
@@ -460,14 +456,14 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
 
         {/* ── Pagination Bar ── */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-1 py-3 font-mono text-xs text-[#707070]">
+          <div className="flex items-center justify-between px-1 py-3 font-mono text-xs text-muted">
             {/* Left: range label */}
             <span>
               Showing{' '}
-              <span className="text-[#f5f5f5]">
+              <span className="text-primary">
                 {(currentPage - 1) * PROBLEMS_PER_PAGE + 1}–{Math.min(currentPage * PROBLEMS_PER_PAGE, filteredProblems.length)}
               </span>{' '}
-              of <span className="text-[#f5f5f5]">{filteredProblems.length}</span>
+              of <span className="text-primary">{filteredProblems.length}</span>
             </span>
 
             {/* Right: page buttons */}
@@ -477,7 +473,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 id="pagination-prev"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border hover:bg-elevated hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Prev</span>
@@ -495,7 +491,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                     className={`w-8 h-8 rounded-lg border transition-all ${
                       currentPage === page
                         ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
-                        : 'border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5]'
+                        : 'border-border hover:bg-elevated hover:text-primary'
                     }`}
                   >
                     {page}
@@ -508,7 +504,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 id="pagination-next"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#1e1e1e] hover:bg-[#1e1e1e] hover:text-[#f5f5f5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border hover:bg-elevated hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />

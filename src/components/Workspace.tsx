@@ -30,6 +30,16 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { Problem, EvaluationResult, EditorialResponse, HintResponse } from '../types';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection, highlightSpecialChars } from '@codemirror/view';
+import { EditorState, Compartment } from '@codemirror/state';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { indentOnInput, bracketMatching, foldGutter, foldKeymap } from '@codemirror/language';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { java } from '@codemirror/lang-java';
+import { cpp } from '@codemirror/lang-cpp';
+import { go } from '@codemirror/lang-go';
+import { oneDark } from '@codemirror/theme-one-dark';
 
 interface WorkspaceProps {
   problemId: number;
@@ -52,6 +62,9 @@ export default function Workspace({
   // Layout Splitting
   const [splitPercent, setSplitPercent] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const cmViewRef = useRef<EditorView | null>(null);
+  const userCodeFromCmRef = useRef(false);
   const [isIdeFullscreen, setIsIdeFullscreen] = useState(false);
 
   // Tabs Left Panel
@@ -70,7 +83,6 @@ export default function Workspace({
   // IDE Editor State
   const [language, setLanguage] = useState('JavaScript');
   const [userCode, setUserCode] = useState('');
-  const [lineNumbers, setLineNumbers] = useState<number[]>([1]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Terminal & Execution State
@@ -91,39 +103,113 @@ export default function Workspace({
     language: string;
   }[]>([]);
 
-  // Synchronize start codes on problem/language change
+  // CodeMirror: language extension mapping
+  const getLangExt = (lang: string) => {
+    switch (lang) {
+      case 'JavaScript': return javascript();
+      case 'Python': return python();
+      case 'Java': return java();
+      case 'C++': return cpp();
+      case 'Go': return go();
+      default: return javascript();
+    }
+  };
+
+  // CodeMirror: create/recreate editor when language or problem changes
   useEffect(() => {
+    if (!editorContainerRef.current) return;
+
+    cmViewRef.current?.destroy();
+
     const savedCodeKey = `leetcode_code_${problemId}_${language}`;
-    const savedCode = localStorage.getItem(savedCodeKey);
-    if (savedCode) {
-      setUserCode(savedCode);
-    } else {
-      setUserCode(problem.starterCode[language] || problem.starterCode['C++'] || '');
+    let initialCode: string;
+    try {
+      initialCode = localStorage.getItem(savedCodeKey) ?? '';
+    } catch {
+      initialCode = '';
     }
-    
-    // Set custom testcase input to default
-    if (problem.testcases && problem.testcases.length > 0) {
-      setCustomTestcaseInput(problem.testcases[0].input);
+    if (!initialCode) {
+      initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
     }
-    
-    setHintText(null);
-    setEvaluationResult(null);
-  }, [problemId, language, problem]);
 
-  // Line number update listener
+    const state = EditorState.create({
+      doc: initialCode,
+      extensions: [
+        lineNumbers(),
+        highlightActiveLine(),
+        drawSelection(),
+        highlightSpecialChars(),
+        EditorState.allowMultipleSelections.of(true),
+        history(),
+        indentOnInput(),
+        bracketMatching(),
+        foldGutter(),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
+        getLangExt(language),
+        oneDark,
+        EditorView.updateListener.of(update => {
+          if (update.docChanged) {
+            userCodeFromCmRef.current = true;
+            setUserCode(update.state.doc.toString());
+          }
+        }),
+        EditorView.theme({
+          '&': { backgroundColor: 'var(--color-code)' },
+          '.cm-scroller': { fontFamily: '"JetBrains Mono", monospace', fontSize: '13px', lineHeight: '21px' },
+          '.cm-content': { padding: '16px 16px 16px 8px', caretColor: 'var(--color-code-text)' },
+          '.cm-gutters': { backgroundColor: 'var(--color-line-num)', borderRight: '1px solid var(--color-border-subtle)' },
+          '.cm-lineNumbers .cm-gutterElement': { paddingLeft: '12px', paddingRight: '12px', color: 'var(--color-line-text)', fontSize: '11px' },
+          '.cm-activeLine': { backgroundColor: 'transparent' },
+          '.cm-activeLineGutter': { backgroundColor: 'transparent' },
+          '.cm-cursor': { borderLeftColor: 'var(--color-code-text)' },
+          '.cm-selectionBackground': { backgroundColor: 'rgba(255,255,255,0.08)' },
+          '.cm-foldGutter .cm-gutterElement': { color: 'var(--color-line-text)' },
+        }),
+      ],
+    });
+
+    cmViewRef.current = new EditorView({ state, parent: editorContainerRef.current });
+    setUserCode(initialCode);
+
+    return () => {
+      cmViewRef.current?.destroy();
+      cmViewRef.current = null;
+    };
+  }, [problemId, language]);
+
+  // Auto-save to localStorage
   useEffect(() => {
-    const lines = userCode.split('\n');
-    setLineNumbers(Array.from({ length: Math.max(lines.length, 1) }, (_, i) => i + 1));
-
-    // Save code mock auto-save
     setIsSaving(true);
     const timeout = setTimeout(() => {
       localStorage.setItem(`leetcode_code_${problemId}_${language}`, userCode);
       setIsSaving(false);
     }, 600);
-
     return () => clearTimeout(timeout);
   }, [userCode, problemId, language]);
+
+  // Sync external userCode changes (reset, new problem) into CodeMirror
+  useEffect(() => {
+    if (userCodeFromCmRef.current) {
+      userCodeFromCmRef.current = false;
+      return;
+    }
+    const view = cmViewRef.current;
+    if (!view) return;
+    const curDoc = view.state.doc.toString();
+    if (curDoc === userCode) return;
+    view.dispatch({
+      changes: { from: 0, to: curDoc.length, insert: userCode },
+    });
+  }, [userCode]);
+
+  // Reset hint/evaluation on problem change
+  useEffect(() => {
+    if (problem.testcases && problem.testcases.length > 0) {
+      setCustomTestcaseInput(problem.testcases[0].input);
+    }
+    setHintText(null);
+    setEvaluationResult(null);
+  }, [problemId]);
 
   // Handle Dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -458,20 +544,18 @@ export default function Workspace({
                   </AnimatePresence>
 
                   {problem.description === "Problem details coming soon!" ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 bg-[#121212]/30 border border-[#1e1e1e] rounded-2xl">
-                      <AlertCircle className="w-12 h-12 text-[#ffb800] mb-4 opacity-80" />
-                      <h3 className="text-sm font-semibold text-[#f5f5f5] mb-2">Problem Details Coming Soon</h3>
-                      <p className="text-xs text-[#707070] max-w-xs leading-relaxed">
+                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 bg-card/30 border border-border rounded-2xl">
+                      <AlertCircle className="w-12 h-12 text-amber mb-4 opacity-80" />
+                      <h3 className="text-sm font-semibold text-primary mb-2">Problem Details Coming Soon</h3>
+                      <p className="text-xs text-muted max-w-xs leading-relaxed">
                         We are currently preparing the description, test cases, and community editorials for this problem. You can still write and edit code in the IDE panel!
                       </p>
                     </div>
                   ) : (
                     <>
-                      {/* Description Markdown Render Box */}
-                      <div className="text-xs text-[#d0d0d0] leading-relaxed flex flex-col gap-4">
+                      <div className="text-xs text-body leading-relaxed flex flex-col gap-4">
                         {problem.description.split('\n\n').map((paragraph, i) => {
-                          // Simple inline monospace parsing for prompt text `s` or indices
-                          const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-[#1e1e1e] px-1.5 py-0.5 rounded text-emerald-400 text-[10px]">$1</code>');
+                          const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-elevated px-1.5 py-0.5 rounded text-emerald-400 text-[10px]">$1</code>');
                           return (
                             <p 
                               key={i} 
@@ -481,25 +565,24 @@ export default function Workspace({
                         })}
                       </div>
 
-                      {/* Examples Execution Blocks */}
                       <div className="flex flex-col gap-4">
-                        <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider">Example Executions</p>
+                        <p className="text-xs font-mono text-secondary uppercase tracking-wider">Example Executions</p>
                         {problem.examples.map((ex, idx) => (
                           <div 
                             key={idx}
-                            className="bg-[#121212] border border-[#1e1e1e] rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
+                            className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
                           >
                             <p className="font-semibold text-emerald-400">Example {idx + 1}:</p>
-                            <div className="grid grid-cols-1 gap-1 text-[#b0b0b0] pl-2 border-l-2 border-[#2e2e2e]">
+                            <div className="grid grid-cols-1 gap-1 text-secondary pl-2 border-l-2 border-hover">
                               <div>
-                                <span className="text-[#707070]">Input:</span> {ex.input}
+                                <span className="text-muted">Input:</span> {ex.input}
                               </div>
                               <div>
-                                <span className="text-[#707070]">Output:</span> {ex.output}
+                                <span className="text-muted">Output:</span> {ex.output}
                               </div>
                               {ex.explanation && (
                                 <div className="mt-1 leading-relaxed">
-                                  <span className="text-[#707070]">Explanation:</span> {ex.explanation}
+                                  <span className="text-muted">Explanation:</span> {ex.explanation}
                                 </div>
                               )}
                             </div>
@@ -752,27 +835,9 @@ export default function Workspace({
             </div>
           </div>
 
-          {/* Code Input Console Window (With sequential vertical line numbers) */}
-          <div className="flex-1 overflow-hidden relative flex text-sm font-mono bg-code" id="code_ide">
-            
-            {/* Sequential Line Numbering System */}
-            <div className="w-12 bg-line-num text-line-text text-right pr-3 select-none py-4 border-r border-border-subtle flex flex-col overflow-hidden">
-              {lineNumbers.map((num) => (
-                <div key={num} className="h-[21px] leading-[21px] text-[11px] pr-0.5">
-                  {num}
-                </div>
-              ))}
-            </div>
-
-            {/* Custom styled text editor */}
-            <textarea
-              value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
-              spellCheck={false}
-              className="flex-1 bg-transparent text-code-text focus:outline-none resize-none p-4 leading-[21px] text-[13px] font-mono h-full overflow-y-auto"
-              style={{ caretColor: 'var(--color-code-text)' }}
-              placeholder="// Write your code here..."
-            />
+          {/* CodeMirror Editor */}
+          <div className="flex-1 overflow-hidden relative" id="code_ide">
+            <div ref={editorContainerRef} className="absolute inset-0" />
           </div>
 
           {/* Collapsible Execution Console Terminal */}
