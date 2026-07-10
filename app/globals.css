@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-primary: var(--color-primary);
@@ -13,6 +13,10 @@
   --color-border-card: var(--color-border-card);
   --color-text-main: var(--color-text-main);
   --color-text-muted: var(--color-text-muted);
+}
+
+html {
+  font-size: 16.8px;
 }
 
 :root {
@@ -26,6 +30,9 @@
   --color-text-main: #f3f4f6;
   --color-text-muted: #9ca3af;
   --shadow-glow: 0 4px 20px rgba(27, 169, 76, 0.04);
+  --color-bg-header: #11141a; /* deep charcoal slate */
+  --color-border-header: #1e232b;
+  --color-text-header: #f3f4f6;
 }
 
 .theme-light {
@@ -38,6 +45,9 @@
   --color-text-main: #232c28;
   --color-text-muted: #526059;
   --shadow-glow: 0 4px 15px rgba(45, 74, 67, 0.04);
+  --color-bg-header: #1e2b26; /* dark forest sage */
+  --color-border-header: #2d3b36;
+  --color-text-header: #f2f4f0;
 }
 
 .theme-dark {
@@ -50,6 +60,9 @@
   --color-text-main: #f3f4f6;
   --color-text-muted: #9ca3af;
   --shadow-glow: 0 0 20px rgba(27, 169, 76, 0.06);
+  --color-bg-header: #11141a; /* deep charcoal slate */
+  --color-border-header: #1e232b;
+  --color-text-header: #f3f4f6;
 }
 
 /* Custom Scrollbar styled for theme colors */

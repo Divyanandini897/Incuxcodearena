@@ -9,6 +9,7 @@ import React, { useMemo, useState } from 'react';
 import Navigation from '@/src/components/Navigation';
 import { useGameState, getXpForNextLevel } from '@/src/lib/gameState';
 import { PROBLEMS_DATA } from '@/src/data';
+import CompanionPet from '@/src/components/dashboard/CompanionPet';
 import { 
   Award, 
   Coins, 
@@ -97,6 +98,22 @@ export default function ProfilePage() {
       setIsEditingName(false);
     }
   };
+
+  // Calendar Days calculation for July 2026
+  const currentDay = 7;
+  const daysInJuly = 31;
+  const startDayOffset = 3;
+
+  const calendarDays = useMemo(() => {
+    const days: (number | null)[] = [];
+    for (let i = 0; i < startDayOffset; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInJuly; i++) {
+      days.push(i);
+    }
+    return days;
+  }, []);
 
   // Compute solved data
   const solvedProblems = useMemo(() => {
@@ -372,8 +389,10 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-
             </div>
+
+            {/* Companion Developer Pet widget */}
+            <CompanionPet />
           </div>
 
           {/* Right Column (7/12) - Skill Radar, Trophies & victories history */}
@@ -552,6 +571,52 @@ export default function ProfilePage() {
                           {ach.desc}
                         </span>
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Daily Activity Heatmap calendar */}
+            <div className="bg-bg-card rounded-xl border border-border-card p-6 flex flex-col gap-4 glow-border">
+              <div className="flex items-center justify-between text-xs font-semibold border-b border-border-card pb-3">
+                <div className="flex items-center gap-2 text-text-main text-sm font-bold">
+                  <Calendar className="w-4.5 h-4.5 text-primary" />
+                  <span>Daily Activity Heatmap</span>
+                </div>
+                <span className="text-[10px] font-mono text-text-muted font-bold">Grid</span>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] font-mono font-bold text-text-muted/65">
+                <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5 text-center font-mono text-xs">
+                {calendarDays.map((day, idx) => {
+                  if (day === null) return <div key={idx} />;
+                  
+                  const isToday = day === currentDay;
+                  const isPast = day < currentDay;
+
+                  return (
+                    <div 
+                      key={idx}
+                      className={`relative aspect-square flex items-center justify-center rounded-full text-xs font-black ${
+                        isToday 
+                          ? 'bg-primary text-white font-bold ring-4 ring-primary/20 shadow-lg shadow-primary/20' 
+                          : isPast
+                            ? 'text-text-main bg-primary/10 border border-primary/20' 
+                            : 'text-text-muted/40 bg-bg-base/30'
+                      }`}
+                      title={isToday ? "Active today!" : ""}
+                    >
+                      {day}
+                      {isToday && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                        </span>
+                      )}
                     </div>
                   );
                 })}
