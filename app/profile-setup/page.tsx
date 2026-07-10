@@ -1,34 +1,40 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { User, Globe, Loader2 } from 'lucide-react';
+import { supabase } from '@/src/utils/supabaseClient';
 
 function ProfileSetupContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      localStorage.setItem('auth_token', token);
-    }
-    const name = searchParams.get('name');
-    if (name) {
-      setUsername(name.replace(/\s+/g, '_').toLowerCase().slice(0, 20));
-    }
-    const email = searchParams.get('email');
-    if (email) {
-      localStorage.setItem('oauth_email', email);
-    }
-    const url = new URL(window.location.href);
-    ['token', 'provider', 'email', 'name'].forEach((p) => url.searchParams.delete(p));
-    window.history.replaceState({}, '', url.pathname);
-  }, [searchParams]);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, name')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profile?.username) {
+        setUsername(profile.username);
+      } else if (profile?.name) {
+        setUsername(profile.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 20));
+      }
+
+      setChecking(false);
+    });
+  }, [router]);
 
   const isFormValid = username.trim().length >= 3;
 
@@ -38,12 +44,38 @@ function ProfileSetupContent() {
     setIsLoading(true);
     setError('');
 
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace('/auth/login');
+        return;
+      }
 
-    localStorage.setItem('profile_setup_done', 'true');
-    localStorage.setItem('auth_username', username);
-    router.push('/');
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ username: username.trim(), bio })
+        .eq('id', session.user.id);
+
+      if (updateError) {
+        setError(updateError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      router.push('/');
+    } catch {
+      setError('Network error. Please try again.');
+      setIsLoading(false);
+    }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] flex items-center justify-center p-4">

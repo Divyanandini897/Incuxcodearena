@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, User, Loader2, Check, X } from 'lucide-react';
-import { getPasswordChecks, isStrongPassword, SPECIAL_CHARS } from '@/src/lib/password-validator';
+import { getPasswordChecks, isStrongPassword } from '@/src/lib/password-validator';
+import { supabase } from '@/src/utils/supabaseClient';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function RegisterPage() {
     password: false,
     confirmPassword: false,
   });
+  const [showOtpSent, setShowOtpSent] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -30,6 +32,39 @@ export default function RegisterPage() {
   const passwordChecks = getPasswordChecks(password);
   const isPasswordStrong = isStrongPassword(password);
   const isFormValid = isNameValid && isEmailValid && isPasswordStrong && doPasswordsMatch;
+
+  if (showOtpSent) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-[#111111] border border-[#1e1e1e] rounded-2xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Verify Your Email</h1>
+            <p className="text-sm text-[#a0a0a0] mb-6">
+              We&apos;ve sent a 6-digit verification code to{' '}
+              <span className="text-[#f5f5f5] font-semibold">{email}</span>
+            </p>
+            <button
+              onClick={() => router.push(`/auth/verify-otp?email=${encodeURIComponent(email)}`)}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold text-sm py-2.5 rounded-lg transition cursor-pointer"
+            >
+              Enter Verification Code
+            </button>
+            <p className="text-center text-sm text-[#666] mt-4">
+              <button
+                onClick={() => { setShowOtpSent(false); setError(''); }}
+                className="text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
+              >
+                Use a different email
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,15 +80,40 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error);
+        setError(data.error || 'Registration failed');
         setIsLoading(false);
         return;
       }
-
-      localStorage.setItem('pending_email', email);
-      router.push('/auth/verify-otp?type=registration');
+      setShowOtpSent(true);
+      setIsLoading(false);
     } catch {
       setError('Network error. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleGitHubLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (authError) {
+      setError(authError.message);
       setIsLoading(false);
     }
   };
@@ -67,6 +127,12 @@ export default function RegisterPage() {
             Start your coding journey today
           </p>
 
+          {error && (
+            <p className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2 mb-4">
+              {error}
+            </p>
+          )}
+
           <form onSubmit={handleRegister} className="space-y-5">
             <div>
               <label className="block text-sm font-medium mb-1.5 text-[#c0c0c0]">
@@ -78,10 +144,7 @@ export default function RegisterPage() {
                   type="text"
                   placeholder="Enter your name"
                   value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setName(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, name: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-3 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -102,10 +165,7 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, email: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-3 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -126,10 +186,7 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-10 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -170,10 +227,7 @@ export default function RegisterPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirm your password"
                   value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, confirmPassword: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-10 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -190,12 +244,6 @@ export default function RegisterPage() {
                 <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
               )}
             </div>
-
-            {error && (
-              <p className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2">
-                {error}
-              </p>
-            )}
 
             <button
               type="submit"
@@ -215,7 +263,7 @@ export default function RegisterPage() {
 
           <div className="space-y-3">
             <button
-              onClick={() => { window.location.href = '/api/auth/google?redirect=/profile-setup'; }}
+              onClick={handleGoogleLogin}
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-[#f5f5f5] text-sm py-2.5 rounded-lg transition disabled:opacity-50 cursor-pointer"
             >
@@ -229,7 +277,7 @@ export default function RegisterPage() {
             </button>
 
             <button
-              onClick={() => { window.location.href = '/api/auth/github?redirect=/profile-setup'; }}
+              onClick={handleGitHubLogin}
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-[#f5f5f5] text-sm py-2.5 rounded-lg transition disabled:opacity-50 cursor-pointer"
             >

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { isStrongPassword } from '@/src/lib/password-validator';
-import { saveOtp } from '@/src/lib/otp-store';
 import { sendOtpEmail } from '@/src/lib/email';
+import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -28,9 +28,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const { data: existing } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
+    }
+
     const otp = generateOtp();
-    saveOtp(email, otp, 'registration', { name, password: hashedPassword });
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    const { error: insertError } = await supabaseAdmin.from('otps').insert({
+      email: email.toLowerCase(),
+      otp_hash: otpHash,
+      type: 'signup',
+      temp_data: { name, password },
+      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      used: false,
+    });
+
+    if (insertError) {
+      console.error('[REGISTER] DB insert error:', insertError);
+      return NextResponse.json({ error: 'Failed to create verification code' }, { status: 500 });
+    }
 
     const result = await sendOtpEmail(email, otp);
 
@@ -41,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (result.previewUrl) {
+    if (result.success && result.previewUrl) {
       console.log('[REGISTER] Email preview:', result.previewUrl);
     }
 

@@ -1,41 +1,26 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/src/utils/supabaseClient';
 import Navigation from '@/src/components/Navigation';
 import Dashboard from '@/src/components/Dashboard';
 
-function HomeContent() {
+export default function HomePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [checking, setChecking] = useState(true);
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
   const [streakCount, setStreakCount] = useState(124);
 
   useEffect(() => {
-    const oauthToken = searchParams.get('token');
-    const provider = searchParams.get('provider');
-
-    if (oauthToken && provider) {
-      localStorage.setItem('auth_token', oauthToken);
-      const email = searchParams.get('email') || '';
-      const name = searchParams.get('name') || '';
-      if (email) localStorage.setItem('oauth_email', email);
-      if (name) localStorage.setItem('oauth_name', name);
-      const url = new URL(window.location.href);
-      ['token', 'provider', 'email', 'name'].forEach((p) => url.searchParams.delete(p));
-      window.history.replaceState({}, '', url.pathname);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      router.replace('/auth/login');
-    } else {
-      setChecking(false);
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/auth/login');
+      } else {
+        setChecking(false);
+      }
+    });
   }, [router]);
 
   useEffect(() => {
@@ -43,8 +28,8 @@ function HomeContent() {
     if (savedSolved) {
       try {
         setSolvedProblemIds(JSON.parse(savedSolved));
-      } catch (err) {
-        console.error('Error loading solved IDs:', err);
+      } catch {
+        /* ignore */
       }
     }
   }, []);
@@ -71,17 +56,5 @@ function HomeContent() {
         />
       </div>
     </div>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-      </div>
-    }>
-      <HomeContent />
-    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { supabase } from '@/src/utils/supabaseClient';
 
 function LoginContent() {
   const router = useRouter();
@@ -17,33 +18,13 @@ function LoginContent() {
 
   useEffect(() => {
     const oauthError = searchParams.get('oauth_error');
-    const oauthToken = searchParams.get('token');
-    const provider = searchParams.get('provider');
-
     if (oauthError) {
-      setError(oauthError);
+      setError(decodeURIComponent(oauthError.replace(/_/g, ' ')));
       const url = new URL(window.location.href);
       url.searchParams.delete('oauth_error');
       window.history.replaceState({}, '', url.pathname);
-      return;
     }
-
-    if (oauthToken && provider) {
-      localStorage.setItem('auth_token', oauthToken);
-      const email = searchParams.get('email') || '';
-      const name = searchParams.get('name') || '';
-      if (email) localStorage.setItem('oauth_email', email);
-      if (name) localStorage.setItem('oauth_name', name);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('token');
-      url.searchParams.delete('provider');
-      url.searchParams.delete('email');
-      url.searchParams.delete('name');
-      window.history.replaceState({}, '', url.pathname);
-      const isFirstTime = !localStorage.getItem('profile_setup_done');
-      router.replace(isFirstTime ? '/profile-setup' : '/');
-    }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -56,39 +37,44 @@ function LoginContent() {
     setIsLoading(true);
     setError('');
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Invalid email or password');
-        setIsLoading(false);
-        return;
-      }
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      localStorage.setItem('auth_token', data.token);
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+      return;
+    }
 
-      const isFirstTime = !localStorage.getItem('profile_setup_done');
-      if (isFirstTime) {
-        router.push('/profile-setup');
-      } else {
-        router.push('/');
-      }
-    } catch {
-      setError('Network error. Please try again.');
+    router.push('/problems');
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (authError) {
+      setError(authError.message);
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `/api/auth/google?redirect=${encodeURIComponent('/profile-setup')}`;
-  };
-
-  const handleGitHubLogin = () => {
-    window.location.href = `/api/auth/github?redirect=${encodeURIComponent('/profile-setup')}`;
+  const handleGitHubLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,6 +85,12 @@ function LoginContent() {
           <p className="text-[#a0a0a0] text-sm text-center mb-8">
             Sign in to continue coding
           </p>
+
+          {error && (
+            <p className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2 mb-4">
+              {error}
+            </p>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
@@ -111,10 +103,7 @@ function LoginContent() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, email: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-3 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -135,10 +124,7 @@ function LoginContent() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                   disabled={isLoading}
                   className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg py-2.5 pl-10 pr-10 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition disabled:opacity-50"
@@ -164,12 +150,6 @@ function LoginContent() {
                 Forgot Password?
               </Link>
             </div>
-
-            {error && (
-              <p className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2">
-                {error}
-              </p>
-            )}
 
             <button
               type="submit"

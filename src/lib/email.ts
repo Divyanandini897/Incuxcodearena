@@ -43,7 +43,7 @@ async function createTransporter() {
   return transporter;
 }
 
-function buildEmailHtml(otp: string): string {
+function buildOtpEmailHtml(otp: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color: #10b981;">CodeNode Verification</h2>
@@ -62,6 +62,27 @@ function buildEmailHtml(otp: string): string {
   `;
 }
 
+function buildWelcomeEmailHtml(name: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #10b981;">Welcome to CodeNode!</h2>
+      <p>Hi ${name},</p>
+      <p>Your account has been created successfully. You can now sign in and start solving coding challenges.</p>
+      <p style="margin: 24px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login"
+           style="background: #10b981; color: white; text-decoration: none;
+                  padding: 12px 24px; border-radius: 8px; display: inline-block;">
+          Sign In
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+      <p style="color: #999; font-size: 12px;">
+        If you did not create this account, please ignore this email.
+      </p>
+    </div>
+  `;
+}
+
 export async function sendOtpEmail(
   email: string,
   otp: string
@@ -75,7 +96,7 @@ export async function sendOtpEmail(
       to: email,
       subject: 'Your CodeNode verification code',
       text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
-      html: buildEmailHtml(otp),
+      html: buildOtpEmailHtml(otp),
     });
 
     let previewUrl: string | undefined;
@@ -90,6 +111,35 @@ export async function sendOtpEmail(
     if (err.code) console.error('[EMAIL] Error code:', err.code);
     if (err.command) console.error('[EMAIL] Failed command:', err.command);
     if (err.response) console.error('[EMAIL] Server response:', err.response);
+    return { success: false, error: err.message || 'Unknown email error' };
+  }
+}
+
+export async function sendWelcomeEmail(
+  email: string,
+  name: string
+): Promise<{ success: true; previewUrl?: string } | { success: false; error: string }> {
+  try {
+    const transporter = await createTransporter();
+    const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@codenode.app';
+
+    const info = await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: email,
+      subject: 'Welcome to CodeNode!',
+      text: `Hi ${name},\n\nYour account has been created successfully. You can now sign in and start solving coding challenges.\n\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`,
+      html: buildWelcomeEmailHtml(name),
+    });
+
+    let previewUrl: string | undefined;
+    if (info.messageId) {
+      const url = nodemailer.getTestMessageUrl(info);
+      if (url) previewUrl = url;
+    }
+
+    return { success: true, previewUrl };
+  } catch (err: any) {
+    console.error('[EMAIL] Welcome email error:', err.message);
     return { success: false, error: err.message || 'Unknown email error' };
   }
 }

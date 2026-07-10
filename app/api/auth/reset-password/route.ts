@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { isStrongPassword } from '@/src/lib/password-validator';
-import { saveUser, findUser } from '@/src/lib/user-store';
+import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,12 +17,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const existing = findUser(email);
-    if (existing) {
-      saveUser(email, hashedPassword, existing.name);
-    } else {
-      saveUser(email, hashedPassword);
+    const { data: user, error: findError } = await supabaseAdmin.auth.admin.listUsers();
+
+    const target = user?.users.find((u) => u.email === email.toLowerCase());
+
+    if (!target) {
+      return NextResponse.json({ error: 'No account found with this email' }, { status: 404 });
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(target.id, {
+      password,
+    });
+
+    if (updateError) {
+      console.error('[RESET-PASSWORD] Update error:', updateError);
+      return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Password reset successful' });

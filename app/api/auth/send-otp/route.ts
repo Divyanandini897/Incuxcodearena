@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveOtp } from '@/src/lib/otp-store';
+import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email';
+import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -19,8 +20,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
+    const otpType = type || 'signup';
     const otp = generateOtp();
-    saveOtp(email, otp, type || 'registration');
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    const { error: insertError } = await supabaseAdmin.from('otps').insert({
+      email: email.toLowerCase(),
+      otp_hash: otpHash,
+      type: otpType,
+      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      used: false,
+    });
+
+    if (insertError) {
+      console.error('[SEND-OTP] DB insert error:', insertError);
+      return NextResponse.json({ error: 'Failed to create verification code' }, { status: 500 });
+    }
 
     const result = await sendOtpEmail(email, otp);
 
@@ -31,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (result.previewUrl) {
+    if (result.success && result.previewUrl) {
       console.log('[SEND-OTP] Email preview:', result.previewUrl);
     }
 

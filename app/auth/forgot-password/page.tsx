@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             <button
               onClick={() => {
                 localStorage.setItem('pending_email', email);
-                router.push('/auth/verify-otp?type=reset');
+                router.push(`/auth/verify-otp?type=reset&email=${encodeURIComponent(email)}`);
               }}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold text-sm py-2.5 rounded-lg transition cursor-pointer"
             >

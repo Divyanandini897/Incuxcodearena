@@ -8,8 +8,9 @@ import Link from 'next/link';
 function VerifyOTPContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const type = searchParams.get('type') || 'registration';
-  const email = typeof window !== 'undefined' ? localStorage.getItem('pending_email') || '' : '';
+  const type = searchParams.get('type') || 'signup';
+  const emailParam = searchParams.get('email') || '';
+  const email = emailParam || (typeof window !== 'undefined' ? localStorage.getItem('pending_email') || '' : '');
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -101,8 +102,9 @@ function VerifyOTPContent() {
         return;
       }
 
-      if (type === 'registration') {
-        router.push('/profile-setup');
+      if (type === 'signup') {
+        localStorage.removeItem('pending_email');
+        router.push('/auth/login?verified=true');
       } else if (type === 'reset') {
         router.push('/auth/reset-password');
       }
@@ -131,9 +133,13 @@ function VerifyOTPContent() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Failed to resend code');
+        setCanResend(true);
+        setTimer(0);
       }
     } catch {
       setError('Network error. Please try again.');
+      setCanResend(true);
+      setTimer(0);
     }
   }, [canResend, email, type]);
 
