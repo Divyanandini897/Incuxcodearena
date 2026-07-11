@@ -18,6 +18,9 @@ export const TOPIC_TAGS = [
   { name: 'Two Pointers', count: 298 },
   { name: 'Breadth-First Search', count: 245 },
   { name: 'Tree', count: 212 },
+  { name: 'Sliding Window', count: 150 },
+  { name: 'Stack', count: 200 },
+  { name: 'Divide and Conquer', count: 100 },
 ];
 
 export const COMPANIES_LIST = [
