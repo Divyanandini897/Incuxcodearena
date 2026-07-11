@@ -30,8 +30,10 @@ export default function ThemeWrapper({ children }: { children: React.ReactNode }
   const currentTheme = mounted ? theme : 'theme-light';
   
   return (
-    <body className={`${currentTheme} min-h-screen bg-bg-base text-text-main transition-colors duration-300 antialiased relative`}>
-      {children}
+    <body className={`${currentTheme} min-h-screen bg-bg-base text-text-main transition-colors duration-300 antialiased relative overflow-x-hidden`}>
+      <div className="flex flex-col min-h-screen">
+        {children}
+      </div>
       
       {/* Floating collapsible companion pet assistant */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans select-none">

@@ -7,19 +7,20 @@ interface BadgeProps {
 }
 
 export default function Badge({ variant = 'default', children, className = '' }: BadgeProps) {
-  const variants = {
-    default: 'bg-[#1e1e1e] text-[#a0a0a0] border-[#2e2e2e]',
-    easy: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    hard: 'bg-red-500/10 text-red-400 border-red-500/20',
-    accepted: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    pending: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    error: 'bg-red-500/10 text-red-400 border-red-500/20',
+  const dotColors = {
+    default: 'bg-text-muted opacity-50',
+    easy: 'bg-[var(--color-easy)]',
+    medium: 'bg-[var(--color-medium)]',
+    hard: 'bg-[var(--color-hard)]',
+    accepted: 'bg-[var(--color-easy)]',
+    pending: 'bg-text-muted opacity-40',
+    error: 'bg-[var(--color-hard)]',
   };
 
   return (
-    <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full border ${variants[variant]} ${className}`}>
-      {children}
+    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted font-sans ${className}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[variant]}`} />
+      <span>{children}</span>
     </span>
   );
 }

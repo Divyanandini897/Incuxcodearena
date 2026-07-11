@@ -99,6 +99,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('Error loading gamified state:', err);
       }
+    } else {
+      // Respect user's system preference on first visit
+      if (typeof window !== 'undefined') {
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(systemPrefersDark ? 'theme-dark' : 'theme-light');
+      }
     }
     setIsLoaded(true);
   }, []);

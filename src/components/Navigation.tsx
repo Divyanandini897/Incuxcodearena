@@ -77,8 +77,8 @@ export default function Navigation({ streakCount = 5 }: NavigationProps) {
 
         {/* Profile Avatar Button */}
         <Link href="/profile" className="flex items-center gap-3 pl-3 border-l border-[var(--color-border-header)] group cursor-pointer" title="Go to My Profile">
-          <div className={`w-9 w-9 rounded-full bg-gradient-to-tr ${avatarInfo.gradient} p-[1.5px] group-hover:scale-105 transition-transform flex items-center justify-center shadow-md`}>
-            <div className="w-full h-full rounded-full bg-bg-base flex items-center justify-center text-xl select-none">
+          <div className={`w-9 h-9 rounded-full bg-gradient-to-tr ${avatarInfo.gradient} p-[1.5px] group-hover:scale-105 transition-transform flex items-center justify-center shadow-md`}>
+            <div className="w-full h-full rounded-full bg-[var(--color-bg-header)] flex items-center justify-center text-xl select-none">
               {avatarInfo.emoji}
             </div>
           </div>

@@ -6,10 +6,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Navigation from '@/src/components/Navigation';
+import AppLayout from '@/src/components/AppLayout';
 import { Terminal, Clock, Award, CheckCircle, ArrowRight, Play, Check, AlertCircle } from 'lucide-react';
 import { useGameState } from '@/src/lib/gameState';
 import Link from 'next/link';
+import Card from '@/src/components/ui/Card';
+import Button from '@/src/components/ui/Button';
+import Badge from '@/src/components/ui/Badge';
 
 interface TestQuestion {
   id: number;
@@ -62,8 +65,9 @@ const ACTIVE_TESTS: TestData[] = [
 ];
 
 const UPCOMING_TESTS = [
-  { id: 'up-1', title: 'Data Structures Midterm', date: 'In 2 days', duration: '50 mins', questions: 10 },
-  { id: 'up-2', title: 'Amazon Mock Evaluation', date: 'In 5 days', duration: '90 mins', questions: 3 }
+  { id: 'meta-hack', title: 'Meta Hacker Cup Round 1', date: 'July 18, 2026', duration: '120 mins', questions: 4 },
+  { id: 'amazon-sde', title: 'Amazon OA Simulation Prep', date: 'July 24, 2026', duration: '90 mins', questions: 2 },
+  { id: 'netflix-sys', title: 'Netflix Systems Architecture OA', date: 'Aug 02, 2026', duration: '60 mins', questions: 1 }
 ];
 
 export default function TestArenaPage() {
@@ -73,24 +77,23 @@ export default function TestArenaPage() {
   const [testSubmitted, setTestSubmitted] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<{ score: number; passed: boolean } | null>(null);
 
-  // Timer countdown hook
   useEffect(() => {
-    if (!activeTest || timeRemaining <= 0 || testSubmitted) return;
-
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          // Auto submit
-          handleSubmitTest();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeTest, timeRemaining, testSubmitted]);
+    let timer: NodeJS.Timeout;
+    if (activeTest && !testSubmitted && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            // Auto submit
+            handleSubmitTest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [activeTest, testSubmitted, timeRemaining]);
 
   const handleStartTest = (test: TestData) => {
     setActiveTest(test);
@@ -121,87 +124,85 @@ export default function TestArenaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans pb-16">
-      <Navigation />
-
-      <main className="max-w-4xl mx-auto px-6 mt-8 flex flex-col gap-8">
+    <AppLayout>
+      <div className="max-w-3xl mx-auto flex flex-col gap-6 font-sans">
         
         {/* Header Title block */}
         {!activeTest && (
           <>
-            <div className="bg-bg-card border border-border-card rounded-xl p-6 glow-border flex flex-col gap-3 relative overflow-hidden">
-              <span className="text-[11px] font-mono font-black uppercase text-primary tracking-wider">Evaluation Hub</span>
-              <h1 className="text-2xl font-black tracking-tight text-text-main">
+            <Card className="flex flex-col gap-2 relative overflow-hidden select-none">
+              <span className="text-[10px] font-mono font-bold uppercase text-primary tracking-wider">Evaluation Hub</span>
+              <h1 className="text-lg font-bold tracking-tight text-text-main">
                 Student Test Arena
               </h1>
-              <p className="text-sm text-text-muted leading-relaxed font-medium max-w-2xl">
+              <p className="text-xs text-text-muted leading-relaxed font-semibold">
                 Prepare for technical coding assessments. Complete active tests, solve target problems, and verify your analytical score dynamically.
               </p>
-            </div>
+            </Card>
 
             {/* Active Assessments list */}
-            <div className="flex flex-col gap-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card pb-2.5">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card/50 pb-2">
                 Active Assessments
               </h2>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {ACTIVE_TESTS.map((test) => (
-                  <div 
+                  <Card 
                     key={test.id}
-                    className="bg-bg-card border border-border-card rounded-xl p-6 glow-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 hover:scale-[1.005] transition-transform duration-300"
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                   >
-                    <div className="flex flex-col gap-2 max-w-xl">
-                      <h3 className="text-base font-black text-text-main leading-snug">
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                      <h3 className="text-sm font-bold text-text-main leading-snug truncate">
                         {test.title}
                       </h3>
-                      <p className="text-xs text-text-muted leading-relaxed font-medium">
+                      <p className="text-xs text-text-muted leading-relaxed font-semibold line-clamp-2">
                         {test.description}
                       </p>
                       
-                      <div className="flex flex-wrap gap-4 mt-1.5 font-mono text-[10px] text-text-muted font-bold">
-                        <span className="flex items-center gap-1.5 bg-bg-base px-2 py-1 rounded border border-border-card/50">
-                          <Clock className="w-3.5 h-3.5" /> {test.durationMins} Mins
+                      <div className="flex flex-wrap gap-4 mt-2 font-mono text-[9px] text-text-muted font-bold">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-text-muted" /> {test.durationMins} mins
                         </span>
-                        <span className="flex items-center gap-1.5 bg-bg-base px-2 py-1 rounded border border-border-card/50">
-                          <Award className="w-3.5 h-3.5 text-yellow-600" /> {test.maxPoints} Points
+                        <span className="flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-text-muted" /> {test.maxPoints} pts
                         </span>
-                        <span className="flex items-center gap-1.5 bg-bg-base px-2 py-1 rounded border border-border-card/50">
-                          <Terminal className="w-3.5 h-3.5 text-primary" /> {test.questions.length} Coding Challenges
+                        <span className="flex items-center gap-1">
+                          <Terminal className="w-3.5 h-3.5 text-text-muted" /> {test.questions.length} problems
                         </span>
                       </div>
                     </div>
 
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => handleStartTest(test)}
-                      className="bg-primary text-white text-xs font-mono font-black py-2.5 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2 cursor-pointer shadow-md shadow-primary/10 shrink-0 self-end sm:self-center"
+                      className="flex items-center gap-1.5 shrink-0 self-end sm:self-center"
                     >
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      <span>Start Assessment</span>
-                    </button>
-                  </div>
+                      <Play className="w-3 h-3 fill-white" />
+                      <span>Start Test</span>
+                    </Button>
+                  </Card>
                 ))}
               </div>
             </div>
 
             {/* Upcoming Assessments */}
-            <div className="flex flex-col gap-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card pb-2.5">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card/50 pb-2">
                 Upcoming Assessments
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {UPCOMING_TESTS.map((test) => (
-                  <div key={test.id} className="bg-bg-card/65 border border-border-card/55 rounded-xl p-5 flex flex-col gap-2 leading-snug">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-xs font-black text-text-main">{test.title}</h3>
-                      <span className="text-[10px] font-mono text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/15 uppercase font-bold">
-                        {test.date}
-                      </span>
+                  <Card key={test.id} className="flex flex-col gap-2 leading-snug">
+                    <div className="flex justify-between items-center gap-2">
+                      <h3 className="text-xs font-bold text-text-main truncate">{test.title}</h3>
+                      <Badge variant="medium">{test.date}</Badge>
                     </div>
-                    <div className="flex gap-4 mt-2 text-[10px] font-mono text-text-muted font-bold">
+                    <div className="flex gap-3 mt-1.5 text-[9px] font-mono text-text-muted font-bold">
                       <span>Duration: {test.duration}</span>
-                      <span>Questions: {test.questions} MCQs</span>
+                      <span>Questions: {test.questions} challenges</span>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -210,65 +211,65 @@ export default function TestArenaPage() {
 
         {/* Assessment Terminal (Active Test Mode) */}
         {activeTest && !testSubmitted && (
-          <div className="bg-bg-card border border-border-card rounded-xl p-6 glow-border flex flex-col gap-6">
+          <Card className="flex flex-col gap-5">
             
             {/* Header info bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border-card pb-4">
-              <div className="flex flex-col gap-1 leading-snug">
-                <span className="text-[10px] font-mono font-black text-primary uppercase tracking-wider">Assessment Terminal</span>
-                <h2 className="text-lg font-black text-text-main">{activeTest.title}</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border-card/50 pb-3">
+              <div className="flex flex-col gap-0.5 leading-snug">
+                <span className="text-[9px] font-mono font-bold text-primary uppercase tracking-wider">Assessment Terminal</span>
+                <h2 className="text-base font-bold text-text-main">{activeTest.title}</h2>
               </div>
 
               {/* Countdown ticking display */}
-              <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-500 font-mono text-base font-black px-4 py-2 rounded-lg shadow-sm animate-pulse">
-                <Clock className="w-5 h-5 text-red-500" />
-                <span>{formatTime(timeRemaining)} Remaining</span>
+              <div className="flex items-center gap-2 text-red-500 font-mono text-sm font-bold border border-red-500/20 bg-red-500/5 px-3.5 py-1.5 rounded-lg">
+                <Clock className="w-4 h-4 text-red-500" />
+                <span>{formatTime(timeRemaining)} remaining</span>
               </div>
             </div>
 
             {/* Test instructions */}
-            <div className="flex gap-3.5 bg-bg-base/40 border border-border-card/60 p-4 rounded-lg items-start text-xs font-medium leading-relaxed text-text-muted">
-              <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="flex gap-2.5 bg-hover/40 border border-border-card/45 p-3.5 rounded-lg items-start text-[11px] leading-relaxed text-text-muted font-semibold">
+              <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <p>
                 Please open the challenges below to write and compile your solutions. Once your challenges are marked as <span className="text-primary font-bold">Solved</span> inside the editor dashboard, click <strong>Submit Assessment</strong> in this window to grade your submissions. Do not refresh this window during the test.
               </p>
             </div>
 
             {/* Test questions check list */}
-            <div className="flex flex-col gap-3">
-              <span className="text-xs font-mono font-bold text-text-muted uppercase tracking-wider">Assigned Problems</span>
-              <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider">Assigned Problems</span>
+              <div className="flex flex-col gap-2.5">
                 {activeTest.questions.map((q, idx) => {
                   const isSolved = solvedIds.includes(q.id);
                   return (
                     <div 
                       key={q.id}
-                      className={`flex justify-between items-center p-4 rounded-lg border transition-colors ${
+                      className={`flex justify-between items-center p-3 rounded-lg border transition-colors ${
                         isSolved 
                           ? 'bg-primary/5 border-primary/20 text-text-main' 
-                          : 'bg-bg-base/50 border-border-card text-text-muted hover:border-border-card/85'
+                          : 'bg-bg-card border-border-card text-text-muted hover:border-border-card/85'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 border ${
-                          isSolved ? 'bg-primary border-primary text-white' : 'bg-neutral-800 border-border-card'
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-5.5 h-5.5 rounded font-mono text-[10px] font-bold flex items-center justify-center shrink-0 border ${
+                          isSolved ? 'bg-primary border-primary text-white' : 'bg-hover border-border-card/65'
                         }`}>
                           {idx + 1}
                         </div>
-                        <span className="text-sm font-bold text-text-main">{q.title}</span>
+                        <span className="text-xs font-bold text-text-main">{q.title}</span>
                       </div>
 
-                      <div className="flex items-center gap-4 font-mono text-xs">
-                        <span className="text-text-muted font-bold">{q.points} pts</span>
+                      <div className="flex items-center gap-3 font-mono text-[11px]">
+                        <span className="text-text-muted font-semibold">{q.points} pts</span>
                         {isSolved ? (
-                          <span className="flex items-center gap-1.5 text-primary font-bold">
-                            <CheckCircle className="w-4.5 h-4.5 text-primary" /> Completed
+                          <span className="flex items-center gap-1 text-primary font-bold">
+                            <Check className="w-3.5 h-3.5" /> Solved
                           </span>
                         ) : (
                           <Link 
                             href={`/problems/${q.id}`} 
                             target="_blank"
-                            className="bg-neutral-800 border border-border-card hover:border-primary/50 text-text-main hover:text-primary transition-all px-3 py-1 rounded font-bold cursor-pointer inline-flex items-center gap-1"
+                            className="bg-bg-card border border-border-card hover:border-primary/50 text-text-main hover:text-primary transition-all px-2.5 py-1 rounded text-[10px] font-bold inline-flex items-center gap-1 hover:bg-hover"
                           >
                             <span>Solve</span>
                             <ArrowRight className="w-3 h-3" />
@@ -282,74 +283,76 @@ export default function TestArenaPage() {
             </div>
 
             {/* Control buttons */}
-            <div className="flex justify-between items-center border-t border-border-card/65 pt-5 mt-2">
-              <button 
+            <div className="flex justify-between items-center border-t border-border-card/50 pt-4 mt-1">
+              <Button 
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   if (confirm("Are you sure you want to exit the assessment? Your time progress will be discarded.")) {
                     setActiveTest(null);
                   }
                 }}
-                className="text-text-muted hover:text-text-main border border-border-card/80 hover:border-border-card bg-transparent text-xs font-mono font-black py-2.5 px-4 rounded-lg cursor-pointer transition-colors"
               >
                 Exit Assessment
-              </button>
+              </Button>
 
-              <button 
+              <Button 
+                variant="primary"
+                size="sm"
                 onClick={handleSubmitTest}
-                className="bg-primary text-white text-xs font-mono font-black py-2.5 px-6 rounded-lg hover:bg-primary-hover cursor-pointer transition-all shadow-md shadow-primary/10"
               >
                 Submit Assessment
-              </button>
+              </Button>
             </div>
 
-          </div>
+          </Card>
         )}
 
         {/* Assessment Result Summary */}
         {activeTest && testSubmitted && testResult && (
-          <div className="bg-bg-card border border-border-card rounded-xl p-8 glow-border flex flex-col items-center text-center gap-6">
+          <Card className="flex flex-col items-center text-center gap-5 select-none">
             
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 ${
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${
               testResult.passed ? 'bg-primary/10 border-primary text-primary' : 'bg-red-500/10 border-red-500 text-red-500'
             }`}>
-              <Check className="w-8 h-8" />
+              <Check className="w-6 h-6" />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-mono font-black text-primary uppercase tracking-wider">Assessment Results</span>
-              <h2 className="text-2xl font-black text-text-main">
+            <div className="flex flex-col gap-1 leading-snug">
+              <span className="text-[9px] font-mono font-bold text-primary uppercase tracking-wider">Assessment Results</span>
+              <h2 className="text-base font-bold text-text-main">
                 {testResult.passed ? 'Assessment Completed!' : 'Assessment Terminated'}
               </h2>
-              <p className="text-sm text-text-muted leading-relaxed font-semibold max-w-md mt-1">
+              <p className="text-[11px] text-text-muted leading-relaxed font-semibold max-w-sm mt-0.5">
                 Your code solutions have been verified. Refer to the dashboard score distribution details.
               </p>
             </div>
 
             {/* Score Grid block */}
-            <div className="grid grid-cols-2 gap-4 w-full max-w-sm font-mono text-xs border border-border-card/60 bg-bg-base/35 p-5 rounded-xl mt-2">
-              <div className="flex flex-col gap-1 items-center border-r border-border-card/65">
+            <div className="grid grid-cols-2 gap-3 w-full max-w-xs font-mono text-[10px] border border-border-card/50 bg-bg-base/35 p-4 rounded-lg mt-1">
+              <div className="flex flex-col gap-0.5 items-center border-r border-border-card/50">
                 <span className="text-text-muted font-bold">TOTAL SCORE</span>
-                <span className="text-xl font-black text-text-main">{testResult.score} / {activeTest.maxPoints}</span>
+                <span className="text-base font-bold text-text-main">{testResult.score} / {activeTest.maxPoints}</span>
               </div>
-              <div className="flex flex-col gap-1 items-center">
+              <div className="flex flex-col gap-0.5 items-center">
                 <span className="text-text-muted font-bold">GRADE STATUS</span>
-                <span className={`text-xl font-black ${testResult.passed ? 'text-primary' : 'text-red-500'}`}>
+                <span className={`text-base font-bold ${testResult.passed ? 'text-primary' : 'text-red-500'}`}>
                   {testResult.passed ? 'PASSED' : 'FAILED'}
                 </span>
               </div>
             </div>
 
             {/* Dynamic Results checklist */}
-            <div className="w-full max-w-md text-left flex flex-col gap-3 mt-2 border-t border-border-card/65 pt-6">
-              <span className="text-xs font-mono font-bold text-text-muted uppercase tracking-wider">Detailed Verification</span>
-              <div className="flex flex-col gap-2.5">
+            <div className="w-full max-w-xs text-left flex flex-col gap-2 mt-2 border-t border-border-card/50 pt-4">
+              <span className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider">Detailed Verification</span>
+              <div className="flex flex-col gap-2">
                 {activeTest.questions.map((q) => {
                   const isSolved = solvedIds.includes(q.id);
                   return (
-                    <div key={q.id} className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-text-main">{q.title}</span>
+                    <div key={q.id} className="flex justify-between items-center text-[11px] font-semibold">
+                      <span className="text-text-main truncate max-w-[200px]">{q.title}</span>
                       <span className={`font-mono font-bold ${isSolved ? 'text-primary' : 'text-red-500'}`}>
-                        {isSolved ? `+${q.points} Points` : '0 Points'}
+                        {isSolved ? `+${q.points} pts` : '0 pts'}
                       </span>
                     </div>
                   );
@@ -357,17 +360,19 @@ export default function TestArenaPage() {
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => setActiveTest(null)}
-              className="w-full max-w-xs bg-primary text-white text-xs font-mono font-black py-2.5 rounded-lg hover:bg-primary-hover transition-colors cursor-pointer text-center mt-4 shadow-md shadow-primary/10"
+              className="w-full max-w-xs mt-3"
             >
               Back to Test Arena
-            </button>
+            </Button>
 
-          </div>
+          </Card>
         )}
 
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
