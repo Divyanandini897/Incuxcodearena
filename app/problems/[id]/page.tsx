@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Workspace from '@/src/components/Workspace';
 import { PROBLEMS_DATA } from '@/src/data/data';
+import { useGameState } from '@/src/lib/gameState';
 
 export default function ProblemPage() {
   const params = useParams();

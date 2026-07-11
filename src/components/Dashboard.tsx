@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
 import { 
   Search, 
   CheckCircle, 
@@ -14,18 +13,17 @@ import {
   Award, 
   SlidersHorizontal, 
   Compass, 
-  Clock,
-  Sparkles,
-  Sword,
-  Shield,
-  Zap,
-  Star,
-  Coins
+  Sparkles, 
+  Coins,
+  ChevronLeft,
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { Problem, Difficulty } from '../types';
 import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data/data';
 import { useGameState, getXpForNextLevel } from '../lib/gameState';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // Import playful components
 import ThemeSelector from './dashboard/ThemeSelector';
@@ -42,18 +40,50 @@ const AVATARS: Record<string, { emoji: string; gradient: string }> = {
   stark: { emoji: '🦾', gradient: 'from-red-600 to-yellow-600' },
 };
 
+const PROBLEMS_PER_PAGE = 50;
+
+const CAREER_ROLES = [
+  {
+    id: 'system',
+    title: 'System Engineer',
+    desc: 'Master OS internals, files handling, sockets concurrency, and distributed system architectures.',
+    color: 'border-cyan-500/30 text-cyan-600 bg-cyan-500/5',
+  },
+  {
+    id: 'ml',
+    title: 'ML Engineer',
+    desc: 'Master data cleaning scripts, classical predictor training, and neural networks tuning.',
+    color: 'border-blue-500/30 text-blue-600 bg-blue-500/5',
+  },
+  {
+    id: 'ai',
+    title: 'AI Analyst',
+    desc: 'Master prompt template structure, vector stores, RAG search, and agent cognitive cycles.',
+    color: 'border-emerald-500/30 text-emerald-600 bg-emerald-500/5',
+  },
+  {
+    id: 'data',
+    title: 'Data Analyst',
+    desc: 'Master SQL aggregation queries, pandas transformations, stats analysis, and visual storytelling.',
+    color: 'border-amber-500/30 text-amber-600 bg-amber-500/5',
+  }
+];
+
 export default function Dashboard({ solvedProblemIds, onSelectProblem }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Topics');
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [companySearch, setCompanySearch] = useState('');
-  const [sortBy, setSortBy] = useState<'id' | 'acceptance' | 'difficulty'>('id');
+  const [sortBy, setSortBy] = useState<'id' | 'title' | 'acceptance' | 'difficulty'>('id');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const router = useRouter();
 
   // Consume our gamified context
-  const { level, xp, avatar, title, gold, streak, theme, userName } = useGameState();
-  const avatarInfo = AVATARS[avatar] || AVATARS.badger;
+  const { theme, userName } = useGameState();
 
   // Dynamic Daily Challenge (First unsolved problem)
   const activeQuest = useMemo(() => {
@@ -80,196 +110,71 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
   const filteredProblems = useMemo(() => {
     return PROBLEMS_DATA.filter((prob) => {
       const matchesSearch = prob.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            prob.id.toString() === searchTerm;
+                            prob.id.toString() === searchTerm.trim();
       const matchesTopic = !selectedTopic || prob.topics.includes(selectedTopic);
+      const matchesDifficulty = !selectedDifficulty || prob.difficulty === selectedDifficulty;
       const matchesCategory = selectedCategory === 'All Topics' || prob.category === selectedCategory;
       const matchesCompany = !selectedCompany || prob.companies.some(c => c.name === selectedCompany);
 
-      return matchesSearch && matchesTopic && matchesCategory && matchesCompany;
+      return matchesSearch && matchesTopic && matchesDifficulty && matchesCategory && matchesCompany;
     }).sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'id') {
         comparison = a.id - b.id;
+      } else if (sortBy === 'title') {
+        comparison = a.title.localeCompare(b.title);
       } else if (sortBy === 'acceptance') {
-        const rateA = parseFloat(a.acceptance);
-        const rateB = parseFloat(b.acceptance);
-        comparison = rateA - rateB;
+        comparison = parseFloat(a.acceptance) - parseFloat(b.acceptance);
       } else if (sortBy === 'difficulty') {
-        const diffWeight = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
-        comparison = diffWeight[a.difficulty] - diffWeight[b.difficulty];
+        const order = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+        comparison = order[a.difficulty] - order[b.difficulty];
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [searchTerm, selectedTopic, selectedCategory, selectedCompany, sortBy, sortOrder]);
+  }, [searchTerm, selectedTopic, selectedDifficulty, selectedCategory, selectedCompany, sortBy, sortOrder]);
 
-  const solvedBreakdown = useMemo(() => {
-    let easy = 0, medium = 0, hard = 0;
-    PROBLEMS_DATA.forEach(p => {
-      if (solvedProblemIds.includes(p.id)) {
-        if (p.difficulty === 'Easy') easy++;
-        else if (p.difficulty === 'Medium') medium++;
-        else if (p.difficulty === 'Hard') hard++;
-      }
-    });
-    return { easy, medium, hard };
-  }, [solvedProblemIds]);
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE));
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    return filteredProblems.slice(start, start + PROBLEMS_PER_PAGE);
+  }, [filteredProblems, currentPage]);
 
-  const solvedCount = solvedProblemIds.length;
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 4) return [1, 2, 3, 4, 5, -1, totalPages];
+    if (currentPage >= totalPages - 3) return [1, -1, totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, -1, currentPage - 1, currentPage, currentPage + 1, -2, totalPages];
+  }, [currentPage, totalPages]);
 
+  // Companies frequency listing
   const filteredCompanies = useMemo(() => {
     return COMPANIES_LIST.filter(c => 
       c.name.toLowerCase().includes(companySearch.toLowerCase())
     );
   }, [companySearch]);
 
-  const handleSort = (field: 'id' | 'acceptance' | 'difficulty') => {
+  const getDifficultyType = (difficulty: Difficulty) => {
+    if (difficulty === 'Easy') return { name: 'Easy', color: 'text-primary' };
+    if (difficulty === 'Medium') return { name: 'Medium', color: 'text-amber-500' };
+    return { name: 'Hard', color: 'text-red-500' };
+  };
+
+  const handleSort = (field: 'id' | 'title' | 'acceptance' | 'difficulty') => {
     if (sortBy === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
       setSortOrder('asc');
     }
-  };
-
-  const xpNeeded = getXpForNextLevel(level);
-  const xpPercentage = Math.min(100, Math.floor((xp / xpNeeded) * 100));
-
-  // Mapping of difficulty levels
-  const getDifficultyType = (difficulty: Difficulty) => {
-    if (difficulty === 'Easy') return { name: '🟢 Easy', color: 'text-emerald-500' };
-    if (difficulty === 'Medium') return { name: '🟡 Medium', color: 'text-amber-500' };
-    return { name: '🔴 Hard', color: 'text-red-500' };
+    setCurrentPage(1);
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-[calc(100vh-64px)] font-sans px-2">
       
-      {/* 1. Left Panel (3/12 Width) - Hero Character Summary Card */}
-      <aside className="lg:col-span-3 flex flex-col gap-8 text-sm" id="sidebar_nav">
-        
-        {/* Playful Hero Card */}
-        <div className="bg-bg-card border border-border-card rounded-xl p-6 flex flex-col gap-5 glow-border relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-primary/10 text-primary border-l border-b border-primary/20 px-3 py-1 rounded-bl-lg font-mono text-[10px] font-bold">
-            MY STATS
-          </div>
-
-          <div className="flex items-center gap-4 mt-3">
-            <div className={`w-16 h-16 rounded-full bg-gradient-to-tr ${avatarInfo.gradient} p-[2.5px] flex items-center justify-center text-4xl shadow-lg shadow-black/40`}>
-              <div className="w-full h-full rounded-full bg-bg-base flex items-center justify-center">
-                {avatarInfo.emoji}
-              </div>
-            </div>
-            <div className="flex flex-col leading-tight gap-1">
-              <h2 className="font-extrabold text-base text-text-main tracking-tight flex items-center gap-1.5">
-                <span>{userName}</span>
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-              </h2>
-              <span className="text-[10px] text-accent-secondary font-bold uppercase tracking-wider leading-none">{title}</span>
-              <span className="text-xs font-mono text-text-muted">Lv. {level} Coder</span>
-            </div>
-          </div>
-
-          {/* XP Bar */}
-          <div className="flex flex-col gap-2 font-mono text-xs mt-1">
-            <div className="flex justify-between font-bold text-text-main">
-              <span>Level Progress</span>
-              <span className="text-text-muted">{xp}/{xpNeeded} XP</span>
-            </div>
-            <div className="w-full h-4 bg-bg-base rounded-full overflow-hidden border border-border-card p-[1px]">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-accent-secondary rounded-full transition-all duration-500 shadow-[0_0_8px_var(--primary)]"
-                style={{ width: `${xpPercentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Core stats breakdown */}
-          <div className="border-t border-border-card/50 pt-4 flex flex-col gap-3">
-            <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Attributes</p>
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-              <div className="flex items-center gap-2 bg-bg-base/60 p-2 rounded border border-border-card/45">
-                <Sword className="w-4.5 h-4.5 text-red-400" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-text-muted leading-none">Code Power</span>
-                  <span className="font-bold text-text-main text-sm mt-0.5">{level * 10}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-bg-base/60 p-2 rounded border border-border-card/45">
-                <Shield className="w-4.5 h-4.5 text-blue-400" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-text-muted leading-none">Gold Earned</span>
-                  <span className="font-bold text-text-main text-sm mt-0.5">{gold} G</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-bg-base/60 p-2 rounded border border-border-card/45 col-span-2">
-                <Zap className="w-4.5 h-4.5 text-amber-400" />
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-[10px] text-text-muted font-bold">Multiplier</span>
-                  <span className="font-extrabold text-text-main text-sm">{streak}x Streak</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Solved Counts */}
-          <div className="border-t border-border-card/50 pt-4 flex flex-col gap-2.5 text-sm font-mono">
-            <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Problems Solved</p>
-            <div className="flex justify-between items-center text-text-main font-bold">
-              <span className="text-emerald-500">🟢 Easy</span>
-              <span className="font-extrabold text-sm">{solvedBreakdown.easy}</span>
-            </div>
-            <div className="flex justify-between items-center text-text-main font-bold">
-              <span className="text-amber-500">🟡 Medium</span>
-              <span className="font-extrabold text-sm">{solvedBreakdown.medium}</span>
-            </div>
-            <div className="flex justify-between items-center text-text-main font-bold">
-              <span className="text-red-500">🔴 Hard</span>
-              <span className="font-extrabold text-sm">{solvedBreakdown.hard}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Utilities */}
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-mono text-text-muted uppercase tracking-wider px-3 mb-1 font-bold">Navigation</p>
-          <button 
-            onClick={() => { setSelectedTopic(null); setSelectedCompany(null); setSelectedCategory('All Topics'); }}
-            className={`flex items-center gap-3.5 px-4 py-3 rounded-lg transition-colors cursor-pointer text-sm font-bold ${!selectedTopic && !selectedCompany && selectedCategory === 'All Topics' ? 'bg-primary/10 border border-primary/20 text-text-main font-extrabold' : 'text-text-muted hover:text-text-main hover:bg-bg-card/45'}`}
-          >
-            <Compass className="w-5 h-5 text-primary" />
-            <span>Problems Library</span>
-          </button>
-          <Link 
-            href="/profile"
-            className="flex items-center gap-3.5 px-4 py-3 rounded-lg text-text-muted hover:text-text-main hover:bg-bg-card/45 transition-colors text-sm font-bold"
-          >
-            <Award className="w-5 h-5 text-accent-secondary" />
-            <span>My Profile</span>
-          </Link>
-        </div>
-
-        {/* Custom Prep Boards */}
-        <div className="flex flex-col gap-2 border-t border-border-card/50 pt-5">
-          <p className="text-xs font-mono text-text-muted uppercase tracking-wider px-3 mb-1 font-bold">Study Tracks</p>
-          <button 
-            onClick={() => { setSelectedCompany('Deloitte'); setSelectedTopic(null); }}
-            className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all cursor-pointer text-sm font-bold ${selectedCompany === 'Deloitte' ? 'bg-accent-secondary/15 text-accent-secondary font-extrabold border border-accent-secondary/30' : 'text-text-muted hover:text-text-main'}`}
-          >
-            <span className="truncate">Deloitte Course</span>
-            <span className="text-xs font-mono bg-bg-card px-2 py-0.5 rounded border border-border-card text-text-muted">32</span>
-          </button>
-          <button 
-            onClick={() => { setSelectedCompany('Google'); setSelectedTopic(null); }}
-            className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all cursor-pointer text-sm font-bold ${selectedCompany === 'Google' ? 'bg-primary/10 text-primary font-extrabold border border-primary/20' : 'text-text-muted hover:text-text-main'}`}
-          >
-            <span className="truncate">Google Track</span>
-            <span className="text-xs font-mono bg-bg-card px-2 py-0.5 rounded border border-border-card text-text-muted">2318</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* 2. Center Feed (6/12 Width) - Arena Feed & Problems List */}
-      <main className="lg:col-span-6 flex flex-col gap-8" id="core_feed">
+      {/* 1. Main Feed (9/12 Width) - Daily Challenge & Problems List */}
+      <main className="lg:col-span-9 flex flex-col gap-8" id="core_feed">
         
         {/* Compact Daily Challenge Banner */}
         {activeQuest && (
@@ -302,119 +207,212 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
           </div>
         )}
 
-        {/* Topic Filters Selector */}
-        <div className="flex flex-col gap-3 bg-bg-card p-5 rounded-xl border border-border-card glow-border">
-          <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Filter by Topic</p>
-          <div className="flex flex-wrap gap-2 max-h-[105px] overflow-y-auto pr-1">
-            {TOPIC_TAGS.map((tag) => (
-              <button
-                key={tag.name}
-                onClick={() => {
-                  setSelectedTopic(selectedTopic === tag.name ? null : tag.name);
-                  setSelectedCompany(null);
-                }}
-                className={`text-xs px-3.5 py-2.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer font-bold ${
-                  selectedTopic === tag.name 
-                    ? 'bg-primary/20 text-primary border border-primary/30' 
-                    : 'bg-bg-base/60 text-text-muted hover:text-text-main border border-transparent hover:border-border-card'
-                }`}
+        {/* Career Role Journeys Grid */}
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Career Role Journeys</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {CAREER_ROLES.map((role) => (
+              <div 
+                key={role.id}
+                onClick={() => router.push(`/journey/${role.id}`)}
+                className="flex flex-col gap-3.5 p-6 rounded-xl border border-border-card/60 bg-bg-card shadow-sm hover:shadow hover:border-primary/30 transition-all duration-300 hover:scale-[1.012] cursor-pointer group"
               >
-                <span>{tag.name}</span>
-                <span className={`text-[11px] px-1.5 py-0.2 rounded font-mono font-bold ${
-                  selectedTopic === tag.name ? 'bg-primary/20 text-primary' : 'bg-bg-card text-text-muted/60'
-                }`}>{tag.count}</span>
-              </button>
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-black text-text-main group-hover:text-primary transition-colors">
+                    {role.title}
+                  </h4>
+                  <span className="text-[9px] font-mono bg-bg-base px-1.5 py-0.5 rounded text-text-muted border border-border-card/45 select-none uppercase font-bold">
+                    Journey
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed font-semibold line-clamp-3 h-13.5">
+                  {role.desc}
+                </p>
+                <div className="text-xs font-mono font-bold text-primary flex items-center gap-1 mt-1">
+                  <span>View Roadmap &gt;</span>
+                </div>
+              </div>
             ))}
+          </div>
+        </div>
+
+        {/* Programming Languages Course Progress Grid */}
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Language Course Progress</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { name: 'C++', total: 10, color: 'border-cyan-500/20 text-cyan-600 bg-cyan-500/5', barColor: 'bg-cyan-500' },
+              { name: 'Python', total: 8, color: 'border-blue-500/20 text-blue-600 bg-blue-500/5', barColor: 'bg-blue-500' },
+              { name: 'Java', total: 12, color: 'border-orange-500/20 text-orange-600 bg-orange-500/5', barColor: 'bg-orange-500' },
+              { name: 'JavaScript', total: 6, color: 'border-amber-500/20 text-amber-600 bg-amber-500/5', barColor: 'bg-amber-500' },
+            ].map((lang) => {
+              const solvedCount = solvedProblemIds.length;
+              const progressPercent = Math.min(100, Math.floor((solvedCount / lang.total) * 100));
+
+              return (
+                <Link 
+                  key={lang.name}
+                  href={`/prepare/${lang.name.toLowerCase().replace('c++', 'cpp')}`}
+                  className="flex flex-col gap-3.5 p-6 rounded-xl border border-border-card/60 bg-bg-card shadow-sm hover:shadow transition-all duration-300 hover:scale-[1.012] cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded border ${lang.color}`}>
+                      {lang.name}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-1 font-mono text-xs">
+                    <div className="flex justify-between font-extrabold text-text-main">
+                      <span>Progress</span>
+                      <span>{progressPercent}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-bg-base rounded-full overflow-hidden border border-border-card/30 p-[1px]">
+                      <div 
+                        className={`h-full ${lang.barColor} rounded-full transition-all duration-700`}
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Topic Tags Filtering Block */}
+        <div className="flex flex-col gap-2 bg-bg-card p-4 rounded-xl border border-border-card/60 glow-border">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-wider mb-1 font-bold">Filter by Topic</p>
+          <div className="flex flex-wrap gap-2 max-h-[88px] overflow-y-auto pr-1">
+            {TOPIC_TAGS.map((tag) => {
+              const isActive = selectedTopic === tag.name;
+              return (
+                <button
+                  key={tag.name}
+                  onClick={() => {
+                    setSelectedTopic(isActive ? null : tag.name);
+                    setCurrentPage(1);
+                  }}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer font-bold ${
+                    isActive 
+                      ? 'bg-primary/20 text-primary border border-primary/30 font-extrabold' 
+                      : 'bg-bg-base/60 text-text-muted hover:text-text-main border border-transparent hover:border-border-card'
+                  }`}
+                >
+                  <span>{tag.name}</span>
+                  <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
+                    isActive ? 'bg-primary/20 text-primary' : 'bg-bg-card text-text-muted/60 border border-border-card/30'
+                  }`}>{tag.count}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Categorization Toolbar tabs */}
-        <div className="flex items-center justify-between border-b border-border-card pb-1">
-          <div className="flex items-center gap-3 overflow-x-auto pr-2 scrollbar-none">
-            {['All Topics', 'Algorithms', 'Database', 'Shell', 'Concurrency'].map((cat) => (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-card p-5 rounded-xl border border-border-card glow-border">
+          <div className="flex flex-wrap items-center gap-3">
+            {['All Topics', 'Algorithms', 'Data Structures', 'Database'].map((category) => (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`relative text-sm px-4 py-3 transition-colors whitespace-nowrap cursor-pointer font-extrabold ${
-                  selectedCategory === cat ? 'text-text-main font-black' : 'text-text-muted hover:text-text-main'
+                key={category}
+                onClick={() => {
+                  setSelectedCategory(category);
+                  setSelectedCompany(null);
+                  setSelectedTopic(null);
+                  setCurrentPage(1);
+                }}
+                className={`text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer font-extrabold tracking-tight ${
+                  selectedCategory === category 
+                    ? 'bg-primary text-white shadow-md shadow-primary/20' 
+                    : 'bg-bg-base text-text-muted hover:text-text-main hover:bg-bg-base/80 border border-border-card/45'
                 }`}
               >
-                {cat}
-                {selectedCategory === cat && (
-                  <motion.div 
-                    layoutId="activeCategoryBorder" 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
+                {category}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Search & Sort Panel */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-bg-card/50 p-2.5 rounded-xl border border-border-card">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-muted" />
-            <input 
-              type="text" 
-              placeholder="Search question by name or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-bg-base border border-border-card focus:border-primary/50 focus:outline-none rounded-lg pl-11 pr-4 py-2.5 text-sm text-text-main placeholder-text-muted/50 transition-colors font-semibold"
-            />
-          </div>
-          
-          <div className="flex items-center justify-between sm:justify-end gap-4 font-mono text-xs text-text-muted">
-            <button 
-              onClick={() => handleSort('acceptance')}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer font-bold ${
-                sortBy === 'acceptance' ? 'bg-bg-base border-border-card text-text-main' : 'border-transparent hover:bg-bg-card/40'
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4 text-primary" />
-              <span>Sort by Acceptance</span>
-              {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
-            </button>
-
-            <div className="h-5 w-px bg-border-card" />
-
-            <div className="flex items-center gap-2 bg-bg-base px-4 py-2.5 rounded-lg border border-border-card text-primary font-bold text-sm">
-              <Clock className="w-4.5 h-4.5 animate-pulse" />
-              <span>{solvedCount}/{PROBLEMS_DATA.length} Solved</span>
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex-1 md:w-60">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-muted/70" />
+              <input
+                type="text"
+                placeholder="Search question name or number..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-bg-base border border-border-card focus:border-primary/40 focus:outline-none rounded-lg pl-10 pr-4 py-2.5 text-xs text-text-main placeholder-text-muted/50 transition-colors font-semibold"
+              />
             </div>
           </div>
         </div>
 
-        {/* Questions Grid Table */}
-        <div className="overflow-hidden rounded-xl border border-border-card bg-bg-card glow-border" id="problems_grid">
+        {/* Search & Sub-Filters Toolbar (Difficulty buttons & Stats) */}
+        <div className="flex flex-col gap-3 bg-bg-card p-4 rounded-xl border border-border-card/60 glow-border">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider font-extrabold">Difficulty:</span>
+            {([null, 'Easy', 'Medium', 'Hard'] as (string | null)[]).map((diff) => {
+              const isActive = selectedDifficulty === diff;
+              const color = diff === 'Easy' ? { text: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/30' }
+                          : diff === 'Medium' ? { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
+                          : diff === 'Hard' ? { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' }
+                          : { text: 'text-text-muted', bg: 'bg-bg-base', border: 'border-border-card' };
+              return (
+                <button
+                  key={diff ?? 'all'}
+                  onClick={() => {
+                    setSelectedDifficulty(isActive ? null : diff);
+                    setCurrentPage(1);
+                  }}
+                  className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                    isActive ? `${color.text} ${color.bg} ${color.border}` : 'border-border-card text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {diff ?? 'All'}
+                </button>
+              );
+            })}
+
+            <div className="ml-auto flex items-center gap-2 font-mono text-xs shrink-0">
+              <div className="flex items-center gap-1.5 bg-bg-base px-3 py-1.5 rounded-lg border border-border-card/50 text-text-muted font-bold">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span>{solvedProblemIds.length}<span className="text-text-muted/50">/{PROBLEMS_DATA.length}</span> Solved</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-bg-base px-3 py-1.5 rounded-lg border border-border-card/50 text-text-muted font-bold">
+                <span>{filteredProblems.length} results</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Grid Problems Table List */}
+        <div className="bg-bg-card border border-border-card rounded-xl overflow-hidden glow-border">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-card bg-bg-base/70 text-text-muted font-mono select-none">
+                <tr className="border-b border-border-card bg-bg-base/70 text-text-muted font-mono select-none text-[11px] font-bold uppercase tracking-wider">
                   <th className="py-4 pl-4 w-14 text-center">Status</th>
-                  <th className="py-4 px-4 w-20 cursor-pointer hover:text-text-main" onClick={() => handleSort('id')}>
-                    Index {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  <th className="py-4 px-4 cursor-pointer hover:text-text-main" onClick={() => handleSort('title')}>
+                    Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-4 px-4">Problem Name</th>
                   <th className="py-4 px-4 w-32 cursor-pointer hover:text-text-main" onClick={() => handleSort('acceptance')}>
                     Acceptance {sortBy === 'acceptance' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="py-4 px-4 w-36 cursor-pointer hover:text-text-main" onClick={() => handleSort('difficulty')}>
                     Difficulty {sortBy === 'difficulty' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="py-4 pr-4 w-20 text-center">Gold</th>
+                  <th className="py-4 pr-4 w-28 text-center">Reward</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-card/50">
-                {filteredProblems.length === 0 ? (
+              <tbody className="divide-y divide-border-card/45 text-xs select-none">
+                {paginatedProblems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-text-muted font-mono text-sm">
-                      No problems found.
+                    <td colSpan={5} className="py-12 text-center text-text-muted font-mono">
+                      No problems found matching active filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredProblems.map((prob) => {
+                  paginatedProblems.map((prob) => {
                     const isSolved = solvedProblemIds.includes(prob.id) || prob.solved;
                     const diffTag = getDifficultyType(prob.difficulty);
                     
@@ -422,27 +420,28 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                       <tr 
                         key={prob.id}
                         onClick={() => onSelectProblem(prob.id)}
-                        className="hover:bg-primary/5 active:bg-primary/10 transition-colors cursor-pointer group hover-wiggle"
+                        className="hover:bg-bg-base/20 transition-colors group cursor-pointer"
                       >
                         {/* Status Checkbox */}
-                        <td className="py-5 pl-4 text-center">
-                          {isSolved ? (
-                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mx-auto shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-                              <CheckCircle className="w-4 h-4 text-emerald-500 fill-emerald-500/15" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border-2 border-border-card mx-auto group-hover:border-primary/50 transition-colors" />
-                          )}
+                        <td className="py-5 px-4 text-center">
+                          <div className="flex items-center justify-center">
+                            {isSolved ? (
+                              <CheckCircle className="w-5 h-5 text-primary fill-primary/10 animate-wiggle" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border border-border-card/90 group-hover:border-primary transition-colors bg-bg-base" />
+                            )}
+                          </div>
                         </td>
-                        
-                        {/* ID Column */}
-                        <td className="py-5 px-4 font-mono text-text-muted text-sm">{prob.id}</td>
                         
                         {/* Title Column */}
                         <td className="py-5 px-4 font-extrabold text-text-main text-base group-hover:text-primary transition-colors">
-                          {prob.title}
+                          <span className="text-text-muted/65 font-mono mr-1">{prob.id}.</span>
+                          <span>{prob.title}</span>
                           <div className="flex gap-2 mt-1.5 select-none font-semibold">
-                            {prob.topics.slice(0, 3).map(tag => (
+                            <span className="text-[10px] font-mono text-text-muted bg-bg-base px-2 py-0.5 rounded border border-border-card/50 uppercase">
+                              {prob.category}
+                            </span>
+                            {prob.topics.slice(0, 2).map(tag => (
                               <span key={tag} className="text-[10px] font-mono text-text-muted bg-bg-base px-2 py-0.5 rounded border border-border-card/50">
                                 {tag}
                               </span>
@@ -455,15 +454,13 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                         
                         {/* Difficulty Column */}
                         <td className="py-5 px-4">
-                          <div className="flex flex-col leading-tight">
-                            <span className={`text-xs font-black ${diffTag.color}`}>
-                              {diffTag.name}
-                            </span>
-                          </div>
+                          <span className={`font-black ${diffTag.color}`}>
+                            {diffTag.name}
+                          </span>
                         </td>
                         
                         {/* Action reward gold */}
-                        <td className="py-5 pr-4 text-center text-xs font-mono font-extrabold text-yellow-600" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-5 pr-4 text-center text-xs font-mono font-extrabold text-yellow-600">
                           <div className="flex items-center justify-center gap-1.5 bg-bg-base/50 py-1.5 px-2.5 rounded border border-border-card/50">
                             <Coins className="w-3.5 h-3.5" />
                             <span>{prob.difficulty === 'Easy' ? 15 : prob.difficulty === 'Medium' ? 30 : 60}g</span>
@@ -477,65 +474,102 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
             </table>
           </div>
         </div>
+
+        {/* Pagination Bar */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-1 py-3 font-mono text-xs text-text-muted select-none mt-4">
+            {/* Left: range label */}
+            <span>
+              Showing{' '}
+              <span className="text-text-main font-bold">
+                {(currentPage - 1) * PROBLEMS_PER_PAGE + 1}–{Math.min(currentPage * PROBLEMS_PER_PAGE, filteredProblems.length)}
+              </span>{' '}
+              of <span className="text-text-main font-bold">{filteredProblems.length}</span>
+            </span>
+
+            {/* Right: page buttons */}
+            <div className="flex items-center gap-1">
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border-card/65 bg-bg-card text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer font-bold"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
+              </button>
+
+              {/* Page number buttons */}
+              {pageNumbers.map((page, idx) =>
+                page < 0 ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 select-none">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg border transition-all cursor-pointer font-bold ${
+                      currentPage === page
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'border-border-card/65 hover:bg-bg-base/40 text-text-muted hover:text-text-main'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              {/* Next */}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border-card/65 bg-bg-card text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer font-bold"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* 3. Right Panel (3/12 Width) - Theme Selector & Extras */}
-      <aside className="lg:col-span-3 flex flex-col gap-8" id="widgets_panel">
+      {/* 2. Sidebar Panel (3/12 Width) - Top Company Prep & Target Companies */}
+      <aside className="lg:col-span-3 flex flex-col gap-8 text-sm" id="sidebar_nav">
         
-        {/* Aesthetic Theme Switcher */}
-        <ThemeSelector />
-
-        {/* Calendar Module */}
+        {/* Top Company Prep (In place of study track) */}
         <div className="bg-bg-card rounded-xl border border-border-card p-5 flex flex-col gap-4 glow-border">
-          <div className="flex items-center justify-between text-xs font-semibold border-b border-border-card pb-3">
-            <div className="flex items-center gap-2 text-text-main text-sm font-bold">
-              <Calendar className="w-4.5 h-4.5 text-primary" />
-              <span>Daily Activity</span>
-            </div>
-            <span className="text-[10px] font-mono text-text-muted font-bold">Grid</span>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] font-mono font-bold text-text-muted/65">
-            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5 text-center font-mono text-xs">
-            {calendarDays.map((day, idx) => {
-              if (day === null) return <div key={idx} />;
-              
-              const isToday = day === currentDay;
-              const isPast = day < currentDay;
-
+          <p className="text-xs font-mono text-text-muted uppercase tracking-wider font-extrabold">Top Company Prep</p>
+          <div className="flex flex-col gap-2">
+            {['Google', 'Deloitte', 'Microsoft', 'Amazon'].map((companyName) => {
+              const isActive = selectedCompany === companyName;
               return (
-                <div 
-                  key={idx}
-                  className={`relative aspect-square flex items-center justify-center rounded-full text-xs font-black ${
-                    isToday 
-                      ? 'bg-primary text-white font-bold ring-4 ring-primary/20 shadow-lg shadow-primary/20' 
-                      : isPast
-                        ? 'text-text-main bg-primary/10 border border-primary/20' 
-                        : 'text-text-muted/40 bg-bg-base/30'
+                <button 
+                  key={companyName}
+                  onClick={() => { 
+                    setSelectedCompany(isActive ? null : companyName); 
+                    setSelectedTopic(null);
+                    setCurrentPage(1);
+                  }}
+                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all cursor-pointer text-sm font-bold ${
+                    isActive 
+                      ? 'bg-primary/10 text-primary border border-primary/20 font-extrabold' 
+                      : 'text-text-muted hover:text-text-main hover:bg-bg-base/40 border border-transparent'
                   }`}
-                  title={isToday ? "Active today!" : ""}
                 >
-                  {day}
-                  {isToday && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
-                    </span>
-                  )}
-                </div>
+                  <span className="truncate">{companyName} Prep</span>
+                  <span className="text-xs font-mono bg-bg-base px-2 py-0.5 rounded border border-border-card text-text-muted font-bold">
+                    {companyName === 'Google' ? 2318 : companyName === 'Deloitte' ? 32 : companyName === 'Microsoft' ? 840 : 1240}
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Target Companies */}
+        {/* Target Companies Search Filter */}
         <div className="bg-bg-card rounded-xl border border-border-card p-5 flex flex-col gap-4 glow-border">
           <p className="text-sm font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card pb-3">Target Companies</p>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-muted" />
             <input 
               type="text" 
               placeholder="Search companies..."
@@ -552,6 +586,7 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
                 onClick={() => {
                   setSelectedCompany(selectedCompany === comp.name ? null : comp.name);
                   setSelectedTopic(null);
+                  setCurrentPage(1);
                 }}
                 className={`text-xs px-3 py-1.5 rounded transition-all flex items-center gap-1.5 cursor-pointer font-bold ${
                   selectedCompany === comp.name 
