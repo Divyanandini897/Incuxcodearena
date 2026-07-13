@@ -66,7 +66,7 @@ export default function AdminContestsPage() {
     const res = await fetch('/api/problems')
     if (res.ok) {
       const data = await res.json()
-      setProblems(data)
+      setProblems(Array.isArray(data) ? data : (data.problems ?? []))
     }
   }, [])
 
