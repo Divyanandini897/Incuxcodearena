@@ -3,7 +3,7 @@ import { Pool } from 'pg'
 
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
-import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../components/data'
+import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../src/data/data'
 
 // DIRECT_URL uses a resolvable hostname (pooler) with the right user format
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL!
