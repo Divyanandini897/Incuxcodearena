@@ -450,7 +450,7 @@ model users {
   sessions                    sessions[]
   webauthn_challenges         webauthn_challenges[]
   webauthn_credentials        webauthn_credentials[]
-  Profile                     Profile?               @ignore
+  Profile                     Profile?
 
   @@index([created_at(sort: Desc)], map: "idx_users_created_at_desc")
   @@index([email], map: "idx_users_email")
@@ -516,9 +516,327 @@ model otps {
   @@schema("public")
 }
 
-// ====================================================================
-// APPLICATION ENUMS (managed by Prisma)
-// ====================================================================
+/// User profile linked to Supabase Auth via profiles.id = auth.users.id.
+model Profile {
+  id           String                @id @db.Uuid
+  email        String                @unique
+  name         String
+  username     String?               @unique
+  avatar_url   String?
+  bio          String?               @default("")
+  created_at   DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?             @default(now()) @db.Timestamptz(6)
+  contests        Contest[]
+  users           users                 @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction) @ignore
+  submissions     Submission[]
+  userProgress    UserProblemProgress[]
+  contestAttempts ContestAttempt[]
+
+  @@map("profiles")
+  @@schema("public")
+}
+
+model Problem {
+  id               String                @id @default(uuid()) @db.Uuid
+  leetcodeId       Int                   @unique @map("leetcode_id")
+  title            String
+  difficulty       DifficultyLevel
+  acceptance       Decimal?              @db.Decimal(5, 2)
+  description      String
+  category         ProblemCategory       @default(Algorithms)
+  isPublished      Boolean               @default(false) @map("is_published")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  contestProblems  ContestProblem[]
+  codeTemplates    ProblemCodeTemplate[]
+  problemCompanies ProblemCompany[]
+  constraints      ProblemConstraint[]
+  examples         ProblemExample[]
+  followUps        ProblemFollowUp[]
+  hints            ProblemHint[]
+  problemTags      ProblemTag[]
+  problemTopics    ProblemTopic[]
+  submissions      Submission[]
+  testCases        TestCase[]
+  userProgress     UserProblemProgress[]
+
+  @@index([difficulty])
+  @@index([category])
+  @@map("problems")
+  @@schema("public")
+}
+
+model ProblemExample {
+  id          String   @id @default(uuid()) @db.Uuid
+  problemId   String   @map("problem_id") @db.Uuid
+  input       String
+  output      String
+  explanation String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("problem_examples")
+  @@schema("public")
+}
+
+model ProblemConstraint {
+  id             String   @id @default(uuid()) @db.Uuid
+  problemId      String   @map("problem_id") @db.Uuid
+  constraintText String   @map("constraint_text")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  problem        Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("problem_constraints")
+  @@schema("public")
+}
+
+model ProblemHint {
+  id        String   @id @default(uuid()) @db.Uuid
+  problemId String   @map("problem_id") @db.Uuid
+  hintText  String   @map("hint_text")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("problem_hints")
+  @@schema("public")
+}
+
+model ProblemFollowUp {
+  id           String   @id @default(uuid()) @db.Uuid
+  problemId    String   @map("problem_id") @db.Uuid
+  followupText String   @map("followup_text")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  problem      Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("problem_followups")
+  @@schema("public")
+}
+
+model ProblemCodeTemplate {
+  id           String            @id @default(uuid()) @db.Uuid
+  problemId    String            @map("problem_id") @db.Uuid
+  language     SupportedLanguage
+  codeTemplate String            @map("code_template")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  problem      Problem           @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, language])
+  @@index([problemId])
+  @@map("problem_code_templates")
+  @@schema("public")
+}
+
+model Tag {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  problemTags ProblemTag[]
+
+  @@index([name])
+  @@index([slug])
+  @@map("tags")
+  @@schema("public")
+}
+
+model ProblemTag {
+  id        String   @id @default(uuid()) @db.Uuid
+  problemId String   @map("problem_id") @db.Uuid
+  tagId     String   @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, tagId])
+  @@index([problemId])
+  @@index([tagId])
+  @@map("problem_tags")
+  @@schema("public")
+}
+
+model Topic {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @unique
+  slug          String         @unique
+  description   String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  problemTopics ProblemTopic[]
+
+  @@index([name])
+  @@index([slug])
+  @@map("topics")
+  @@schema("public")
+}
+
+model ProblemTopic {
+  id        String   @id @default(uuid()) @db.Uuid
+  problemId String   @map("problem_id") @db.Uuid
+  topicId   String   @map("topic_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, topicId])
+  @@index([problemId])
+  @@index([topicId])
+  @@map("problem_topics")
+  @@schema("public")
+}
+
+model Company {
+  id               String           @id @default(uuid()) @db.Uuid
+  name             String           @unique
+  slug             String           @unique
+  websiteUrl       String?          @map("website_url")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  problemCompanies ProblemCompany[]
+
+  @@index([name])
+  @@map("companies")
+  @@schema("public")
+}
+
+model ProblemCompany {
+  id        String   @id @default(uuid()) @db.Uuid
+  problemId String   @map("problem_id") @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  frequency Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, companyId])
+  @@index([problemId])
+  @@index([companyId])
+  @@map("problem_companies")
+  @@schema("public")
+}
+
+model TestCase {
+  id             String   @id @default(uuid()) @db.Uuid
+  problemId      String   @map("problem_id") @db.Uuid
+  input          String
+  expectedOutput String   @map("expected_output")
+  isSample       Boolean  @default(false) @map("is_sample")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  problem        Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("test_cases")
+  @@schema("public")
+}
+
+model Submission {
+  id           String                @id @default(uuid()) @db.Uuid
+  userId       String                @map("user_id") @db.Uuid
+  problemId    String                @map("problem_id") @db.Uuid
+  language     SupportedLanguage
+  code         String
+  status       SubmissionStatus
+  runtime      String?
+  memory       String?
+  testResults  Json?                 @map("test_results")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  problem      Problem               @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user         Profile               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userProgress UserProblemProgress[]
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([userId, problemId])
+  @@index([createdAt])
+  @@map("submissions")
+  @@schema("public")
+}
+
+model UserProblemProgress {
+  id               String         @id @default(uuid()) @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  problemId        String         @map("problem_id") @db.Uuid
+  status           ProgressStatus @default(not_started)
+  lastSubmissionId String?        @map("last_submission_id") @db.Uuid
+  solvedAt         DateTime?      @map("solved_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  lastSubmission   Submission?    @relation(fields: [lastSubmissionId], references: [id])
+  problem          Problem        @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user             Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+  @@index([userId])
+  @@index([problemId])
+  @@index([status])
+  @@map("user_progress")
+  @@schema("public")
+}
+
+model Contest {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  description  String?
+  durationMins Int              @map("duration_mins")
+  maxPoints    Int              @default(0) @map("max_points")
+  startsAt     DateTime?        @map("starts_at") @db.Timestamptz(6)
+  endsAt       DateTime?        @map("ends_at") @db.Timestamptz(6)
+  isPublished  Boolean          @default(false) @map("is_published")
+  createdBy    String           @map("created_by") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reminderSent Boolean          @default(false) @map("reminder_sent")
+  problems        ContestProblem[]
+  creator         Profile          @relation(fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contestAttempts ContestAttempt[]
+
+  @@index([isPublished])
+  @@index([createdBy])
+  @@index([startsAt])
+  @@map("contests")
+  @@schema("public")
+}
+
+model ContestProblem {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId String  @map("contest_id") @db.Uuid
+  problemId String  @map("problem_id") @db.Uuid
+  sortOrder Int     @default(0) @map("sort_order")
+  points    Int     @default(0)
+  contest   Contest @relation(fields: [contestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([contestId, problemId])
+  @@index([contestId])
+  @@index([problemId])
+  @@map("contest_problems")
+  @@schema("public")
+}
+
+model ContestAttempt {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId   String    @map("contest_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  score       Int?      @default(0)
+  startedAt   DateTime? @default(now()) @map("started_at") @db.Timestamptz(6)
+  submittedAt DateTime? @map("submitted_at") @db.Timestamptz(6)
+  user        Profile   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([contestId, userId], map: "contest_attempts_cid_uid")
+  @@index([contestId], map: "contest_attempts_cid_idx")
+  @@index([userId], map: "contest_attempts_uid_idx")
+  @@map("contest_attempts")
+  @@schema("public")
+}
 
 enum DifficultyLevel {
   Easy
@@ -567,351 +885,6 @@ enum ProgressStatus {
   solved
 
   @@map("progress_status")
-  @@schema("public")
-}
-
-// ====================================================================
-// APPLICATION MODELS (managed by Prisma)
-// ====================================================================
-
-/// User profile linked to Supabase Auth via profiles.id = auth.users.id.
-model Profile {
-  id         String    @id @db.Uuid
-  email      String    @unique
-  name       String
-  username   String?   @unique
-  avatar_url String?
-  bio        String?   @default("")
-  created_at DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at DateTime? @default(now()) @db.Timestamptz(6)
-
-  users        users                 @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction) @ignore
-  submissions      Submission[]
-  userProgress     UserProblemProgress[]
-  contests         Contest[]
-  contestAttempts  ContestAttempt[]
-
-  @@map("profiles")
-  @@schema("public")
-}
-
-model Problem {
-  id          String          @id @default(uuid()) @db.Uuid
-  leetcodeId  Int             @unique @map("leetcode_id")
-  title       String
-  difficulty  DifficultyLevel
-  acceptance  Decimal?        @db.Decimal(5, 2)
-  description String
-  category    ProblemCategory @default(Algorithms)
-  isPublished Boolean         @default(false) @map("is_published")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
-
-  examples         ProblemExample[]
-  constraints      ProblemConstraint[]
-  hints            ProblemHint[]
-  followUps        ProblemFollowUp[]
-  codeTemplates    ProblemCodeTemplate[]
-  problemTags      ProblemTag[]
-  problemTopics    ProblemTopic[]
-  problemCompanies ProblemCompany[]
-  testCases        TestCase[]
-  submissions      Submission[]
-  userProgress     UserProblemProgress[]
-  contestProblems  ContestProblem[]
-
-  @@index([difficulty])
-  @@index([category])
-  @@map("problems")
-  @@schema("public")
-}
-
-model ProblemExample {
-  id          String   @id @default(uuid()) @db.Uuid
-  problemId   String   @map("problem_id") @db.Uuid
-  input       String
-  output      String
-  explanation String?
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("problem_examples")
-  @@schema("public")
-}
-
-model ProblemConstraint {
-  id             String   @id @default(uuid()) @db.Uuid
-  problemId      String   @map("problem_id") @db.Uuid
-  constraintText String   @map("constraint_text")
-  sortOrder      Int      @default(0) @map("sort_order")
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("problem_constraints")
-  @@schema("public")
-}
-
-model ProblemHint {
-  id        String   @id @default(uuid()) @db.Uuid
-  problemId String   @map("problem_id") @db.Uuid
-  hintText  String   @map("hint_text")
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("problem_hints")
-  @@schema("public")
-}
-
-model ProblemFollowUp {
-  id           String   @id @default(uuid()) @db.Uuid
-  problemId    String   @map("problem_id") @db.Uuid
-  followupText String   @map("followup_text")
-  sortOrder    Int      @default(0) @map("sort_order")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("problem_followups")
-  @@schema("public")
-}
-
-model ProblemCodeTemplate {
-  id           String            @id @default(uuid()) @db.Uuid
-  problemId    String            @map("problem_id") @db.Uuid
-  language     SupportedLanguage
-  codeTemplate String            @map("code_template")
-  createdAt    DateTime          @default(now()) @map("created_at")
-  updatedAt    DateTime          @updatedAt @map("updated_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@unique([problemId, language])
-  @@index([problemId])
-  @@map("problem_code_templates")
-  @@schema("public")
-}
-
-model Tag {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  problemTags ProblemTag[]
-
-  @@index([name])
-  @@index([slug])
-  @@map("tags")
-  @@schema("public")
-}
-
-model ProblemTag {
-  id        String   @id @default(uuid()) @db.Uuid
-  problemId String   @map("problem_id") @db.Uuid
-  tagId     String   @map("tag_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@unique([problemId, tagId])
-  @@index([problemId])
-  @@index([tagId])
-  @@map("problem_tags")
-  @@schema("public")
-}
-
-model Topic {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  problemTopics ProblemTopic[]
-
-  @@index([name])
-  @@index([slug])
-  @@map("topics")
-  @@schema("public")
-}
-
-model ProblemTopic {
-  id        String   @id @default(uuid()) @db.Uuid
-  problemId String   @map("problem_id") @db.Uuid
-  topicId   String   @map("topic_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  topic   Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-  @@unique([problemId, topicId])
-  @@index([problemId])
-  @@index([topicId])
-  @@map("problem_topics")
-  @@schema("public")
-}
-
-model Company {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String   @unique
-  slug       String   @unique
-  websiteUrl String?  @map("website_url")
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  problemCompanies ProblemCompany[]
-
-  @@index([name])
-  @@map("companies")
-  @@schema("public")
-}
-
-model ProblemCompany {
-  id        String   @id @default(uuid()) @db.Uuid
-  problemId String   @map("problem_id") @db.Uuid
-  companyId String   @map("company_id") @db.Uuid
-  frequency Int      @default(0)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([problemId, companyId])
-  @@index([problemId])
-  @@index([companyId])
-  @@map("problem_companies")
-  @@schema("public")
-}
-
-model TestCase {
-  id             String   @id @default(uuid()) @db.Uuid
-  problemId      String   @map("problem_id") @db.Uuid
-  input          String
-  expectedOutput String   @map("expected_output")
-  isSample       Boolean  @default(false) @map("is_sample")
-  sortOrder      Int      @default(0) @map("sort_order")
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("test_cases")
-  @@schema("public")
-}
-
-model Submission {
-  id          String            @id @default(uuid()) @db.Uuid
-  userId      String            @map("user_id") @db.Uuid
-  problemId   String            @map("problem_id") @db.Uuid
-  language    SupportedLanguage
-  code        String
-  status      SubmissionStatus
-  runtime     String?
-  memory      String?
-  testResults Json?             @map("test_results") @db.JsonB
-  createdAt   DateTime          @default(now()) @map("created_at")
-
-  user         Profile               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem      Problem               @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  userProgress UserProblemProgress[]
-
-  @@index([userId])
-  @@index([problemId])
-  @@index([userId, problemId])
-  @@index([createdAt])
-  @@map("submissions")
-  @@schema("public")
-}
-
-model UserProblemProgress {
-  id               String         @id @default(uuid()) @db.Uuid
-  userId           String         @map("user_id") @db.Uuid
-  problemId        String         @map("problem_id") @db.Uuid
-  status           ProgressStatus @default(not_started)
-  lastSubmissionId String?        @map("last_submission_id") @db.Uuid
-  solvedAt         DateTime?      @map("solved_at")
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
-
-  user           Profile     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem        Problem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  lastSubmission Submission? @relation(fields: [lastSubmissionId], references: [id], onDelete: SetNull)
-
-  @@unique([userId, problemId])
-  @@index([userId])
-  @@index([problemId])
-  @@index([status])
-  @@map("user_progress")
-  @@schema("public")
-}
-
-model Contest {
-  id          String            @id @default(uuid()) @db.Uuid
-  title       String
-  description String?
-  durationMins Int              @map("duration_mins")
-  maxPoints   Int               @default(0) @map("max_points")
-  startsAt    DateTime?         @map("starts_at")
-  endsAt      DateTime?         @map("ends_at")
-  isPublished  Boolean           @default(false) @map("is_published")
-  reminderSent Boolean           @default(false) @map("reminder_sent")
-  createdBy   String            @map("created_by") @db.Uuid
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-
-  creator  Profile          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  problems      ContestProblem[]
-  attempts      ContestAttempt[]
-
-  @@index([isPublished])
-  @@index([createdBy])
-  @@index([startsAt])
-  @@map("contests")
-  @@schema("public")
-}
-
-model ContestProblem {
-  id        String @id @default(uuid()) @db.Uuid
-  contestId String @map("contest_id") @db.Uuid
-  problemId String @map("problem_id") @db.Uuid
-  sortOrder Int    @default(0) @map("sort_order")
-  points    Int    @default(0)
-
-  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@unique([contestId, problemId])
-  @@index([contestId])
-  @@index([problemId])
-  @@map("contest_problems")
-  @@schema("public")
-}
-
-model ContestAttempt {
-  id         String   @id @default(uuid()) @db.Uuid
-  contestId  String   @map("contest_id") @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  score      Int      @default(0)
-  startedAt  DateTime @default(now()) @map("started_at")
-  submittedAt DateTime? @map("submitted_at")
-
-  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([contestId, userId])
-  @@index([contestId])
-  @@index([userId])
-  @@map("contest_attempts")
   @@schema("public")
 }
 
