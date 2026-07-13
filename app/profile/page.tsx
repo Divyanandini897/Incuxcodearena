@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import Navigation from '@/src/components/Navigation';
+import AppLayout from '@/src/components/AppLayout';
 import { useGameState, getXpForNextLevel } from '@/src/lib/gameState';
 import { PROBLEMS_DATA } from '@/src/data/data';
 import CompanionPet from '@/src/components/dashboard/CompanionPet';
@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
+import Card from '@/src/components/ui/Card';
+import Button from '@/src/components/ui/Button';
+import Badge from '@/src/components/ui/Badge';
 
 const AVATAR_OPTIONS = [
   { id: 'sherlock', name: 'Sherlock Holmes', emoji: '🕵️‍♂️', desc: 'Default avatar. Analytical master of debug traces and logical deductions.', gradient: 'from-amber-600 to-orange-700', req: 'Level 1 (Default)' },
@@ -58,79 +61,72 @@ const ANGLES = [
   Math.PI / 6,       // 4 o'clock: Topics Covered
   Math.PI / 2,       // 6 o'clock: Streak Days
   (5 * Math.PI) / 6,  // 8 o'clock: Items Purchased
-  (7 * Math.PI) / 6,  // 10 o'clock: Accuracy Rate
+  (-5 * Math.PI) / 6, // 10 o'clock: Avg Solve speed/Dexterity
 ];
 
 const ATTRIBUTE_NAMES = [
   'Algorithms',
   'Categories',
-  'Topics Covered',
+  'Topics',
   'Streak Days',
-  'Items Bought',
-  'Accuracy Rate'
+  'Customizations',
+  'Dexterity'
 ];
 
 export default function ProfilePage() {
-  const {
-    level,
-    xp,
-    gold,
-    streak,
-    solvedIds,
-    avatar,
-    title,
+  const { 
+    userName, 
+    level, 
+    xp, 
+    gold, 
+    streak, 
+    title, 
+    avatar, 
+    solvedIds, 
+    petAccessories, 
     unlockedTitles,
     unlockedAchievements,
-    petAccessories,
-    updateAvatar,
+    updateUserName,
     updateTitle,
-    userName,
-    updateUserName
+    updateAvatar
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<'avatar' | 'title'>('avatar');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userName);
 
+  // Fetch full details of solved problems
+  const solvedProblems = useMemo(() => {
+    return PROBLEMS_DATA.filter((p) => solvedIds.includes(p.id));
+  }, [solvedIds]);
+
+  const solvedBreakdown = useMemo(() => {
+    return {
+      easy: solvedProblems.filter(p => p.difficulty === 'Easy').length,
+      medium: solvedProblems.filter(p => p.difficulty === 'Medium').length,
+      hard: solvedProblems.filter(p => p.difficulty === 'Hard').length,
+    };
+  }, [solvedProblems]);
+
   const handleSaveName = () => {
-    if (tempName.trim().length > 0) {
+    if (tempName.trim()) {
       updateUserName(tempName.trim());
       setIsEditingName(false);
     }
   };
 
-  // Calendar Days calculation for July 2026
-  const currentDay = 7;
-  const daysInJuly = 31;
-  const startDayOffset = 3;
-
+  // Mock Calendar days
   const calendarDays = useMemo(() => {
-    const days: (number | null)[] = [];
-    for (let i = 0; i < startDayOffset; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInJuly; i++) {
-      days.push(i);
-    }
-    return days;
+    const arr = [];
+    // July 2026 starts on Wednesday (3 empty slots)
+    for (let i = 0; i < 3; i++) arr.push(null);
+    for (let i = 1; i <= 31; i++) arr.push(i);
+    return arr;
   }, []);
 
-  // Compute solved data
-  const solvedProblems = useMemo(() => {
-    return PROBLEMS_DATA.filter(p => solvedIds.includes(p.id));
-  }, [solvedIds]);
+  const currentDay = 11; // July 11, 2026
 
-  const solvedBreakdown = useMemo(() => {
-    let easy = 0, medium = 0, hard = 0;
-    solvedProblems.forEach(p => {
-      if (p.difficulty === 'Easy') easy++;
-      else if (p.difficulty === 'Medium') medium++;
-      else if (p.difficulty === 'Hard') hard++;
-    });
-    return { easy, medium, hard };
-  }, [solvedProblems]);
-
-  // Compute stats metrics (0 to 100)
+  // Derived user statistics for attributes (0 to 100)
   const attributes = useMemo(() => {
     const strength = Math.min(100, 30 + (solvedBreakdown.easy * 10) + (solvedBreakdown.medium * 15) + (solvedBreakdown.hard * 30));
     const categoriesSolved = new Set(solvedProblems.map(p => p.category)).size;
@@ -171,68 +167,68 @@ export default function ProfilePage() {
   const currentAvatarInfo = AVATAR_OPTIONS.find(a => a.id === avatar) || AVATAR_OPTIONS[0];
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main flex flex-col antialiased">
-      <Navigation streakCount={streak} />
-
-      <main className="flex-1 p-8 max-w-[1500px] w-full mx-auto flex flex-col gap-8 font-sans">
-        
+    <AppLayout>
         {/* Navigation & Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-lg bg-bg-card border border-border-card text-text-muted hover:text-text-main hover:border-primary transition-colors cursor-pointer">
-            <ArrowLeft className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-card border border-border-card text-text-muted hover:text-text-main transition-colors cursor-pointer">
+            <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-tight text-text-main flex items-center gap-2">
-              My Profile
+            <h1 className="text-lg font-bold tracking-tight text-text-main">
+              Profile
             </h1>
-            <p className="text-sm text-text-muted">Customize your developer avatar, choose your title, and view your solved metrics.</p>
+            <p className="text-[11px] text-text-muted">Customize your developer avatar, choose your title, and view your solved metrics.</p>
           </div>
         </div>
 
         {/* Outer Split Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-4">
           
           {/* Left Column (5/12) - Avatar Customizer, Title Equip & General Status */}
-          <div className="lg:col-span-5 flex flex-col gap-8">
+          <div className="lg:col-span-5 flex flex-col gap-6">
             
             {/* Main Character Showcase Card */}
-            <div className="bg-bg-card border border-border-card rounded-xl p-6 flex flex-col gap-5 glow-border relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-primary/25 text-primary border-l border-b border-primary/30 px-4 py-1.5 rounded-bl-xl font-mono text-xs font-black tracking-wider">
-                DEVELOPER ACCOUNT
+            <Card className="flex flex-col gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-primary/10 text-primary border-l border-b border-border-card px-3 py-1 rounded-bl-lg font-mono text-[9px] font-bold tracking-wider">
+                Rank Player
               </div>
 
-              <div className="flex items-center gap-5 mt-4">
-                <div className={`w-24 h-24 rounded-full bg-gradient-to-tr ${currentAvatarInfo.gradient} p-[3px] flex items-center justify-center text-6xl shadow-xl shadow-black/40 animate-float`}>
+              <div className="flex items-center gap-4.5 mt-2">
+                <div className={`w-20 h-20 rounded-full bg-gradient-to-tr ${currentAvatarInfo.gradient} p-[2px] flex items-center justify-center text-4xl shrink-0`}>
                   <div className="w-full h-full rounded-full bg-bg-base flex items-center justify-center">
                     {currentAvatarInfo.emoji}
                   </div>
                 </div>
-                <div className="flex-1 flex flex-col leading-tight gap-1.5">
+                <div className="flex-1 flex flex-col leading-tight gap-1 min-w-0">
                   {isEditingName ? (
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-0.5">
                       <input 
                         type="text" 
                         value={tempName}
                         onChange={(e) => setTempName(e.target.value)}
                         maxLength={18}
-                        className="bg-bg-base border border-border-card rounded px-3 py-1.5 text-sm font-extrabold focus:outline-none focus:border-primary text-text-main w-full max-w-[200px]"
+                        className="bg-bg-base border border-border-card rounded px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-primary text-text-main w-full max-w-[150px]"
                       />
-                      <button 
+                      <Button 
+                        variant="primary" 
+                        size="sm"
                         onClick={handleSaveName}
-                        className="bg-primary text-white font-mono font-bold text-xs px-3 py-2 rounded cursor-pointer hover:bg-primary-hover transition-colors"
+                        className="h-7 px-2.5"
                       >
                         Save
-                      </button>
-                      <button 
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
                         onClick={() => { setIsEditingName(false); setTempName(userName); }}
-                        className="bg-neutral-800 border border-border-card text-text-muted hover:text-text-main font-mono font-bold text-xs px-3 py-2 rounded cursor-pointer transition-colors"
+                        className="h-7 px-2.5"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <h2 className="text-2xl font-black tracking-tight text-text-main">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h2 className="text-lg font-bold tracking-tight text-text-main truncate">
                         {userName}
                       </h2>
                       <button 
@@ -240,54 +236,56 @@ export default function ProfilePage() {
                         className="text-text-muted hover:text-text-main p-1 rounded cursor-pointer transition-colors"
                         title="Edit name"
                       >
-                        <Pencil className="w-4.5 h-4.5 text-text-muted" />
+                        <Pencil className="w-3.5 h-3.5 text-text-muted" />
                       </button>
                     </div>
                   )}
-                  <span className="text-xs text-primary font-mono font-black uppercase tracking-wider leading-none">{title}</span>
-                  <span className="text-sm text-text-muted font-mono font-bold">Level {level} Coder</span>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-text-main font-mono font-bold">
-                    <span className="flex items-center gap-1.5 bg-yellow-500/10 text-yellow-600 px-3 py-1 rounded-lg border border-yellow-500/20">
-                      <Coins className="w-4 h-4" />
-                      {gold} Gold
+                  <span className="text-[10px] text-primary font-mono font-bold uppercase tracking-wider leading-none mt-0.5">{title}</span>
+                  <span className="text-[11px] text-text-muted font-bold">Level {level} Coder</span>
+                  
+                  {/* Compact minimal status text widgets */}
+                  <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-text-muted">
+                    <span className="flex items-center gap-1" title="Platform Gold">
+                      <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                      <span>{gold} gold</span>
                     </span>
-                    <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 px-3 py-1 rounded-lg border border-amber-500/20">
-                      <Flame className="w-4 h-4" />
-                      {streak} D Streak
+                    <span className="flex items-center gap-1" title="Daily Streak">
+                      <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500/10" />
+                      <span>{streak} days</span>
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Progress Slider (XP) */}
-              <div className="flex flex-col gap-2 font-mono text-xs border-t border-border-card/50 pt-5 mt-3">
+              <div className="flex flex-col gap-2 text-[11px] border-t border-border-card/50 pt-4 mt-1">
                 <div className="flex justify-between font-bold text-text-main">
-                  <span>EXP to Level {level + 1}</span>
-                  <span className="text-text-muted">{xp}/{getXpForNextLevel(level)} XP</span>
+                  <span>XP to Level {level + 1}</span>
+                  <span className="text-text-muted font-mono">{xp}/{getXpForNextLevel(level)} XP</span>
                 </div>
-                <div className="w-full h-4.5 bg-bg-base rounded-full overflow-hidden border border-border-card p-[2px]">
+                <div className="w-full h-1 bg-hover rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-primary to-accent-secondary rounded-full transition-all duration-500 shadow-[0_0_12px_var(--primary)]"
+                    className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, Math.floor((xp / getXpForNextLevel(level)) * 100))}%` }}
                   />
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Customization Tabs Card */}
-            <div className="bg-bg-card border border-border-card rounded-xl p-5 flex flex-col gap-5 glow-border">
+            <Card className="flex flex-col gap-4">
               
               {/* Tab headers */}
-              <div className="flex border-b border-border-card">
+              <div className="flex border-b border-border-card/50">
                 <button
                   onClick={() => setActiveTab('avatar')}
-                  className={`flex-1 pb-3.5 text-sm font-mono font-black cursor-pointer transition-colors border-b-2 ${activeTab === 'avatar' ? 'text-primary border-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
+                  className={`flex-1 pb-2.5 text-xs font-bold cursor-pointer transition-colors border-b-2 ${activeTab === 'avatar' ? 'text-primary border-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
                 >
                   🎭 Select Avatar
                 </button>
                 <button
                   onClick={() => setActiveTab('title')}
-                  className={`flex-1 pb-3.5 text-sm font-mono font-black cursor-pointer transition-colors border-b-2 ${activeTab === 'title' ? 'text-primary border-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
+                  className={`flex-1 pb-2.5 text-xs font-bold cursor-pointer transition-colors border-b-2 ${activeTab === 'title' ? 'text-primary border-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
                 >
                   🏅 Equip Title
                 </button>
@@ -296,7 +294,7 @@ export default function ProfilePage() {
               {/* Tab Contents */}
               <div className="mt-1">
                 {activeTab === 'avatar' && (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
                     {AVATAR_OPTIONS.map((opt) => {
                       const isEquipped = avatar === opt.id;
                       const levelReq = opt.id === 'sherlock' ? 1 : opt.id === 'neo' ? 2 : opt.id === 'yoda' ? 3 : 4;
@@ -308,34 +306,34 @@ export default function ProfilePage() {
                           onClick={() => {
                             if (!isLocked) updateAvatar(opt.id);
                           }}
-                          className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
+                          className={`flex items-center gap-3.5 p-3 rounded-lg border transition-all ${
                             isEquipped 
-                              ? 'bg-primary/10 border-primary cursor-pointer'
+                              ? 'bg-hover border-primary/20 cursor-pointer'
                               : isLocked 
                                 ? 'bg-bg-base/30 border-border-card/45 opacity-60 cursor-not-allowed'
-                                : 'bg-bg-base/60 border-border-card hover:border-primary/45 cursor-pointer'
+                                : 'bg-bg-card border-border-card hover:border-border-card/85 cursor-pointer'
                           }`}
                         >
-                          <div className={`w-16 h-16 rounded-full bg-gradient-to-tr ${opt.gradient} p-[2px] flex items-center justify-center text-4xl shadow-md`}>
+                          <div className={`w-12 h-12 rounded-full bg-gradient-to-tr ${opt.gradient} p-[1px] flex items-center justify-center text-2xl shadow-xs shrink-0`}>
                             <div className="w-full h-full rounded-full bg-bg-base flex items-center justify-center">
-                              {isLocked ? <Lock className="w-5 h-5 text-text-muted" /> : opt.emoji}
+                              {isLocked ? <Lock className="w-4 h-4 text-text-muted" /> : opt.emoji}
                             </div>
                           </div>
 
-                          <div className="flex-1 flex flex-col leading-tight">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-extrabold text-text-main">{opt.name}</span>
+                          <div className="flex-1 flex flex-col leading-tight min-w-0">
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="text-xs font-bold text-text-main truncate">{opt.name}</span>
                               {isLocked ? (
-                                <span className="text-[10px] font-mono font-black bg-neutral-900 border border-border-card px-2 py-0.5 rounded text-red-400">
-                                  Unlocks at Lvl {levelReq}
+                                <span className="text-[9px] font-mono font-bold bg-bg-base border border-border-card px-1.5 py-0.5 rounded text-red-500">
+                                  Lvl {levelReq}
                                 </span>
                               ) : isEquipped ? (
-                                <span className="text-[10px] font-mono font-black bg-primary text-black px-2 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                                  <Check className="w-3.5 h-3.5" /> Equipped
+                                <span className="text-[9px] font-mono font-bold text-primary flex items-center gap-0.5">
+                                  <Check className="w-3 h-3" /> Equipped
                                 </span>
                               ) : null}
                             </div>
-                            <p className="text-xs text-text-muted mt-1.5 leading-relaxed">{opt.desc}</p>
+                            <p className="text-[10px] text-text-muted mt-1 leading-relaxed line-clamp-2">{opt.desc}</p>
                           </div>
                         </div>
                       );
@@ -344,7 +342,7 @@ export default function ProfilePage() {
                 )}
 
                 {activeTab === 'title' && (
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {TITLES_CONFIG.map((cfg) => {
                       const isEquipped = title === cfg.name;
                       const isUnlocked = level >= cfg.reqLevel;
@@ -355,32 +353,36 @@ export default function ProfilePage() {
                           onClick={() => {
                             if (isUnlocked) handleEquipTitle(cfg.name);
                           }}
-                          className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
                             isEquipped
-                              ? 'bg-primary/10 border-primary cursor-pointer'
+                              ? 'bg-hover border-primary/20 cursor-pointer'
                               : isUnlocked
-                                ? 'bg-bg-base/60 border-border-card hover:border-primary/45 cursor-pointer'
+                                ? 'bg-bg-card border-border-card hover:border-border-card/85 cursor-pointer'
                                 : 'bg-bg-base/30 border-border-card/45 opacity-60 cursor-not-allowed'
                           }`}
                         >
-                          <div className="flex items-center gap-3.5">
-                            <span className="text-xl">{cfg.icon}</span>
-                            <span className="text-sm font-extrabold text-text-main">{cfg.name}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base">{cfg.icon}</span>
+                            <span className="text-xs font-bold text-text-main">{cfg.name}</span>
                           </div>
 
                           {isUnlocked ? (
                             isEquipped ? (
-                              <span className="text-[10px] font-mono font-black bg-primary text-black px-3 py-1 rounded flex items-center gap-0.5 shadow-sm">
-                                <Check className="w-3.5 h-3.5" /> Equipped
+                              <span className="text-[9px] font-mono font-bold text-primary flex items-center gap-0.5">
+                                <Check className="w-3 h-3" /> Equipped
                               </span>
                             ) : (
-                              <button className="text-[10px] font-mono font-black bg-neutral-800 text-text-muted hover:text-text-main px-3 py-1 rounded border border-border-card cursor-pointer">
+                              <Button 
+                                variant="secondary" 
+                                size="sm"
+                                className="h-6 px-2.5 text-[10px]"
+                              >
                                 Equip
-                              </button>
+                              </Button>
                             )
                           ) : (
-                            <span className="text-[10px] font-mono font-black bg-neutral-900 border border-border-card px-3 py-1 rounded text-text-muted flex items-center gap-1">
-                              <Lock className="w-3.5 h-3.5" /> Lvl {cfg.reqLevel}
+                            <span className="text-[9px] font-mono font-bold text-text-muted flex items-center gap-1">
+                              <Lock className="w-3 h-3" /> Lvl {cfg.reqLevel}
                             </span>
                           )}
                         </div>
@@ -389,21 +391,21 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Companion Developer Pet widget */}
             <CompanionPet />
           </div>
 
           {/* Right Column (7/12) - Skill Radar, Trophies & victories history */}
-          <div className="lg:col-span-7 flex flex-col gap-8">
+          <div className="lg:col-span-7 flex flex-col gap-6">
             
             {/* Hexagonal Radar Chart & Attribute Sheet */}
-            <div className="bg-bg-card border border-border-card rounded-xl p-6 flex flex-col md:flex-row gap-8 items-center justify-between glow-border">
+            <Card className="flex flex-col md:flex-row gap-6 items-center justify-between">
               
-              {/* Radar Chart Visual */}
-              <div className="relative w-[280px] h-[280px] flex items-center justify-center flex-shrink-0 bg-bg-base/40 rounded-full border border-border-card/50 p-2">
-                <svg width="280" height="280" viewBox="0 0 280 280" className="w-full h-full overflow-visible">
+              {/* Radar Chart Visual (Subtle outlines, flat styling) */}
+              <div className="relative w-[240px] h-[240px] flex items-center justify-center flex-shrink-0 bg-bg-base/40 rounded-full border border-border-card/30 p-2">
+                <svg width="240" height="240" viewBox="0 0 280 280" className="w-full h-full overflow-visible">
                   {/* Concentric grid lines (Concentric Hexagons) */}
                   {[0.2, 0.4, 0.6, 0.8, 1.0].map((scale) => {
                     const radius = RADAR_MAX_R * scale;
@@ -418,9 +420,9 @@ export default function ProfilePage() {
                         key={scale}
                         points={points}
                         fill="none"
-                        stroke="var(--border-card)"
-                        strokeWidth="1.2"
-                        className="opacity-70"
+                        stroke="var(--color-border-card)"
+                        strokeWidth="1"
+                        className="opacity-60"
                       />
                     );
                   })}
@@ -436,16 +438,16 @@ export default function ProfilePage() {
                         y1={RADAR_CENTER}
                         x2={x2}
                         y2={y2}
-                        stroke="var(--border-card)"
-                        strokeWidth="1.2"
-                        className="opacity-60"
+                        stroke="var(--color-border-card)"
+                        strokeWidth="1"
+                        className="opacity-55"
                       />
                     );
                   })}
 
                   {/* Labels on vertices */}
                   {ANGLES.map((angle, idx) => {
-                    const offset = 22;
+                    const offset = 18;
                     const x = RADAR_CENTER + (RADAR_MAX_R + offset) * Math.cos(angle);
                     const y = RADAR_CENTER + (RADAR_MAX_R + offset) * Math.sin(angle);
                     const isLeft = Math.cos(angle) < -0.1;
@@ -455,28 +457,27 @@ export default function ProfilePage() {
                       <text
                         key={idx}
                         x={x}
-                        y={y + 4}
-                        fill="var(--text-muted)"
-                        fontSize="10"
-                        fontWeight="bold"
+                        y={y + 3}
+                        fill="var(--color-text-muted)"
+                        fontSize="9"
+                        fontWeight="semibold"
                         fontFamily="inherit"
                         textAnchor={isLeft ? 'end' : isRight ? 'start' : 'middle'}
-                        className="select-none text-[10px]"
+                        className="select-none text-[9px]"
                       >
                         {ATTRIBUTE_NAMES[idx]}
                       </text>
                     );
                   })}
 
-                  {/* The User Skill Area Polygon */}
+                  {/* The User Skill Area Polygon (No glow filter, clean stroke) */}
                   <polygon
                     points={radarPointsString}
-                    fill="var(--primary)"
-                    fillOpacity="0.18"
-                    stroke="var(--primary)"
-                    strokeWidth="3.5"
+                    fill="var(--color-primary)"
+                    fillOpacity="0.12"
+                    stroke="var(--color-primary)"
+                    strokeWidth="2.5"
                     className="transition-all duration-700 ease-out"
-                    style={{ filter: 'drop-shadow(0 0 6px var(--primary))' }}
                   />
 
                   {/* Dots at vertices of user stats */}
@@ -485,10 +486,10 @@ export default function ProfilePage() {
                       key={i}
                       cx={p.x}
                       cy={p.y}
-                      r="5.5"
-                      fill="var(--accent-secondary)"
-                      stroke="#fff"
-                      strokeWidth="1.5"
+                      r="4"
+                      fill="var(--color-accent-secondary)"
+                      stroke="var(--color-bg-card)"
+                      strokeWidth="1"
                       className="transition-all duration-700 ease-out"
                     />
                   ))}
@@ -496,31 +497,31 @@ export default function ProfilePage() {
               </div>
 
               {/* Attributes Sheet text list */}
-              <div className="flex-1 flex flex-col gap-4 w-full">
-                <div className="flex items-center gap-2 border-b border-border-card pb-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main">
+              <div className="flex-1 flex flex-col gap-3.5 w-full">
+                <div className="flex items-center gap-2 border-b border-border-card/50 pb-2">
+                  <TrendingUp className="w-4 h-4 text-text-muted" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main">
                     My Statistics
                   </h3>
                 </div>
 
-                <div className="flex flex-col gap-3 font-mono text-xs">
+                <div className="flex flex-col gap-2.5 font-mono text-[10px]">
                   {ATTRIBUTE_NAMES.map((name, idx) => {
                     const value = attributes[idx];
                     return (
-                      <div key={name} className="flex flex-col gap-1.5">
-                        <div className="flex justify-between text-xs font-bold">
-                          <span className="text-text-muted flex items-center gap-2">
-                            <span className="text-[11px] w-5 h-5 flex items-center justify-center bg-bg-base/80 border border-border-card rounded font-mono text-accent-secondary">
+                      <div key={name} className="flex flex-col gap-1">
+                        <div className="flex justify-between font-semibold">
+                          <span className="text-text-muted flex items-center gap-1.5">
+                            <span className="text-[9px] w-4.5 h-4.5 flex items-center justify-center bg-hover border border-border-card/35 rounded font-mono text-accent-secondary">
                               {idx + 1}
                             </span>
                             {name}
                           </span>
-                          <span className="text-text-main font-extrabold">{value} / 100</span>
+                          <span className="text-text-main font-bold">{value}/100</span>
                         </div>
-                        <div className="w-full h-2.5 bg-bg-base rounded-full overflow-hidden border border-border-card/30 p-[1px]">
+                        <div className="w-full h-1 bg-hover rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-accent-secondary rounded-full transition-all duration-700 shadow-[0_0_8px_var(--accent-secondary)]"
+                            className="h-full bg-accent-secondary rounded-full transition-all duration-700"
                             style={{ width: `${value}%` }}
                           />
                         </div>
@@ -529,45 +530,44 @@ export default function ProfilePage() {
                   })}
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Achievement Trophies Cabinet */}
-            <div className="bg-bg-card border border-border-card rounded-xl p-6 flex flex-col gap-5 glow-border">
-              <div className="flex items-center justify-between border-b border-border-card pb-3">
+            <Card className="flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-border-card pb-2">
                 <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main">
+                  <Award className="w-4.5 h-4.5 text-text-muted" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main">
                     Trophies & Badges
                   </h3>
                 </div>
-                <span className="text-xs font-mono text-text-muted font-bold">
-                  {unlockedAchievements.length} / {ACHIEVEMENTS_LIST.length} Unlocked
+                <span className="text-[10px] font-mono text-text-muted font-bold">
+                  {unlockedAchievements.length} / {ACHIEVEMENTS_LIST.length} unlocked
                 </span>
               </div>
 
               {/* Cabinet Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {ACHIEVEMENTS_LIST.map((ach) => {
                   const isUnlocked = unlockedAchievements.includes(ach.id);
 
                   return (
                     <div
                       key={ach.id}
-                      className={`relative p-4 rounded-lg border-2 flex flex-col items-center text-center gap-3 group transition-all duration-300 ${
+                      className={`relative p-3 rounded-lg border flex flex-col items-center text-center gap-2.5 transition-all duration-200 ${
                         isUnlocked
-                          ? 'bg-bg-base/60 border-primary/20 hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_15px_var(--primary)]'
-                          : 'bg-bg-base/20 border-border-card/40 opacity-50 select-none'
+                          ? 'bg-bg-card border-border-card hover:border-primary/20 cursor-pointer hover:-translate-y-0.5'
+                          : 'bg-bg-card border-border-card/35 opacity-45 select-none'
                       }`}
                       title={ach.desc}
                     >
-                      {/* Trophy Medal Icon */}
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl transition-transform duration-500 ${isUnlocked ? 'bg-primary/10 group-hover:rotate-12 group-hover:scale-105 shadow-sm' : 'bg-neutral-900'}`}>
-                        {isUnlocked ? ach.emoji : <Lock className="w-5 h-5 text-text-muted" />}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-transform duration-300 ${isUnlocked ? 'bg-hover' : 'bg-bg-base border border-border-card/20'}`}>
+                        {isUnlocked ? ach.emoji : <Lock className="w-4 h-4 text-text-muted/65" />}
                       </div>
 
-                      <div className="flex flex-col gap-1 leading-none">
-                        <span className="text-xs font-extrabold text-text-main truncate max-w-[120px]">{ach.title}</span>
-                        <span className="text-[10px] text-text-muted line-clamp-2 mt-1 leading-snug h-8">
+                      <div className="flex flex-col gap-0.5 leading-none">
+                        <span className="text-[10.5px] font-bold text-text-main truncate max-w-[120px]">{ach.title}</span>
+                        <span className="text-[9px] text-text-muted line-clamp-2 mt-1 leading-snug h-6">
                           {ach.desc}
                         </span>
                       </div>
@@ -575,23 +575,23 @@ export default function ProfilePage() {
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Daily Activity Heatmap calendar */}
-            <div className="bg-bg-card rounded-xl border border-border-card p-6 flex flex-col gap-4 glow-border">
-              <div className="flex items-center justify-between text-xs font-semibold border-b border-border-card pb-3">
-                <div className="flex items-center gap-2 text-text-main text-sm font-bold">
-                  <Calendar className="w-4.5 h-4.5 text-primary" />
+            <Card className="flex flex-col gap-3">
+              <div className="flex items-center justify-between text-xs font-semibold border-b border-border-card pb-2">
+                <div className="flex items-center gap-1.5 text-text-main text-xs font-bold">
+                  <Calendar className="w-4 h-4 text-text-muted" />
                   <span>Daily Activity Heatmap</span>
                 </div>
-                <span className="text-[10px] font-mono text-text-muted font-bold">Grid</span>
+                <span className="text-[9px] font-mono text-text-muted font-bold">Grid</span>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] font-mono font-bold text-text-muted/65">
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[9px] font-mono font-bold text-text-muted/65 select-none">
                 <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 text-center font-mono text-xs">
+              <div className="grid grid-cols-7 gap-1.5 text-center font-mono text-xs select-none">
                 {calendarDays.map((day, idx) => {
                   if (day === null) return <div key={idx} />;
                   
@@ -601,9 +601,9 @@ export default function ProfilePage() {
                   return (
                     <div 
                       key={idx}
-                      className={`relative aspect-square flex items-center justify-center rounded-full text-xs font-black ${
+                      className={`relative aspect-square flex items-center justify-center rounded-full text-xs font-bold ${
                         isToday 
-                          ? 'bg-primary text-white font-bold ring-4 ring-primary/20 shadow-lg shadow-primary/20' 
+                          ? 'bg-primary text-white font-bold ring-2 ring-primary/20' 
                           : isPast
                             ? 'text-text-main bg-primary/10 border border-primary/20' 
                             : 'text-text-muted/40 bg-bg-base/30'
@@ -614,20 +614,20 @@ export default function ProfilePage() {
                       {isToday && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                         </span>
                       )}
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Victory History Logs */}
-            <div className="bg-bg-card border border-border-card rounded-xl p-6 flex flex-col gap-5 glow-border">
-              <div className="flex items-center gap-2 border-b border-border-card pb-3">
-                <Calendar className="w-5 h-5 text-primary animate-pulse" />
-                <h3 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main">
+            <Card className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-border-card pb-2">
+                <Calendar className="w-4.5 h-4.5 text-text-muted" />
+                <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main">
                   Recent Accomplishments
                 </h3>
               </div>
@@ -638,22 +638,22 @@ export default function ProfilePage() {
                   No solved questions history found. Solve a challenge to start!
                 </p>
               ) : (
-                <div className="flex flex-col gap-4 font-mono text-xs relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-[2px] before:bg-border-card">
+                <div className="flex flex-col gap-3 font-sans text-xs relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-[1px] before:bg-border-card/65">
                   {solvedProblems.map((prob) => {
                     return (
-                      <div key={prob.id} className="flex gap-5 items-start relative z-10">
-                        <div className="w-8.5 h-8.5 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.25)]">
-                          <ShieldCheck className="w-4.5 h-4.5 fill-emerald-500/10" />
+                      <div key={prob.id} className="flex gap-4 items-start relative z-10">
+                        <div className="w-6 h-6 rounded-full bg-hover border border-border-card/50 text-text-main flex items-center justify-center flex-shrink-0 text-[10px] shadow-xs">
+                          ✓
                         </div>
-                        <div className="flex flex-col gap-1.5 bg-bg-base/50 p-3.5 rounded-lg border border-border-card flex-1">
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-emerald-500 uppercase tracking-wider">CHALLENGE SOLVED</span>
-                            <span className="text-text-muted">July 9, 2026</span>
+                        <div className="flex flex-col gap-1 bg-hover/40 p-3 rounded-lg border border-border-card/45 flex-1">
+                          <div className="flex justify-between items-center text-[9px] font-bold">
+                            <span className="text-primary font-mono">CHALLENGE SOLVED</span>
+                            <span className="text-text-muted font-mono">July 9, 2026</span>
                           </div>
-                          <span className="text-sm font-black text-text-main mt-0.5">
+                          <span className="text-xs font-bold text-text-main mt-0.5">
                             {prob.title}
                           </span>
-                          <p className="text-xs text-text-muted leading-relaxed mt-1">
+                          <p className="text-[10px] text-text-muted leading-relaxed mt-0.5 font-semibold">
                             Earned +{prob.difficulty === 'Easy' ? 100 : prob.difficulty === 'Medium' ? 200 : 400} XP and +{prob.difficulty === 'Easy' ? 15 : prob.difficulty === 'Medium' ? 30 : 60} Gold.
                           </p>
                         </div>
@@ -662,33 +662,11 @@ export default function ProfilePage() {
                   })}
                 </div>
               )}
-            </div>
+            </Card>
 
           </div>
         </div>
 
-      </main>
-    </div>
-  );
-}
-
-// Inline component to satisfy imports cleanly
-function ShieldCheck(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
+    </AppLayout>
   );
 }

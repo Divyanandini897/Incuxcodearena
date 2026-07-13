@@ -479,20 +479,20 @@ export default function Workspace({
                   </AnimatePresence>
 
                   {problem.description === "Problem details coming soon!" ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 bg-[#121212]/30 border border-[#1e1e1e] rounded-2xl">
-                      <AlertCircle className="w-12 h-12 text-[#ffb800] mb-4 opacity-80" />
-                      <h3 className="text-sm font-semibold text-[#f5f5f5] mb-2">Problem Details Coming Soon</h3>
-                      <p className="text-xs text-[#707070] max-w-xs leading-relaxed">
+                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 bg-elevated/40 border border-border-card rounded-2xl">
+                      <AlertCircle className="w-12 h-12 text-[var(--color-amber)] mb-4 opacity-80" />
+                      <h3 className="text-sm font-semibold text-text-main mb-2">Problem Details Coming Soon</h3>
+                      <p className="text-xs text-text-muted max-w-xs leading-relaxed">
                         We are currently preparing the description, test cases, and community editorials for this problem. You can still write and edit code in the IDE panel!
                       </p>
                     </div>
                   ) : (
                     <>
                       {/* Description Markdown Render Box */}
-                      <div className="text-xs text-[#d0d0d0] leading-relaxed flex flex-col gap-4">
+                      <div className="text-xs text-text-main leading-relaxed flex flex-col gap-4">
                         {problem.description.split('\n\n').map((paragraph, i) => {
                           // Simple inline monospace parsing for prompt text `s` or indices
-                          const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-[#1e1e1e] px-1.5 py-0.5 rounded text-emerald-400 text-[10px]">$1</code>');
+                          const processedText = paragraph.replace(/`([^`]+)`/g, '<code class="font-mono bg-elevated px-1.5 py-0.5 rounded text-primary text-[10px]">$1</code>');
                           return (
                             <p 
                               key={i} 
@@ -504,23 +504,23 @@ export default function Workspace({
 
                       {/* Examples Execution Blocks */}
                       <div className="flex flex-col gap-4">
-                        <p className="text-xs font-mono text-[#a0a0a0] uppercase tracking-wider">Example Executions</p>
+                        <p className="text-xs font-mono text-text-muted uppercase tracking-wider">Example Executions</p>
                         {problem.examples.map((ex, idx) => (
                           <div 
                             key={idx}
-                            className="bg-[#121212] border border-[#1e1e1e] rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
+                            className="bg-elevated/35 border border-border-card rounded-xl p-4 flex flex-col gap-2 text-xs font-mono"
                           >
-                            <p className="font-semibold text-emerald-400">Example {idx + 1}:</p>
-                            <div className="grid grid-cols-1 gap-1 text-[#b0b0b0] pl-2 border-l-2 border-[#2e2e2e]">
+                            <p className="font-semibold text-primary">Example {idx + 1}:</p>
+                            <div className="grid grid-cols-1 gap-1 text-text-main pl-2 border-l-2 border-border-card">
                               <div>
-                                <span className="text-[#707070]">Input:</span> {ex.input}
+                                <span className="text-text-muted">Input:</span> {ex.input}
                               </div>
                               <div>
-                                <span className="text-[#707070]">Output:</span> {ex.output}
+                                <span className="text-text-muted">Output:</span> {ex.output}
                               </div>
                               {ex.explanation && (
                                 <div className="mt-1 leading-relaxed">
-                                  <span className="text-[#707070]">Explanation:</span> {ex.explanation}
+                                  <span className="text-text-muted">Explanation:</span> {ex.explanation}
                                 </div>
                               )}
                             </div>

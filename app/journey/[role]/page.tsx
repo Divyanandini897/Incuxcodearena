@@ -6,10 +6,12 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navigation from '@/src/components/Navigation';
+import AppLayout from '@/src/components/AppLayout';
 import { ArrowLeft, Check, BookOpen, Terminal, Code, Cpu } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import Card from '@/src/components/ui/Card';
+import Button from '@/src/components/ui/Button';
 
 interface Checkpoint {
   id: string;
@@ -61,116 +63,115 @@ const ROADMAPS_DATA: Record<string, RoleData> = {
   },
   ml: {
     title: 'ML Engineer',
-    description: 'Learn to manipulate large datasets, train classical forecasting structures, and design deep convolutional neural networks.',
+    description: 'Master data ingestion pipelines, numerical analytics, classical algorithm models, and deep neural net tuning.',
     startLanguage: 'Python',
-    foundations: ['NumPy arrays & Linear algebra', 'Pandas data frame manipulation', 'Scikit-Learn modeling', 'PyTorch deep networks'],
+    foundations: ['Vector algebra', 'Differential calculus', 'Pandas pipelines', 'TensorFlow/PyTorch arrays'],
     checkpoints: [
       {
         id: 'ml-cp1',
-        title: 'Python core & Vectorized Math',
-        desc: 'Learn python list comprehensions, matrix dot products, and multi-dimensional grid arrays.',
-        topics: ['NumPy matrices', 'Vectorization', 'Eigenvalues & Gradients', 'Data files parsing']
+        title: 'Python Numerical Foundations',
+        desc: 'Learn numpy matrix manipulations, vector broadcasting, and statistical outliers detection.',
+        topics: ['Matrix multiplication', 'Standard deviation', 'Array slicing', 'CSV/JSON Dataframes']
       },
       {
         id: 'ml-cp2',
-        title: 'Data Cleaning & Wrangling',
-        desc: 'Clean noisy databases, handle missing values, merge data sets, and extract key features.',
-        topics: ['Pandas pivots', 'Outlier filtering', 'SQL JOIN analytics', 'Feature engineering']
+        title: 'Classical Machine Learning',
+        desc: 'Implement linear regression, decision trees, support vector machines, and evaluate cost metrics.',
+        topics: ['Gradient descent', 'Overfitting', 'Cross validation', 'Precision & Recall']
       },
       {
         id: 'ml-cp3',
-        title: 'Classical Predictor Training',
-        desc: 'Train decision tree classifiers, support vector machines, and linear/logistic predictors.',
-        topics: ['Scikit-learn modeling', 'Cross validation', 'F1-score metrics', 'Loss function optimizers']
+        title: 'Neural Networks & Layers',
+        desc: 'Understand feed-forward nets, backpropagation mechanics, activation bounds, and weights initialization.',
+        topics: ['Backpropagation', 'Sigmoid/ReLU', 'SGD optimizers', 'Cross entropy loss']
       },
       {
         id: 'ml-cp4',
-        title: 'Deep Learning & Neural Networks',
-        desc: 'Build convolutional neural grids, tune backpropagation weights, and deploy Transformer models.',
-        topics: ['PyTorch tensors', 'Backpropagation', 'Activation functions', 'LLM fine-tuning']
+        title: 'Deep Learning Architectures',
+        desc: 'Tune convolution filters, sequence recurrent gates, and transformer self-attention vectors.',
+        topics: ['CNN filters', 'LSTM gates', 'Self-attention matrices', 'Fine-tuning models']
       }
     ]
   },
   ai: {
     title: 'AI Analyst',
-    description: 'Learn prompt engineering structures, vector databases index setups, semantic search pipelines, and multi-agent workflows.',
-    startLanguage: 'Python',
-    foundations: ['OpenAI / Gemini SDKs', 'Vector database index searches', 'Retrieval Augmented Generation (RAG)', 'Multi-agent frameworks'],
+    description: 'Learn vector search patterns, prompt optimizations, context retrieval databases, and cognitive agent behaviors.',
+    startLanguage: 'Python or JavaScript',
+    foundations: ['API integrations', 'Semantic embeddings', 'Vector databases', 'Agent tool calls'],
     checkpoints: [
       {
         id: 'ai-cp1',
-        title: 'Python Scripting & API Requests',
-        desc: 'Learn to request model completions, extract key fields, and process JSON outputs securely.',
-        topics: ['HTTP fetch SDKs', 'JSON schema bounds', 'Exception handling', 'Text sanitization']
+        title: 'API Integrations & Prompting',
+        desc: 'Design clean prompt instructions, system boundaries, and handle JSON parsing results.',
+        topics: ['Few-shot prompting', 'System messages', 'JSON output schemas', 'Token limit pricing']
       },
       {
         id: 'ai-cp2',
-        title: 'Semantic Vectors & Indexes',
-        desc: 'Understand text embedding grids, cosine similarity computations, and vector store configurations.',
-        topics: ['Text embeddings', 'Cosine similarities', 'Pinecone / Milvus setups', 'Metadata filtering']
+        title: 'Semantic Vector Databases',
+        desc: 'Convert text queries to vectors, index semantic spaces, and retrieve context vectors.',
+        topics: ['Cosine similarity', 'Vector indexes', 'Metadata filters', 'Embedding models']
       },
       {
         id: 'ai-cp3',
-        title: 'Context Retrieval & RAG',
-        desc: 'Implement text chunking parameters, augment LLM context prompts, and build chat histories.',
-        topics: ['Token counting', 'Text chunkers', 'System prompt injection', 'Retrieval parameters']
+        title: 'RAG Retrieval Systems',
+        desc: 'Build search flows combining keyword retrieval with semantic lookups and response generation.',
+        topics: ['Query rewrite', 'Context chunking', 'Reranking tools', 'Hallucinations check']
       },
       {
         id: 'ai-cp4',
-        title: 'Multi-Agent Frameworks',
-        desc: 'Design stateful tool-calling graphs, agent cycles, planning parameters, and token cost reductions.',
-        topics: ['LangChain / LangGraph', 'Tool definitions', 'Cost optimizations', 'System prompt constraints']
+        title: 'Autonomous Agent Frameworks',
+        desc: 'Implement tool execution loops, scratchpad memory states, and multi-agent group coordination.',
+        topics: ['ReAct prompt pattern', 'Tool bindings', 'State recovery', 'Agent conversations']
       }
     ]
   },
   data: {
     title: 'Data Analyst',
-    description: 'Master advanced SQL analytics, pandas transformations, data cleaning pipelines, and interactive BI dashboards.',
+    description: 'Master analytical SQL queries, data warehousing pipelines, visualization models, and statistical significance.',
     startLanguage: 'SQL & Python',
-    foundations: ['Advanced SQL Joins & Windowing', 'Pandas pivot tables & CTEs', 'Statistical hypothesis distributions', 'BI dashboard visuals'],
+    foundations: ['Relational databases', 'Data normalizations', 'Descriptive statistics', 'Visual analytics'],
     checkpoints: [
       {
-        id: 'da-cp1',
-        title: 'Advanced SQL Analytics',
-        desc: 'Write high-performance window partitions, CTEs, self-joins, and database indexes.',
-        topics: ['Window functions', 'CTEs', 'Query optimization', 'Aggregations']
+        id: 'data-cp1',
+        title: 'Advanced SQL Query Engines',
+        desc: 'Master complex window partition functions, CTE layers, hierarchical queries, and index lookups.',
+        topics: ['Window functions', 'Common Table Expressions', 'Inner/Outer joins', 'Index optimizations']
       },
       {
-        id: 'da-cp2',
-        title: 'Pandas Data Cleansing',
-        desc: 'Remove duplicate records, normalize columns, pivot summary matrices, and compute rolling stats.',
-        topics: ['DataFrame groupbys', 'Outlier filtering', 'Regular expressions', 'Missing values imputation']
+        id: 'data-cp2',
+        title: 'Data Processing Pipelines',
+        desc: 'Clean transactional databases, resolve missing fields, normalise tables, and merge datasets.',
+        topics: ['Null handling', 'Data deduplications', 'Outer bounds', 'Grouping aggregations']
       },
       {
-        id: 'da-cp3',
-        title: 'Statistics & A/B Testing',
-        desc: 'Evaluate statistical distributions, run hypothesis tests, trace linear regressions, and calculate variances.',
-        topics: ['P-values', 'Confidence intervals', 'A/B testing partitions', 'Correlation metrics']
+        id: 'data-cp3',
+        title: 'Descriptive Analytics & Stats',
+        desc: 'Master hypothesis validations, correlation coefficient models, and probability distributions.',
+        topics: ['Z-score calculation', 'T-tests validation', 'A/B testing ratios', 'Normal curves']
       },
       {
-        id: 'da-cp4',
-        title: 'Interactive BI Dashboarding',
-        desc: 'Construct clean visual reporting summaries, set up data filters, and design presentation metrics.',
-        topics: ['Tableau / PowerBI queries', 'Chart selection', 'Data aggregation', 'KPI design']
+        id: 'data-cp4',
+        title: 'Data Visualization & Reporting',
+        desc: 'Build dashboard reporting schemas, coordinate charts visual hierarchy, and export clean metrics.',
+        topics: ['Categorical charts', 'KPI scorecards', 'Scatter correlation plots', 'PDF/CSV exports']
       }
     ]
   }
 };
 
-export default function JourneyPage() {
+export default function JourneyRolePage() {
   const params = useParams();
-  const role = params.role as string;
-  const data = ROADMAPS_DATA[role];
+  const role = Array.isArray(params?.role) ? params.role[0] : params?.role;
+  const decodedRole = role ? decodeURIComponent(role) : 'system';
+
+  const data = ROADMAPS_DATA[decodedRole] || ROADMAPS_DATA.system;
 
   const [completed, setCompleted] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  const storageKey = useMemo(() => `leetcode_journey_completed_${role}`, [role]);
-
-  // Load state on mount
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem(storageKey);
+    const saved = localStorage.getItem(`roadmap-${decodedRole}-completed`);
     if (saved) {
       try {
         setCompleted(JSON.parse(saved));
@@ -178,27 +179,15 @@ export default function JourneyPage() {
         console.error(e);
       }
     }
-  }, [storageKey]);
+  }, [decodedRole]);
 
-  // Save state on change
   const toggleCheckpoint = (id: string) => {
-    setCompleted((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
-    });
+    const nextCompleted = completed.includes(id)
+      ? completed.filter((c) => c !== id)
+      : [...completed, id];
+    setCompleted(nextCompleted);
+    localStorage.setItem(`roadmap-${decodedRole}-completed`, JSON.stringify(nextCompleted));
   };
-
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-bg-base text-text-main flex flex-col items-center justify-center p-8 font-sans">
-        <h2 className="text-xl font-bold">Role Journey Not Found</h2>
-        <Link href="/" className="mt-4 text-primary hover:underline font-mono text-xs">
-          Return to Dashboard
-        </Link>
-      </div>
-    );
-  }
 
   // Check if checkpoints are completed sequentially
   const line1Filled = mounted && completed.includes(data.checkpoints[0].id);
@@ -206,93 +195,91 @@ export default function JourneyPage() {
   const line3Filled = mounted && line2Filled && completed.includes(data.checkpoints[2].id);
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans pb-16">
-      <Navigation />
-
-      <main className="max-w-4xl mx-auto px-6 mt-8 flex flex-col gap-8">
+    <AppLayout>
+      <div className="max-w-3xl mx-auto flex flex-col gap-6 font-sans">
         
         {/* Back Link */}
         <Link 
           href="/" 
-          className="flex items-center gap-2 text-xs font-mono font-bold text-text-muted hover:text-text-main transition-colors w-fit border border-border-card/50 bg-bg-card px-3 py-1.5 rounded-lg"
+          className="flex items-center gap-1.5 text-xs font-bold text-text-muted hover:text-text-main transition-colors w-fit border border-border-card bg-bg-card px-3 py-1.5 rounded-lg shadow-xs cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Arena</span>
         </Link>
 
         {/* Title Header */}
-        <div className="bg-bg-card border border-border-card rounded-xl p-6 glow-border flex flex-col gap-3 relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-primary/10 text-primary border-l border-b border-primary/20 px-4 py-1.5 rounded-bl-xl font-mono text-[10px] font-bold uppercase tracking-wider">
+        <Card className="flex flex-col gap-2 relative overflow-hidden select-none">
+          <div className="absolute top-0 right-0 bg-primary/10 text-primary border-l border-b border-border-card px-3 py-1 rounded-bl-lg font-mono text-[9px] font-bold uppercase tracking-wider">
             Career Path
           </div>
-          <span className="text-[11px] font-mono font-black uppercase text-primary tracking-wider">Roadmap Journey</span>
-          <h1 className="text-2xl font-black tracking-tight text-text-main">
+          <span className="text-[10px] font-mono font-bold uppercase text-primary tracking-wider">Roadmap Journey</span>
+          <h1 className="text-lg font-bold tracking-tight text-text-main">
             {data.title}
           </h1>
-          <p className="text-sm text-text-muted leading-relaxed font-medium max-w-2xl">
+          <p className="text-xs text-text-muted leading-relaxed font-semibold">
             {data.description}
           </p>
-        </div>
+        </Card>
 
         {/* Starting Requirements Guide Card */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Language Starter */}
-          <div className="bg-bg-card border border-border-card rounded-xl p-5 flex gap-4 items-start glow-border">
-            <div className="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-600 flex items-center justify-center shrink-0">
-              <Code className="w-5 h-5" />
+          <Card className="flex gap-3.5 items-start">
+            <div className="w-8 h-8 rounded-lg bg-hover border border-border-card/45 text-text-muted flex items-center justify-center shrink-0">
+              <Code className="w-4 h-4" />
             </div>
-            <div className="flex flex-col gap-1.5 leading-snug">
-              <span className="text-xs font-mono text-text-muted uppercase tracking-wider font-bold">Start Language</span>
-              <span className="text-base font-black text-text-main">{data.startLanguage}</span>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed font-medium">
+            <div className="flex flex-col gap-1 leading-snug">
+              <span className="text-[9.5px] font-mono text-text-muted uppercase tracking-wider font-bold">Start Language</span>
+              <span className="text-sm font-bold text-text-main">{data.startLanguage}</span>
+              <p className="text-[11px] text-text-muted mt-1 leading-relaxed font-semibold">
                 The recommended syntax environment to begin mastering core libraries and concepts for this role.
               </p>
             </div>
-          </div>
+          </Card>
 
           {/* Core Foundations */}
-          <div className="bg-bg-card border border-border-card rounded-xl p-5 flex gap-4 items-start glow-border">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-              <Cpu className="w-5 h-5" />
+          <Card className="flex gap-3.5 items-start">
+            <div className="w-8 h-8 rounded-lg bg-hover border border-border-card/45 text-text-muted flex items-center justify-center shrink-0">
+              <Cpu className="w-4 h-4" />
             </div>
-            <div className="flex flex-col gap-1.5 leading-snug">
-              <span className="text-xs font-mono text-text-muted uppercase tracking-wider font-bold">Required Foundations</span>
-              <div className="flex flex-wrap gap-1.5 mt-1">
+            <div className="flex flex-col gap-1 leading-snug">
+              <span className="text-[9.5px] font-mono text-text-muted uppercase tracking-wider font-bold">Required Foundations</span>
+              <div className="flex flex-wrap gap-1 mt-1.5">
                 {data.foundations.map((f) => (
-                  <span key={f} className="text-[10px] font-mono bg-bg-base text-text-muted border border-border-card/45 px-2 py-0.5 rounded font-bold">
+                  <span key={f} className="text-[9px] font-mono bg-hover border border-border-card/45 px-1.5 py-0.5 rounded text-text-muted">
                     {f}
                   </span>
                 ))}
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Roadmap Line Graph Checklist */}
-        <div className="bg-bg-card border border-border-card rounded-xl p-8 glow-border flex flex-col gap-6">
-          <h2 className="text-sm font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card pb-3.5">
+        <Card className="flex flex-col gap-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card/50 pb-2">
             Journey Roadmap Graph
           </h2>
 
           {/* Timeline Wrapper */}
-          <div className="flex flex-col relative pl-4 sm:pl-10 mt-2">
+          <div className="flex flex-col relative pl-4 sm:pl-8 mt-1.5 select-none">
             
-            {/* Sequential Connecting Lines (Drawn behind checkpoints) */}
-            <div className="absolute left-[31px] sm:left-[55px] top-6 bottom-6 w-1 flex flex-col justify-between items-center z-0 select-none">
+            {/* Sequential Connecting Lines (Flat styling) */}
+            <div className="absolute left-[23px] sm:left-[39px] top-6 bottom-6 w-0.5 flex flex-col justify-between items-center z-0 select-none">
               {/* Line segment 1 -> 2 */}
-              <div className={`w-full flex-1 transition-colors duration-500 ${line1Filled ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 'bg-transparent border-l-2 border-dashed border-border-card'}`} />
+              <div className={`w-full flex-1 transition-colors duration-500 ${line1Filled ? 'bg-primary' : 'bg-transparent border-l border-dashed border-border-card'}`} />
               
               {/* Node Spacer */}
               <div className="h-10 shrink-0" />
               
               {/* Line segment 2 -> 3 */}
-              <div className={`w-full flex-1 transition-colors duration-500 ${line2Filled ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 'bg-transparent border-l-2 border-dashed border-border-card'}`} />
+              <div className={`w-full flex-1 transition-colors duration-500 ${line2Filled ? 'bg-primary' : 'bg-transparent border-l border-dashed border-border-card'}`} />
               
               {/* Node Spacer */}
               <div className="h-10 shrink-0" />
 
               {/* Line segment 3 -> 4 */}
-              <div className={`w-full flex-1 transition-colors duration-500 ${line3Filled ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 'bg-transparent border-l-2 border-dashed border-border-card'}`} />
+              <div className={`w-full flex-1 transition-colors duration-500 ${line3Filled ? 'bg-primary' : 'bg-transparent border-l border-dashed border-border-card'}`} />
             </div>
 
             {/* Checkpoint Nodes */}
@@ -301,51 +288,49 @@ export default function JourneyPage() {
                 const isLearned = completed.includes(cp.id);
                 
                 return (
-                  <div key={cp.id} className="flex gap-6 items-start">
+                  <div key={cp.id} className="flex gap-4 items-start">
                     
                     {/* Node Circle */}
                     <button 
                       onClick={() => toggleCheckpoint(cp.id)}
-                      className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 border-2 transition-all duration-300 cursor-pointer ${
+                      className={`w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center shrink-0 border transition-all duration-300 cursor-pointer ${
                         isLearned 
-                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/25 scale-105' 
+                          ? 'bg-primary border-primary text-white font-bold' 
                           : 'bg-bg-card border-border-card text-text-muted hover:border-primary/50'
                       }`}
                       title={isLearned ? "Checkpoint completed! Click to toggle" : "Mark checkpoint as completed"}
                     >
-                      {isLearned ? <Check className="w-5 h-5" /> : <span className="font-mono text-xs font-black">{idx + 1}</span>}
+                      {isLearned ? <Check className="w-4 h-4" /> : <span className="font-mono text-[11px] font-bold">{idx + 1}</span>}
                     </button>
 
                     {/* Step Details Card */}
-                    <div className={`flex-1 p-5 rounded-xl border transition-all duration-300 ${
+                    <div className={`flex-1 p-4 rounded-xl border transition-all duration-300 ${
                       isLearned 
-                        ? 'bg-bg-base/30 border-primary/20 shadow-sm' 
-                        : 'bg-bg-base/60 border-border-card hover:border-border-card/85'
+                        ? 'bg-hover border-primary/20' 
+                        : 'bg-bg-card border-border-card hover:border-border-card/85'
                     }`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex flex-col gap-1 leading-snug">
-                          <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider">Checkpoint {idx + 1}</span>
-                          <h3 className="text-base font-black text-text-main">{cp.title}</h3>
+                        <div className="flex flex-col gap-0.5 leading-snug">
+                          <span className="text-[9px] font-mono font-bold text-primary uppercase tracking-wider">Checkpoint {idx + 1}</span>
+                          <h3 className="text-xs font-bold text-text-main">{cp.title}</h3>
                         </div>
-                        <button
+                        <Button
+                          variant={isLearned ? 'secondary' : 'primary'}
+                          size="sm"
                           onClick={() => toggleCheckpoint(cp.id)}
-                          className={`px-4 py-2 rounded-lg text-xs font-mono font-black transition-all cursor-pointer ${
-                            isLearned 
-                              ? 'bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20' 
-                              : 'bg-neutral-800 border border-border-card text-text-muted hover:text-text-main'
-                          }`}
+                          className="h-7 px-3 text-[10px]"
                         >
                           {isLearned ? 'Learned' : 'Mark Learned'}
-                        </button>
+                        </Button>
                       </div>
 
-                      <p className="text-xs text-text-muted leading-relaxed mt-2.5 font-medium">
+                      <p className="text-[11px] text-text-muted leading-relaxed mt-2 font-semibold">
                         {cp.desc}
                       </p>
 
-                      <div className="flex flex-wrap gap-2 mt-4">
+                      <div className="flex flex-wrap gap-1.5 mt-3">
                         {cp.topics.map((t) => (
-                          <span key={t} className="text-[10px] font-mono bg-bg-card text-text-muted border border-border-card/50 px-2 py-0.5 rounded font-bold">
+                          <span key={t} className="text-[9px] font-mono bg-bg-base/70 border border-border-card/50 px-1.5 py-0.5 rounded text-text-muted">
                             {t}
                           </span>
                         ))}
@@ -358,9 +343,8 @@ export default function JourneyPage() {
             </div>
 
           </div>
-        </div>
-
-      </main>
-    </div>
+        </Card>
+      </div>
+    </AppLayout>
   );
 }
