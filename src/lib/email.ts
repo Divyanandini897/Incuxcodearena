@@ -152,6 +152,22 @@ export async function sendOtpEmail(
   email: string,
   otp: string
 ): Promise<{ success: true; previewUrl?: string } | { success: false; error: string }> {
+  if (resend) {
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to: email,
+      subject: 'Your CodeNode verification code',
+      text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
+      html: buildOtpEmailHtml(otp),
+    });
+    if (error) {
+      console.error('[EMAIL] Resend error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[EMAIL] OTP sent via Resend (id:', data?.id, ')');
+    return { success: true };
+  }
+
   try {
     const transporter = await createTransporter();
     const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@codenode.app';
@@ -184,6 +200,21 @@ export async function sendWelcomeEmail(
   email: string,
   name: string
 ): Promise<{ success: true; previewUrl?: string } | { success: false; error: string }> {
+  if (resend) {
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to: email,
+      subject: 'Welcome to CodeNode!',
+      text: `Hi ${name},\n\nYour account has been created successfully. You can now sign in and start solving coding challenges.\n\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`,
+      html: buildWelcomeEmailHtml(name),
+    });
+    if (error) {
+      console.error('[EMAIL] Resend welcome error:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+
   try {
     const transporter = await createTransporter();
     const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@codenode.app';
