@@ -73,6 +73,27 @@ export default function Workspace({
   const [lineNumbers, setLineNumbers] = useState<number[]>([1]);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Synchronize language from URL parameter on initial mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlLang = searchParams.get('lang')?.toLowerCase();
+      if (urlLang) {
+        const langMap: Record<string, string> = {
+          javascript: 'JavaScript',
+          python: 'Python',
+          java: 'Java',
+          cpp: 'C++',
+          go: 'Go',
+        };
+        const mappedLang = langMap[urlLang];
+        if (mappedLang) {
+          setLanguage(mappedLang);
+        }
+      }
+    }
+  }, []);
+
   // Terminal & Execution State
   const [isTerminalExpanded, setIsTerminalExpanded] = useState(true);
   const [activeConsoleTab, setActiveConsoleTab] = useState<'Testcase' | 'Test Result'>('Testcase');

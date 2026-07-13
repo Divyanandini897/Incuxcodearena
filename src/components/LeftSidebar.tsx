@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
+import { useGameState } from '@/src/lib/gameState';
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -34,6 +35,7 @@ export default function LeftSidebar({
   onToggleCollapse 
 }: SidebarProps) {
   const pathname = usePathname();
+  const { userName } = useGameState();
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -139,7 +141,7 @@ export default function LeftSidebar({
               🦊
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-text-main truncate">Sravan Kumar</p>
+              <p className="text-xs font-bold text-text-main truncate">{userName || 'User'}</p>
               <p className="text-[10px] text-text-muted truncate">Premium Student</p>
             </div>
           </div>
