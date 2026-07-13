@@ -1,0 +1,492 @@
+[
+  {
+    "role": "Data Engineer",
+    "description": "Master data pipelines, engineering practices, and analytics infrastructure.",
+    "skills": [
+      {
+        "skill_name": "Python Programming",
+        "levels": [
+          {
+            "level_name": "Basic",
+            "questions": [
+              {
+                "id": "py-b-01",
+                "title": "Fizz Buzz",
+                "description": "Given an integer n, return a string array answer (1-indexed) where:\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: n = 3\nOutput: [\"1\",\"2\",\"Fizz\"]\n```\n\n**Example 2:**\n```\nInput: n = 5\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\"]\n```\n\n**Example 3:**\n```\nInput: n = 15\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\",\"Fizz\",\"7\",\"8\",\"Fizz\",\"Buzz\",\"11\",\"Fizz\",\"13\",\"14\",\"FizzBuzz\"]\n```\n\n\n**Constraints:**\n- `1 <= n <= 104`",
+                "starter_code": "class Solution:\n    def fizzBuzz(self, n: int) -> List[str]:\n        "
+              },
+              {
+                "id": "py-b-02",
+                "title": "Palindrome Number",
+                "description": "Given an integer x, return true if x is a palindrome, and false otherwise.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: x = 121\nOutput: true\nExplanation: 121 reads as 121 from left to right and from right to left.\n```\n\n**Example 2:**\n```\nInput: x = -121\nOutput: false\nExplanation: From left to right, it reads -121. From right to left, it becomes 121-. Therefore it is not a palindrome.\n```\n\n**Example 3:**\n```\nInput: x = 10\nOutput: false\nExplanation: Reads 01 from right to left. Therefore it is not a palindrome.\n```\n\n\n**Constraints:**\n- `-231 <= x <= 231 - 1`",
+                "starter_code": "class Solution:\n    def isPalindrome(self, x: int) -> bool:\n        "
+              },
+              {
+                "id": "py-b-03",
+                "title": "Power of Two",
+                "description": "Given an integer n, return true if it is a power of two. Otherwise, return false.\nAn integer n is a power of two, if there exists an integer x such that n == 2x.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: n = 1\nOutput: true\nExplanation: 20 = 1\n```\n\n**Example 2:**\n```\nInput: n = 16\nOutput: true\nExplanation: 24 = 16\n```\n\n**Example 3:**\n```\nInput: n = 3\nOutput: false\n```\n\n\n**Constraints:**\n- `-231 <= n <= 231 - 1`",
+                "starter_code": "class Solution:\n    def isPowerOfTwo(self, n: int) -> bool:\n        "
+              },
+              {
+                "id": "py-b-04",
+                "title": "Add Digits",
+                "description": "Given an integer num, repeatedly add all its digits until the result has only one digit, and return it.\nExample 1:\nExample 2:\nConstraints:\nFollow up: Could you do it without any loop/recursion in O(1) runtime?\n\n**Example 1:**\n```\nInput: num = 38\nOutput: 2\nExplanation: The process is\n38 --> 3 + 8 --> 11\n11 --> 1 + 1 --> 2 \nSince 2 has only one digit, return it.\n```\n\n**Example 2:**\n```\nInput: num = 0\nOutput: 0\n```\n\n\n**Constraints:**\n- `0 <= num <= 231 - 1`",
+                "starter_code": "class Solution:\n    def addDigits(self, num: int) -> int:\n        "
+              }
+            ]
+          },
+          {
+            "level_name": "Easy",
+            "questions": [
+              {
+                "id": "py-e-01",
+                "title": "Two Sum",
+                "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\nYou can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n```\n\n**Example 2:**\n```\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n```\n\n**Example 3:**\n```\nInput: nums = [3,3], target = 6\nOutput: [0,1]\n```\n\n\n**Constraints:**\n- `2 <= nums.length <= 104`\n- `-109 <= nums[i] <= 109`\n- `-109 <= target <= 109`\n- `Only one valid answer exists.`",
+                "starter_code": "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        "
+              },
+              {
+                "id": "py-e-02",
+                "title": "Valid Parentheses",
+                "description": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.\nAn input string is valid if:\nExample 1:\nExample 2:\nExample 3:\nExample 4:\nExample 5:\n\n**Example 1:**\n```\nInput: s = \"()\"\nOutput: true\n```\n\n**Example 2:**\n```\nInput: s = \"()[]{}\"\nOutput: true\n```\n\n**Example 3:**\n```\nInput: s = \"(]\"\nOutput: false\n```\n\n**Example 4:**\n```\nInput: s = \"([])\"\nOutput: true\n```\n\n**Example 5:**\n```\nInput: s = \"([)]\"\nOutput: false\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 104`\n- `s consists of parentheses only '()[]{}'.`",
+                "starter_code": "class Solution:\n    def isValid(self, s: str) -> bool:\n        "
+              },
+              {
+                "id": "py-e-03",
+                "title": "Single Number",
+                "description": "Given a non-empty array of integers nums, every element appears twice except for one. Find that single one.\nYou must implement a solution with a linear runtime complexity and use only constant extra space.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [2,2,1]\nOutput: 1\n```\n\n**Example 2:**\n```\nInput: nums = [4,1,2,1,2]\nOutput: 4\n```\n\n**Example 3:**\n```\nInput: nums = [1]\nOutput: 1\n```\n\n\n**Constraints:**\n- `1 <= nums.length <= 3 * 104`\n- `-3 * 104 <= nums[i] <= 3 * 104`\n- `Each element in the array appears twice except for one element which appears only once.`",
+                "starter_code": "class Solution:\n    def singleNumber(self, nums: List[int]) -> int:\n        "
+              },
+              {
+                "id": "py-e-04",
+                "title": "Move Zeroes",
+                "description": "Given an integer array nums, move all 0's to the end of it while maintaining the relative order of the non-zero elements.\nNote that you must do this in-place without making a copy of the array.\nExample 1:\n\n**Example 1:**\n```\nInput: nums = [0,1,0,3,12]\nOutput: [1,3,12,0,0]\n```\n\n**Example 2:**\n```\nInput: nums = [0]\nOutput: [0]\n```\n\n\n**Constraints:**\n- `1 <= nums.length <= 104`\n- `-231 <= nums[i] <= 231 - 1`",
+                "starter_code": "class Solution:\n    def moveZeroes(self, nums: List[int]) -> None:\n        \"\"\"\n        Do not return anything, modify nums in-place instead.\n        \"\"\"\n        "
+              }
+            ]
+          },
+          {
+            "level_name": "Medium",
+            "questions": [
+              {
+                "id": "py-m-01",
+                "title": "Add Two Numbers",
+                "description": "You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.\nYou may assume the two numbers do not contain any leading zero, except the number 0 itself.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: l1 = [2,4,3], l2 = [5,6,4]\nOutput: [7,0,8]\nExplanation: 342 + 465 = 807.\n```\n\n**Example 2:**\n```\nInput: l1 = [0], l2 = [0]\nOutput: [0]\n```\n\n**Example 3:**\n```\nInput: l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]\nOutput: [8,9,9,9,0,0,0,1]\n```\n\n\n**Constraints:**\n- `The number of nodes in each linked list is in the range [1, 100].`\n- `0 <= Node.val <= 9`\n- `It is guaranteed that the list represents a number that does not have leading zeros.`",
+                "starter_code": "# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution:\n    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:\n        "
+              },
+              {
+                "id": "py-m-02",
+                "title": "Longest Substring Without Repeating Characters",
+                "description": "Given a string s, find the length of the longest substring without duplicate characters.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"abcabcbb\"\nOutput: 3\nExplanation: The answer is \"abc\", with the length of 3.\n```\n\n**Example 2:**\n```\nInput: s = \"bbbbb\"\nOutput: 1\nExplanation: The answer is \"b\", with the length of 1.\n```\n\n**Example 3:**\n```\nInput: s = \"pwwkew\"\nOutput: 3\nExplanation: The answer is \"wke\", with the length of 3.\nNotice that the answer must be a substring, \"pwke\" is a subsequence and not a substring.\n```\n\n\n**Constraints:**\n- `0 <= s.length <= 5 * 104`\n- `s consists of English letters, digits, symbols and spaces.`",
+                "starter_code": "class Solution:\n    def lengthOfLongestSubstring(self, s: str) -> int:\n        "
+              },
+              {
+                "id": "py-m-03",
+                "title": "3Sum",
+                "description": "Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.\nNotice that the solution set must not contain duplicate triplets.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [-1,0,1,2,-1,-4]\nOutput: [[-1,-1,2],[-1,0,1]]\nExplanation: \nnums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0.\nnums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0.\nnums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0.\nThe distinct triplets are [-1,0,1] and [-1,-1,2].\nNotice that the order of the output and the order of the triplets does not matter.\n```\n\n**Example 2:**\n```\nInput: nums = [0,1,1]\nOutput: []\nExplanation: The only possible triplet does not sum up to 0.\n```\n\n**Example 3:**\n```\nInput: nums = [0,0,0]\nOutput: [[0,0,0]]\nExplanation: The only possible triplet sums up to 0.\n```\n\n\n**Constraints:**\n- `3 <= nums.length <= 3000`\n- `-105 <= nums[i] <= 105`",
+                "starter_code": "class Solution:\n    def threeSum(self, nums: List[int]) -> List[List[int]]:\n        "
+              },
+              {
+                "id": "py-m-04",
+                "title": "Group Anagrams",
+                "description": "Given an array of strings strs, group the anagrams together. You can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]\nExplanation:\n```\n\n**Example 2:**\n```\nInput: strs = [\"\"]\nOutput: [[\"\"]]\n```\n\n**Example 3:**\n```\nInput: strs = [\"a\"]\nOutput: [[\"a\"]]\n```\n\n\n**Constraints:**\n- `1 <= strs.length <= 104`\n- `0 <= strs[i].length <= 100`\n- `strs[i] consists of lowercase English letters.`",
+                "starter_code": "class Solution:\n    def groupAnagrams(self, strs: List[str]) -> List[List[str]]:\n        "
+              }
+            ]
+          },
+          {
+            "level_name": "Hard",
+            "questions": [
+              {
+                "id": "py-h-01",
+                "title": "Median of Two Sorted Arrays",
+                "description": "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.\nThe overall run time complexity should be O(log (m+n)).\nExample 1:\n\n**Example 1:**\n```\nInput: nums1 = [1,3], nums2 = [2]\nOutput: 2.00000\nExplanation: merged array = [1,2,3] and median is 2.\n```\n\n**Example 2:**\n```\nInput: nums1 = [1,2], nums2 = [3,4]\nOutput: 2.50000\nExplanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.\n```\n\n\n**Constraints:**\n- `nums1.length == m`\n- `nums2.length == n`\n- `0 <= m <= 1000`\n- `0 <= n <= 1000`\n- `1 <= m + n <= 2000`\n- `-106 <= nums1[i], nums2[i] <= 106`",
+                "starter_code": "class Solution:\n    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:\n        "
+              },
+              {
+                "id": "py-h-02",
+                "title": "Merge k Sorted Lists",
+                "description": "You are given an array of k linked-lists lists, each linked-list is sorted in ascending order.\nMerge all the linked-lists into one sorted linked-list and return it.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: lists = [[1,4,5],[1,3,4],[2,6]]\nOutput: [1,1,2,3,4,4,5,6]\nExplanation: The linked-lists are:\n[\n  1->4->5,\n  1->3->4,\n  2->6\n]\nmerging them into one sorted linked list:\n1->1->2->3->4->4->5->6\n```\n\n**Example 2:**\n```\nInput: lists = []\nOutput: []\n```\n\n**Example 3:**\n```\nInput: lists = [[]]\nOutput: []\n```\n\n\n**Constraints:**\n- `k == lists.length`\n- `0 <= k <= 104`\n- `0 <= lists[i].length <= 500`\n- `-104 <= lists[i][j] <= 104`\n- `lists[i] is sorted in ascending order.`\n- `The sum of lists[i].length will not exceed 104.`",
+                "starter_code": "# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution:\n    def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:\n        "
+              },
+              {
+                "id": "py-h-03",
+                "title": "Trapping Rain Water",
+                "description": "Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.\nExample 1:\n\n**Example 1:**\n```\nInput: height = [0,1,0,2,1,0,1,3,2,1,2,1]\nOutput: 6\nExplanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped.\n```\n\n**Example 2:**\n```\nInput: height = [4,2,0,3,2,5]\nOutput: 9\n```\n\n\n**Constraints:**\n- `n == height.length`\n- `1 <= n <= 2 * 104`\n- `0 <= height[i] <= 105`",
+                "starter_code": "class Solution:\n    def trap(self, height: List[int]) -> int:\n        "
+              },
+              {
+                "id": "py-h-04",
+                "title": "Minimum Window Substring",
+                "description": "Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return the empty string \"\".\nThe testcases will be generated such that the answer is unique.\nExample 1:\nExample 2:\nExample 3:\nConstraints:\nFollow up: Could you find an algorithm that runs in O(m + n) time?\n\n**Example 1:**\n```\nInput: s = \"ADOBECODEBANC\", t = \"ABC\"\nOutput: \"BANC\"\nExplanation: The minimum window substring \"BANC\" includes 'A', 'B', and 'C' from string t.\n```\n\n**Example 2:**\n```\nInput: s = \"a\", t = \"a\"\nOutput: \"a\"\nExplanation: The entire string s is the minimum window.\n```\n\n**Example 3:**\n```\nInput: s = \"a\", t = \"aa\"\nOutput: \"\"\nExplanation: Both 'a's from t must be included in the window.\nSince the largest window of s only has one 'a', return empty string.\n```\n\n\n**Constraints:**\n- `m == s.length`\n- `n == t.length`\n- `1 <= m, n <= 105`\n- `s and t consist of uppercase and lowercase English letters.`",
+                "starter_code": "class Solution:\n    def minWindow(self, s: str, t: str) -> str:\n        "
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "skill_name": "SQL & Databases",
+        "levels": [
+          {
+            "level_name": "Basic",
+            "questions": [
+              {
+                "id": "sql-b-01",
+                "title": "Big Countries",
+                "description": "Table: World\nA country is big if:\nWrite a solution to find the name, population, and area of the big countries.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| name        | varchar |\n| continent   | varchar |\n| area        | int     |\n| population  | int     |\n| gdp         | bigint  |\n+-------------+---------+\nname is the primary key (column with unique values) for this table.\nEach row of this table gives information about the name of a country, the continent to which it belongs, its area, the population, and its GDP value.\n```\n\n**Example 2:**\n```\nInput: \nWorld table:\n+-------------+-----------+---------+------------+--------------+\n| name        | continent | area    | population | gdp          |\n+-------------+-----------+---------+------------+--------------+\n| Afghanistan | Asia      | 652230  | 25500100   | 20343000000  |\n| Albania     | Europe    | 28748   | 2831741    | 12960000000  |\n| Algeria     | Africa    | 2381741 | 37100000   | 188681000000 |\n| Andorra     | Europe    | 468     | 78115      | 3712000000   |\n| Angola      | Africa    | 1246700 | 20609294   | 100990000000 |\n+-------------+-----------+---------+------------+--------------+\nOutput: \n+-------------+------------+---------+\n| name        | population | area    |\n+-------------+------------+---------+\n| Afghanistan | 25500100   | 652230  |\n| Algeria     | 37100000   | 2381741 |\n+-------------+------------+---------+\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-b-02",
+                "title": "Combine Two Tables",
+                "description": "Table: Person\nTable: Address\nWrite a solution to report the first name, last name, city, and state of each person in the Person table. If the address of a personId is not present in the Address table, report null instead.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| personId    | int     |\n| lastName    | varchar |\n| firstName   | varchar |\n+-------------+---------+\npersonId is the primary key (column with unique values) for this table.\nThis table contains information about the ID of some persons and their first and last names.\n```\n\n**Example 2:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| addressId   | int     |\n| personId    | int     |\n| city        | varchar |\n| state       | varchar |\n+-------------+---------+\naddressId is the primary key (column with unique values) for this table.\nEach row of this table contains information about the city and state of one person with ID = PersonId.\n```\n\n**Example 3:**\n```\nInput: \nPerson table:\n+----------+----------+-----------+\n| personId | lastName | firstName |\n+----------+----------+-----------+\n| 1        | Wang     | Allen     |\n| 2        | Alice    | Bob       |\n+----------+----------+-----------+\nAddress table:\n+-----------+----------+---------------+------------+\n| addressId | personId | city          | state      |\n+-----------+----------+---------------+------------+\n| 1         | 2        | New York City | New York   |\n| 2         | 3        | Leetcode      | California |\n+-----------+----------+---------------+------------+\nOutput: \n+-----------+----------+---------------+----------+\n| firstName | lastName | city          | state    |\n+-----------+----------+---------------+----------+\n| Allen     | Wang     | Null          | Null     |\n| Bob       | Alice    | New York City | New York |\n+-----------+----------+---------------+----------+\nExplanation: \nThere is no address in the address table for the personId = 1 so we return null in their city and state.\naddressId = 1 contains information about the address of personId = 2.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-b-03",
+                "title": "Swap Salary",
+                "description": "Table: Salary\nWrite a solution to swap all 'f' and 'm' values (i.e., change all 'f' values to 'm' and vice versa) with a single update statement and no intermediate temporary tables.\nNote that you must write a single update statement, do not write any select statement for this problem.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+----------+\n| Column Name | Type     |\n+-------------+----------+\n| id          | int      |\n| name        | varchar  |\n| sex         | ENUM     |\n| salary      | int      |\n+-------------+----------+\nid is the primary key (column with unique values) for this table.\nThe sex column is ENUM (category) value of type ('m', 'f').\nThe table contains information about an employee.\n```\n\n**Example 2:**\n```\nInput: \nSalary table:\n+----+------+-----+--------+\n| id | name | sex | salary |\n+----+------+-----+--------+\n| 1  | A    | m   | 2500   |\n| 2  | B    | f   | 1500   |\n| 3  | C    | m   | 5500   |\n| 4  | D    | f   | 500    |\n+----+------+-----+--------+\nOutput: \n+----+------+-----+--------+\n| id | name | sex | salary |\n+----+------+-----+--------+\n| 1  | A    | f   | 2500   |\n| 2  | B    | m   | 1500   |\n| 3  | C    | f   | 5500   |\n| 4  | D    | m   | 500    |\n+----+------+-----+--------+\nExplanation: \n(1, A) and (3, C) were changed from 'm' to 'f'.\n(2, B) and (4, D) were changed from 'f' to 'm'.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-b-04",
+                "title": "Not Boring Movies",
+                "description": "Table: Cinema\nWrite a solution to report the movies with an odd-numbered ID and a description that is not \"boring\".\nReturn the result table ordered by rating in descending order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+----------------+----------+\n| Column Name    | Type     |\n+----------------+----------+\n| id             | int      |\n| movie          | varchar  |\n| description    | varchar  |\n| rating         | float    |\n+----------------+----------+\nid is the primary key (column with unique values) for this table.\nEach row contains information about the name of a movie, its genre, and its rating.\nrating is a 2 decimal places float in the range [0, 10]\n```\n\n**Example 2:**\n```\nInput: \nCinema table:\n+----+------------+-------------+--------+\n| id | movie      | description | rating |\n+----+------------+-------------+--------+\n| 1  | War        | great 3D    | 8.9    |\n| 2  | Science    | fiction     | 8.5    |\n| 3  | irish      | boring      | 6.2    |\n| 4  | Ice song   | Fantacy     | 8.6    |\n| 5  | House card | Interesting | 9.1    |\n+----+------------+-------------+--------+\nOutput: \n+----+------------+-------------+--------+\n| id | movie      | description | rating |\n+----+------------+-------------+--------+\n| 5  | House card | Interesting | 9.1    |\n| 1  | War        | great 3D    | 8.9    |\n+----+------------+-------------+--------+\nExplanation: \nWe have three movies with odd-numbered IDs: 1, 3, and 5. The movie with ID = 3 is boring so we do not include it in the answer.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              }
+            ]
+          },
+          {
+            "level_name": "Easy",
+            "questions": [
+              {
+                "id": "sql-e-01",
+                "title": "Employees Earning More Than Their Managers",
+                "description": "Table: Employee\nWrite a solution to find the employees who earn more than their managers.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| name        | varchar |\n| salary      | int     |\n| managerId   | int     |\n+-------------+---------+\nid is the primary key (column with unique values) for this table.\nEach row of this table indicates the ID of an employee, their name, salary, and the ID of their manager.\n```\n\n**Example 2:**\n```\nInput: \nEmployee table:\n+----+-------+--------+-----------+\n| id | name  | salary | managerId |\n+----+-------+--------+-----------+\n| 1  | Joe   | 70000  | 3         |\n| 2  | Henry | 80000  | 4         |\n| 3  | Sam   | 60000  | Null      |\n| 4  | Max   | 90000  | Null      |\n+----+-------+--------+-----------+\nOutput: \n+----------+\n| Employee |\n+----------+\n| Joe      |\n+----------+\nExplanation: Joe is the only employee who earns more than his manager.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-e-02",
+                "title": "Duplicate Emails",
+                "description": "Table: Person\nWrite a solution to report all the duplicate emails. Note that it's guaranteed that the email field is not NULL.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| email       | varchar |\n+-------------+---------+\nid is the primary key (column with unique values) for this table.\nEach row of this table contains an email. The emails will not contain uppercase letters.\n```\n\n**Example 2:**\n```\nInput: \nPerson table:\n+----+---------+\n| id | email   |\n+----+---------+\n| 1  | a@b.com |\n| 2  | c@d.com |\n| 3  | a@b.com |\n+----+---------+\nOutput: \n+---------+\n| Email   |\n+---------+\n| a@b.com |\n+---------+\nExplanation: a@b.com is repeated two times.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-e-03",
+                "title": "Customers Who Never Order",
+                "description": "Table: Customers\nTable: Orders\nWrite a solution to find all customers who never order anything.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| name        | varchar |\n+-------------+---------+\nid is the primary key (column with unique values) for this table.\nEach row of this table indicates the ID and name of a customer.\n```\n\n**Example 2:**\n```\n+-------------+------+\n| Column Name | Type |\n+-------------+------+\n| id          | int  |\n| customerId  | int  |\n+-------------+------+\nid is the primary key (column with unique values) for this table.\ncustomerId is a foreign key (reference columns) of the ID from the Customers table.\nEach row of this table indicates the ID of an order and the ID of the customer who ordered it.\n```\n\n**Example 3:**\n```\nInput: \nCustomers table:\n+----+-------+\n| id | name  |\n+----+-------+\n| 1  | Joe   |\n| 2  | Henry |\n| 3  | Sam   |\n| 4  | Max   |\n+----+-------+\nOrders table:\n+----+------------+\n| id | customerId |\n+----+------------+\n| 1  | 3          |\n| 2  | 1          |\n+----+------------+\nOutput: \n+-----------+\n| Customers |\n+-----------+\n| Henry     |\n| Max       |\n+-----------+\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-e-04",
+                "title": "Rising Temperature",
+                "description": "Table: Weather\nWrite a solution to find all dates' id with higher temperatures compared to its previous dates (yesterday).\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+---------------+---------+\n| Column Name   | Type    |\n+---------------+---------+\n| id            | int     |\n| recordDate    | date    |\n| temperature   | int     |\n+---------------+---------+\nid is the column with unique values for this table.\nThere are no different rows with the same recordDate.\nThis table contains information about the temperature on a certain day.\n```\n\n**Example 2:**\n```\nInput: \nWeather table:\n+----+------------+-------------+\n| id | recordDate | temperature |\n+----+------------+-------------+\n| 1  | 2015-01-01 | 10          |\n| 2  | 2015-01-02 | 25          |\n| 3  | 2015-01-03 | 20          |\n| 4  | 2015-01-04 | 30          |\n+----+------------+-------------+\nOutput: \n+----+\n| id |\n+----+\n| 2  |\n| 4  |\n+----+\nExplanation: \nIn 2015-01-02, the temperature was higher than the previous day (10 -> 25).\nIn 2015-01-04, the temperature was higher than the previous day (20 -> 30).\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              }
+            ]
+          },
+          {
+            "level_name": "Medium",
+            "questions": [
+              {
+                "id": "sql-m-01",
+                "title": "Second Highest Salary",
+                "description": "Table: Employee\nWrite a solution to find the second highest distinct salary from the Employee table. If there is no second highest salary, return null (return None in Pandas).\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+------+\n| Column Name | Type |\n+-------------+------+\n| id          | int  |\n| salary      | int  |\n+-------------+------+\nid is the primary key (column with unique values) for this table.\nEach row of this table contains information about the salary of an employee.\n```\n\n**Example 2:**\n```\nInput: \nEmployee table:\n+----+--------+\n| id | salary |\n+----+--------+\n| 1  | 100    |\n| 2  | 200    |\n| 3  | 300    |\n+----+--------+\nOutput: \n+---------------------+\n| SecondHighestSalary |\n+---------------------+\n| 200                 |\n+---------------------+\n```\n\n**Example 3:**\n```\nInput: \nEmployee table:\n+----+--------+\n| id | salary |\n+----+--------+\n| 1  | 100    |\n+----+--------+\nOutput: \n+---------------------+\n| SecondHighestSalary |\n+---------------------+\n| null                |\n+---------------------+\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-m-02",
+                "title": "Nth Highest Salary",
+                "description": "Table: Employee\nWrite a solution to find the nth highest distinct salary from the Employee table. If there are less than n distinct salaries, return null.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+------+\n| Column Name | Type |\n+-------------+------+\n| id          | int  |\n| salary      | int  |\n+-------------+------+\nid is the primary key (column with unique values) for this table.\nEach row of this table contains information about the salary of an employee.\n```\n\n**Example 2:**\n```\nInput: \nEmployee table:\n+----+--------+\n| id | salary |\n+----+--------+\n| 1  | 100    |\n| 2  | 200    |\n| 3  | 300    |\n+----+--------+\nn = 2\nOutput: \n+------------------------+\n| getNthHighestSalary(2) |\n+------------------------+\n| 200                    |\n+------------------------+\n```\n\n**Example 3:**\n```\nInput: \nEmployee table:\n+----+--------+\n| id | salary |\n+----+--------+\n| 1  | 100    |\n+----+--------+\nn = 2\nOutput: \n+------------------------+\n| getNthHighestSalary(2) |\n+------------------------+\n| null                   |\n+------------------------+\n```",
+                "starter_code": "CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT\nBEGIN\n  RETURN (\n      # Write your MySQL query statement below.\n\n  );\nEND"
+              },
+              {
+                "id": "sql-m-03",
+                "title": "Rank Scores",
+                "description": "Table: Scores\nWrite a solution to find the rank of the scores. The ranking should be calculated according to the following rules:\nReturn the result table ordered by score in descending order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| score       | decimal |\n+-------------+---------+\nid is the primary key (column with unique values) for this table.\nEach row of this table contains the score of a game. Score is a floating point value with two decimal places.\n```\n\n**Example 2:**\n```\nInput: \nScores table:\n+----+-------+\n| id | score |\n+----+-------+\n| 1  | 3.50  |\n| 2  | 3.65  |\n| 3  | 4.00  |\n| 4  | 3.85  |\n| 5  | 4.00  |\n| 6  | 3.65  |\n+----+-------+\nOutput: \n+-------+------+\n| score | rank |\n+-------+------+\n| 4.00  | 1    |\n| 4.00  | 1    |\n| 3.85  | 2    |\n| 3.65  | 3    |\n| 3.65  | 3    |\n| 3.50  | 4    |\n+-------+------+\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-m-04",
+                "title": "Consecutive Numbers",
+                "description": "Table: Logs\nFind all numbers that appear at least three times consecutively.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| num         | varchar |\n+-------------+---------+\nIn SQL, id is the primary key for this table.\nid is an autoincrement column starting from 1.\n```\n\n**Example 2:**\n```\nInput: \nLogs table:\n+----+-----+\n| id | num |\n+----+-----+\n| 1  | 1   |\n| 2  | 1   |\n| 3  | 1   |\n| 4  | 2   |\n| 5  | 1   |\n| 6  | 2   |\n| 7  | 2   |\n+----+-----+\nOutput: \n+-----------------+\n| ConsecutiveNums |\n+-----------------+\n| 1               |\n+-----------------+\nExplanation: 1 is the only number that appears consecutively for at least three times.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              }
+            ]
+          },
+          {
+            "level_name": "Hard",
+            "questions": [
+              {
+                "id": "sql-h-01",
+                "title": "Department Top Three Salaries",
+                "description": "Table: Employee\nTable: Department\nA company's executives are interested in seeing who earns the most money in each of the company's departments. A high earner in a department is an employee who has a salary in the top three unique salaries for that department.\nWrite a solution to find the employees who are high earners in each of the departments.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+--------------+---------+\n| Column Name  | Type    |\n+--------------+---------+\n| id           | int     |\n| name         | varchar |\n| salary       | int     |\n| departmentId | int     |\n+--------------+---------+\nid is the primary key (column with unique values) for this table.\ndepartmentId is a foreign key (reference column) of the ID from the Department table.\nEach row of this table indicates the ID, name, and salary of an employee. It also contains the ID of their department.\n```\n\n**Example 2:**\n```\n+-------------+---------+\n| Column Name | Type    |\n+-------------+---------+\n| id          | int     |\n| name        | varchar |\n+-------------+---------+\nid is the primary key (column with unique values) for this table.\nEach row of this table indicates the ID of a department and its name.\n```\n\n**Example 3:**\n```\nInput: \nEmployee table:\n+----+-------+--------+--------------+\n| id | name  | salary | departmentId |\n+----+-------+--------+--------------+\n| 1  | Joe   | 85000  | 1            |\n| 2  | Henry | 80000  | 2            |\n| 3  | Sam   | 60000  | 2            |\n| 4  | Max   | 90000  | 1            |\n| 5  | Janet | 69000  | 1            |\n| 6  | Randy | 85000  | 1            |\n| 7  | Will  | 70000  | 1            |\n+----+-------+--------+--------------+\nDepartment table:\n+----+-------+\n| id | name  |\n+----+-------+\n| 1  | IT    |\n| 2  | Sales |\n+----+-------+\nOutput: \n+------------+----------+--------+\n| Department | Employee | Salary |\n+------------+----------+--------+\n| IT         | Max      | 90000  |\n| IT         | Joe      | 85000  |\n| IT         | Randy    | 85000  |\n| IT         | Will     | 70000  |\n| Sales      | Henry    | 80000  |\n| Sales      | Sam      | 60000  |\n+------------+----------+--------+\nExplanation: \nIn the IT department:\n- Max earns the highest unique salary\n- Both Randy and Joe earn the second-highest unique salary\n- Will earns the third-highest unique salary\n\nIn the Sales department:\n- Henry earns the highest salary\n- Sam earns the second-highest salary\n- There is no third-highest salary as there are only two employees\n```\n\n\n**Constraints:**\n- `There are no employees with the exact same name, salary and department.`",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-h-02",
+                "title": "Trips and Users",
+                "description": "Table: Trips\nTable: Users\nThe cancellation rate is computed by dividing the number of canceled (by client or driver) requests with unbanned users by the total number of requests with unbanned users on that day.\nWrite a solution to find the cancellation rate of requests with unbanned users (both client and driver must not be banned) each day between \"2013-10-01\" and \"2013-10-03\" with at least one trip. Round Cancellation Rate to two decimal points.\nReturn the result table in any order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+-------------+----------+\n| Column Name | Type     |\n+-------------+----------+\n| id          | int      |\n| client_id   | int      |\n| driver_id   | int      |\n| city_id     | int      |\n| status      | enum     |\n| request_at  | varchar  |     \n+-------------+----------+\nid is the primary key (column with unique values) for this table.\nThe table holds all taxi trips. Each trip has a unique id, while client_id and driver_id are foreign keys to the users_id at the Users table.\nStatus is an ENUM (category) type of ('completed', 'cancelled_by_driver', 'cancelled_by_client').\n```\n\n**Example 2:**\n```\n+-------------+----------+\n| Column Name | Type     |\n+-------------+----------+\n| users_id    | int      |\n| banned      | enum     |\n| role        | enum     |\n+-------------+----------+\nusers_id is the primary key (column with unique values) for this table.\nThe table holds all users. Each user has a unique users_id, and role is an ENUM type of ('client', 'driver', 'partner').\nbanned is an ENUM (category) type of ('Yes', 'No').\n```\n\n**Example 3:**\n```\nInput: \nTrips table:\n+----+-----------+-----------+---------+---------------------+------------+\n| id | client_id | driver_id | city_id | status              | request_at |\n+----+-----------+-----------+---------+---------------------+------------+\n| 1  | 1         | 10        | 1       | completed           | 2013-10-01 |\n| 2  | 2         | 11        | 1       | cancelled_by_driver | 2013-10-01 |\n| 3  | 3         | 12        | 6       | completed           | 2013-10-01 |\n| 4  | 4         | 13        | 6       | cancelled_by_client | 2013-10-01 |\n| 5  | 1         | 10        | 1       | completed           | 2013-10-02 |\n| 6  | 2         | 11        | 6       | completed           | 2013-10-02 |\n| 7  | 3         | 12        | 6       | completed           | 2013-10-02 |\n| 8  | 2         | 12        | 12      | completed           | 2013-10-03 |\n| 9  | 3         | 10        | 12      | completed           | 2013-10-03 |\n| 10 | 4         | 13        | 12      | cancelled_by_driver | 2013-10-03 |\n+----+-----------+-----------+---------+---------------------+------------+\nUsers table:\n+----------+--------+--------+\n| users_id | banned | role   |\n+----------+--------+--------+\n| 1        | No     | client |\n| 2        | Yes    | client |\n| 3        | No     | client |\n| 4        | No     | client |\n| 10       | No     | driver |\n| 11       | No     | driver |\n| 12       | No     | driver |\n| 13       | No     | driver |\n+----------+--------+--------+\nOutput: \n+------------+-------------------+\n| Day        | Cancellation Rate |\n+------------+-------------------+\n| 2013-10-01 | 0.33              |\n| 2013-10-02 | 0.00              |\n| 2013-10-03 | 0.50              |\n+------------+-------------------+\nExplanation: \nOn 2013-10-01:\n  - There were 4 requests in total, 2 of which were canceled.\n  - However, the request with Id=2 was made by a banned client (User_Id=2), so it is ignored in the calculation.\n  - Hence there are 3 unbanned requests in total, 1 of which was canceled.\n  - The Cancellation Rate is (1 / 3) = 0.33\nOn 2013-10-02:\n  - There were 3 requests in total, 0 of which were canceled.\n  - The request with Id=6 was made by a banned client, so it is ignored.\n  - Hence there are 2 unbanned requests in total, 0 of which were canceled.\n  - The Cancellation Rate is (0 / 2) = 0.00\nOn 2013-10-03:\n  - There were 3 requests in total, 1 of which was canceled.\n  - The request with Id=8 was made by a banned client, so it is ignored.\n  - Hence there are 2 unbanned request in total, 1 of which were canceled.\n  - The Cancellation Rate is (1 / 2) = 0.50\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              },
+              {
+                "id": "sql-h-03",
+                "title": "Human Traffic of Stadium",
+                "description": "Table: Stadium\nWrite a solution to display the records with three or more rows with consecutive id's, and the number of people is greater than or equal to 100 for each.\nReturn the result table ordered by visit_date in ascending order.\nThe result format is in the following example.\n\n**Example 1:**\n```\n+---------------+---------+\n| Column Name   | Type    |\n+---------------+---------+\n| id            | int     |\n| visit_date    | date    |\n| people        | int     |\n+---------------+---------+\nvisit_date is the column with unique values for this table.\nEach row of this table contains the visit date and visit id to the stadium with the number of people during the visit.\nAs the id increases, the date increases as well.\n```\n\n**Example 2:**\n```\nInput: \nStadium table:\n+------+------------+-----------+\n| id   | visit_date | people    |\n+------+------------+-----------+\n| 1    | 2017-01-01 | 10        |\n| 2    | 2017-01-02 | 109       |\n| 3    | 2017-01-03 | 150       |\n| 4    | 2017-01-04 | 99        |\n| 5    | 2017-01-05 | 145       |\n| 6    | 2017-01-06 | 1455      |\n| 7    | 2017-01-07 | 199       |\n| 8    | 2017-01-09 | 188       |\n+------+------------+-----------+\nOutput: \n+------+------------+-----------+\n| id   | visit_date | people    |\n+------+------------+-----------+\n| 5    | 2017-01-05 | 145       |\n| 6    | 2017-01-06 | 1455      |\n| 7    | 2017-01-07 | 199       |\n| 8    | 2017-01-09 | 188       |\n+------+------------+-----------+\nExplanation: \nThe four rows with ids 5, 6, 7, and 8 have consecutive ids and each of them has >= 100 people attended. Note that row 8 was included even though the visit_date was not the next day after row 7.\nThe rows with ids 2 and 3 are not included because we need at least three consecutive ids.\n```",
+                "starter_code": "# Write your MySQL query statement below\n"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "Full Stack Developer",
+    "description": "Build robust, responsive, and interactive user interfaces and backend systems.",
+    "skills": [
+      {
+        "skill_name": "JavaScript/TypeScript Basics",
+        "levels": [
+          {
+            "level_name": "Basic",
+            "questions": [
+              {
+                "id": "js-b-01",
+                "title": "Fizz Buzz",
+                "description": "Given an integer n, return a string array answer (1-indexed) where:\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: n = 3\nOutput: [\"1\",\"2\",\"Fizz\"]\n```\n\n**Example 2:**\n```\nInput: n = 5\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\"]\n```\n\n**Example 3:**\n```\nInput: n = 15\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\",\"Fizz\",\"7\",\"8\",\"Fizz\",\"Buzz\",\"11\",\"Fizz\",\"13\",\"14\",\"FizzBuzz\"]\n```\n\n\n**Constraints:**\n- `1 <= n <= 104`",
+                "starter_code": "/**\n * @param {number} n\n * @return {string[]}\n */\nvar fizzBuzz = function(n) {\n    \n};"
+              },
+              {
+                "id": "js-b-02",
+                "title": "Reverse String",
+                "description": "Write a function that reverses a string. The input string is given as an array of characters s.\nYou must do this by modifying the input array in-place with O(1) extra memory.\nExample 1:\n\n**Example 1:**\n```\nInput: s = [\"h\",\"e\",\"l\",\"l\",\"o\"]\nOutput: [\"o\",\"l\",\"l\",\"e\",\"h\"]\n```\n\n**Example 2:**\n```\nInput: s = [\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]\nOutput: [\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 105`\n- `s[i] is a printable ascii character.`",
+                "starter_code": "/**\n * @param {character[]} s\n * @return {void} Do not return anything, modify s in-place instead.\n */\nvar reverseString = function(s) {\n    \n};"
+              },
+              {
+                "id": "js-b-03",
+                "title": "Palindrome Number",
+                "description": "Given an integer x, return true if x is a palindrome, and false otherwise.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: x = 121\nOutput: true\nExplanation: 121 reads as 121 from left to right and from right to left.\n```\n\n**Example 2:**\n```\nInput: x = -121\nOutput: false\nExplanation: From left to right, it reads -121. From right to left, it becomes 121-. Therefore it is not a palindrome.\n```\n\n**Example 3:**\n```\nInput: x = 10\nOutput: false\nExplanation: Reads 01 from right to left. Therefore it is not a palindrome.\n```\n\n\n**Constraints:**\n- `-231 <= x <= 231 - 1`",
+                "starter_code": "/**\n * @param {number} x\n * @return {boolean}\n */\nvar isPalindrome = function(x) {\n    \n};"
+              },
+              {
+                "id": "js-b-04",
+                "title": "To Lower Case",
+                "description": "Given a string s, return the string after replacing every uppercase letter with the same lowercase letter.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"Hello\"\nOutput: \"hello\"\n```\n\n**Example 2:**\n```\nInput: s = \"here\"\nOutput: \"here\"\n```\n\n**Example 3:**\n```\nInput: s = \"LOVELY\"\nOutput: \"lovely\"\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 100`\n- `s consists of printable ASCII characters.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {string}\n */\nvar toLowerCase = function(s) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Easy",
+            "questions": [
+              {
+                "id": "js-e-01",
+                "title": "Two Sum",
+                "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\nYou can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n```\n\n**Example 2:**\n```\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n```\n\n**Example 3:**\n```\nInput: nums = [3,3], target = 6\nOutput: [0,1]\n```\n\n\n**Constraints:**\n- `2 <= nums.length <= 104`\n- `-109 <= nums[i] <= 109`\n- `-109 <= target <= 109`\n- `Only one valid answer exists.`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};"
+              },
+              {
+                "id": "js-e-02",
+                "title": "Valid Parentheses",
+                "description": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.\nAn input string is valid if:\nExample 1:\nExample 2:\nExample 3:\nExample 4:\nExample 5:\n\n**Example 1:**\n```\nInput: s = \"()\"\nOutput: true\n```\n\n**Example 2:**\n```\nInput: s = \"()[]{}\"\nOutput: true\n```\n\n**Example 3:**\n```\nInput: s = \"(]\"\nOutput: false\n```\n\n**Example 4:**\n```\nInput: s = \"([])\"\nOutput: true\n```\n\n**Example 5:**\n```\nInput: s = \"([)]\"\nOutput: false\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 104`\n- `s consists of parentheses only '()[]{}'.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {boolean}\n */\nvar isValid = function(s) {\n    \n};"
+              },
+              {
+                "id": "js-e-03",
+                "title": "Valid Palindrome",
+                "description": "A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.\nGiven a string s, return true if it is a palindrome, or false otherwise.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"A man, a plan, a canal: Panama\"\nOutput: true\nExplanation: \"amanaplanacanalpanama\" is a palindrome.\n```\n\n**Example 2:**\n```\nInput: s = \"race a car\"\nOutput: false\nExplanation: \"raceacar\" is not a palindrome.\n```\n\n**Example 3:**\n```\nInput: s = \" \"\nOutput: true\nExplanation: s is an empty string \"\" after removing non-alphanumeric characters.\nSince an empty string reads the same forward and backward, it is a palindrome.\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 2 * 105`\n- `s consists only of printable ASCII characters.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {boolean}\n */\nvar isPalindrome = function(s) {\n    \n};"
+              },
+              {
+                "id": "js-e-04",
+                "title": "Best Time to Buy and Sell Stock",
+                "description": "You are given an array prices where prices[i] is the price of a given stock on the ith day.\nYou want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.\nReturn the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.\nExample 1:\n\n**Example 1:**\n```\nInput: prices = [7,1,5,3,6,4]\nOutput: 5\nExplanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.\nNote that buying on day 2 and selling on day 1 is not allowed because you must buy before you sell.\n```\n\n**Example 2:**\n```\nInput: prices = [7,6,4,3,1]\nOutput: 0\nExplanation: In this case, no transactions are done and the max profit = 0.\n```\n\n\n**Constraints:**\n- `1 <= prices.length <= 105`\n- `0 <= prices[i] <= 104`",
+                "starter_code": "/**\n * @param {number[]} prices\n * @return {number}\n */\nvar maxProfit = function(prices) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Medium",
+            "questions": [
+              {
+                "id": "js-m-01",
+                "title": "Longest Substring Without Repeating Characters",
+                "description": "Given a string s, find the length of the longest substring without duplicate characters.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"abcabcbb\"\nOutput: 3\nExplanation: The answer is \"abc\", with the length of 3.\n```\n\n**Example 2:**\n```\nInput: s = \"bbbbb\"\nOutput: 1\nExplanation: The answer is \"b\", with the length of 1.\n```\n\n**Example 3:**\n```\nInput: s = \"pwwkew\"\nOutput: 3\nExplanation: The answer is \"wke\", with the length of 3.\nNotice that the answer must be a substring, \"pwke\" is a subsequence and not a substring.\n```\n\n\n**Constraints:**\n- `0 <= s.length <= 5 * 104`\n- `s consists of English letters, digits, symbols and spaces.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {number}\n */\nvar lengthOfLongestSubstring = function(s) {\n    \n};"
+              },
+              {
+                "id": "js-m-02",
+                "title": "3Sum",
+                "description": "Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.\nNotice that the solution set must not contain duplicate triplets.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [-1,0,1,2,-1,-4]\nOutput: [[-1,-1,2],[-1,0,1]]\nExplanation: \nnums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0.\nnums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0.\nnums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0.\nThe distinct triplets are [-1,0,1] and [-1,-1,2].\nNotice that the order of the output and the order of the triplets does not matter.\n```\n\n**Example 2:**\n```\nInput: nums = [0,1,1]\nOutput: []\nExplanation: The only possible triplet does not sum up to 0.\n```\n\n**Example 3:**\n```\nInput: nums = [0,0,0]\nOutput: [[0,0,0]]\nExplanation: The only possible triplet sums up to 0.\n```\n\n\n**Constraints:**\n- `3 <= nums.length <= 3000`\n- `-105 <= nums[i] <= 105`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @return {number[][]}\n */\nvar threeSum = function(nums) {\n    \n};"
+              },
+              {
+                "id": "js-m-03",
+                "title": "Group Anagrams",
+                "description": "Given an array of strings strs, group the anagrams together. You can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]\nExplanation:\n```\n\n**Example 2:**\n```\nInput: strs = [\"\"]\nOutput: [[\"\"]]\n```\n\n**Example 3:**\n```\nInput: strs = [\"a\"]\nOutput: [[\"a\"]]\n```\n\n\n**Constraints:**\n- `1 <= strs.length <= 104`\n- `0 <= strs[i].length <= 100`\n- `strs[i] consists of lowercase English letters.`",
+                "starter_code": "/**\n * @param {string[]} strs\n * @return {string[][]}\n */\nvar groupAnagrams = function(strs) {\n    \n};"
+              },
+              {
+                "id": "js-m-04",
+                "title": "Container With Most Water",
+                "description": "You are given an integer array height of length n. There are n vertical lines drawn such that the two endpoints of the ith line are (i, 0) and (i, height[i]).\nFind two lines that together with the x-axis form a container, such that the container contains the most water.\nReturn the maximum amount of water a container can store.\nNotice that you may not slant the container.\nExample 1:\n\n**Example 1:**\n```\nInput: height = [1,8,6,2,5,4,8,3,7]\nOutput: 49\nExplanation: The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49.\n```\n\n**Example 2:**\n```\nInput: height = [1,1]\nOutput: 1\n```\n\n\n**Constraints:**\n- `n == height.length`\n- `2 <= n <= 105`\n- `0 <= height[i] <= 104`",
+                "starter_code": "/**\n * @param {number[]} height\n * @return {number}\n */\nvar maxArea = function(height) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Hard",
+            "questions": [
+              {
+                "id": "js-h-01",
+                "title": "Median of Two Sorted Arrays",
+                "description": "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.\nThe overall run time complexity should be O(log (m+n)).\nExample 1:\n\n**Example 1:**\n```\nInput: nums1 = [1,3], nums2 = [2]\nOutput: 2.00000\nExplanation: merged array = [1,2,3] and median is 2.\n```\n\n**Example 2:**\n```\nInput: nums1 = [1,2], nums2 = [3,4]\nOutput: 2.50000\nExplanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.\n```\n\n\n**Constraints:**\n- `nums1.length == m`\n- `nums2.length == n`\n- `0 <= m <= 1000`\n- `0 <= n <= 1000`\n- `1 <= m + n <= 2000`\n- `-106 <= nums1[i], nums2[i] <= 106`",
+                "starter_code": "/**\n * @param {number[]} nums1\n * @param {number[]} nums2\n * @return {number}\n */\nvar findMedianSortedArrays = function(nums1, nums2) {\n    \n};"
+              },
+              {
+                "id": "js-h-02",
+                "title": "Edit Distance",
+                "description": "Given two strings word1 and word2, return the minimum number of operations required to convert word1 to word2.\nYou have the following three operations permitted on a word:\nExample 1:\n\n**Example 1:**\n```\nInput: word1 = \"horse\", word2 = \"ros\"\nOutput: 3\nExplanation: \nhorse -> rorse (replace 'h' with 'r')\nrorse -> rose (remove 'r')\nrose -> ros (remove 'e')\n```\n\n**Example 2:**\n```\nInput: word1 = \"intention\", word2 = \"execution\"\nOutput: 5\nExplanation: \nintention -> inention (remove 't')\ninention -> enention (replace 'i' with 'e')\nenention -> exention (replace 'n' with 'x')\nexention -> exection (replace 'n' with 'c')\nexection -> execution (insert 'u')\n```\n\n\n**Constraints:**\n- `0 <= word1.length, word2.length <= 500`\n- `word1 and word2 consist of lowercase English letters.`",
+                "starter_code": "/**\n * @param {string} word1\n * @param {string} word2\n * @return {number}\n */\nvar minDistance = function(word1, word2) {\n    \n};"
+              },
+              {
+                "id": "js-h-03",
+                "title": "Trapping Rain Water",
+                "description": "Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.\nExample 1:\n\n**Example 1:**\n```\nInput: height = [0,1,0,2,1,0,1,3,2,1,2,1]\nOutput: 6\nExplanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped.\n```\n\n**Example 2:**\n```\nInput: height = [4,2,0,3,2,5]\nOutput: 9\n```\n\n\n**Constraints:**\n- `n == height.length`\n- `1 <= n <= 2 * 104`\n- `0 <= height[i] <= 105`",
+                "starter_code": "/**\n * @param {number[]} height\n * @return {number}\n */\nvar trap = function(height) {\n    \n};"
+              },
+              {
+                "id": "js-h-04",
+                "title": "Minimum Window Substring",
+                "description": "Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return the empty string \"\".\nThe testcases will be generated such that the answer is unique.\nExample 1:\nExample 2:\nExample 3:\nConstraints:\nFollow up: Could you find an algorithm that runs in O(m + n) time?\n\n**Example 1:**\n```\nInput: s = \"ADOBECODEBANC\", t = \"ABC\"\nOutput: \"BANC\"\nExplanation: The minimum window substring \"BANC\" includes 'A', 'B', and 'C' from string t.\n```\n\n**Example 2:**\n```\nInput: s = \"a\", t = \"a\"\nOutput: \"a\"\nExplanation: The entire string s is the minimum window.\n```\n\n**Example 3:**\n```\nInput: s = \"a\", t = \"aa\"\nOutput: \"\"\nExplanation: Both 'a's from t must be included in the window.\nSince the largest window of s only has one 'a', return empty string.\n```\n\n\n**Constraints:**\n- `m == s.length`\n- `n == t.length`\n- `1 <= m, n <= 105`\n- `s and t consist of uppercase and lowercase English letters.`",
+                "starter_code": "/**\n * @param {string} s\n * @param {string} t\n * @return {string}\n */\nvar minWindow = function(s, t) {\n    \n};"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "skill_name": "Data Structures & Algorithms (Arrays/Strings)",
+        "levels": [
+          {
+            "level_name": "Basic",
+            "questions": [
+              {
+                "id": "dsa-b-01",
+                "title": "Reverse String",
+                "description": "Write a function that reverses a string. The input string is given as an array of characters s.\nYou must do this by modifying the input array in-place with O(1) extra memory.\nExample 1:\n\n**Example 1:**\n```\nInput: s = [\"h\",\"e\",\"l\",\"l\",\"o\"]\nOutput: [\"o\",\"l\",\"l\",\"e\",\"h\"]\n```\n\n**Example 2:**\n```\nInput: s = [\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]\nOutput: [\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 105`\n- `s[i] is a printable ascii character.`",
+                "starter_code": "/**\n * @param {character[]} s\n * @return {void} Do not return anything, modify s in-place instead.\n */\nvar reverseString = function(s) {\n    \n};"
+              },
+              {
+                "id": "dsa-b-02",
+                "title": "Fizz Buzz",
+                "description": "Given an integer n, return a string array answer (1-indexed) where:\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: n = 3\nOutput: [\"1\",\"2\",\"Fizz\"]\n```\n\n**Example 2:**\n```\nInput: n = 5\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\"]\n```\n\n**Example 3:**\n```\nInput: n = 15\nOutput: [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\",\"Fizz\",\"7\",\"8\",\"Fizz\",\"Buzz\",\"11\",\"Fizz\",\"13\",\"14\",\"FizzBuzz\"]\n```\n\n\n**Constraints:**\n- `1 <= n <= 104`",
+                "starter_code": "/**\n * @param {number} n\n * @return {string[]}\n */\nvar fizzBuzz = function(n) {\n    \n};"
+              },
+              {
+                "id": "dsa-b-03",
+                "title": "Length of Last Word",
+                "description": "Given a string s consisting of words and spaces, return the length of the last word in the string.\nA word is a maximal substring consisting of non-space characters only.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"Hello World\"\nOutput: 5\nExplanation: The last word is \"World\" with length 5.\n```\n\n**Example 2:**\n```\nInput: s = \"   fly me   to   the moon  \"\nOutput: 4\nExplanation: The last word is \"moon\" with length 4.\n```\n\n**Example 3:**\n```\nInput: s = \"luffy is still joyboy\"\nOutput: 6\nExplanation: The last word is \"joyboy\" with length 6.\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 104`\n- `s consists of only English letters and spaces ' '.`\n- `There will be at least one word in s.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {number}\n */\nvar lengthOfLastWord = function(s) {\n    \n};"
+              },
+              {
+                "id": "dsa-b-04",
+                "title": "To Lower Case",
+                "description": "Given a string s, return the string after replacing every uppercase letter with the same lowercase letter.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"Hello\"\nOutput: \"hello\"\n```\n\n**Example 2:**\n```\nInput: s = \"here\"\nOutput: \"here\"\n```\n\n**Example 3:**\n```\nInput: s = \"LOVELY\"\nOutput: \"lovely\"\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 100`\n- `s consists of printable ASCII characters.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {string}\n */\nvar toLowerCase = function(s) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Easy",
+            "questions": [
+              {
+                "id": "dsa-e-01",
+                "title": "Two Sum",
+                "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\nYou can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n```\n\n**Example 2:**\n```\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n```\n\n**Example 3:**\n```\nInput: nums = [3,3], target = 6\nOutput: [0,1]\n```\n\n\n**Constraints:**\n- `2 <= nums.length <= 104`\n- `-109 <= nums[i] <= 109`\n- `-109 <= target <= 109`\n- `Only one valid answer exists.`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};"
+              },
+              {
+                "id": "dsa-e-02",
+                "title": "Valid Palindrome",
+                "description": "A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.\nGiven a string s, return true if it is a palindrome, or false otherwise.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"A man, a plan, a canal: Panama\"\nOutput: true\nExplanation: \"amanaplanacanalpanama\" is a palindrome.\n```\n\n**Example 2:**\n```\nInput: s = \"race a car\"\nOutput: false\nExplanation: \"raceacar\" is not a palindrome.\n```\n\n**Example 3:**\n```\nInput: s = \" \"\nOutput: true\nExplanation: s is an empty string \"\" after removing non-alphanumeric characters.\nSince an empty string reads the same forward and backward, it is a palindrome.\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 2 * 105`\n- `s consists only of printable ASCII characters.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {boolean}\n */\nvar isPalindrome = function(s) {\n    \n};"
+              },
+              {
+                "id": "dsa-e-03",
+                "title": "Move Zeroes",
+                "description": "Given an integer array nums, move all 0's to the end of it while maintaining the relative order of the non-zero elements.\nNote that you must do this in-place without making a copy of the array.\nExample 1:\n\n**Example 1:**\n```\nInput: nums = [0,1,0,3,12]\nOutput: [1,3,12,0,0]\n```\n\n**Example 2:**\n```\nInput: nums = [0]\nOutput: [0]\n```\n\n\n**Constraints:**\n- `1 <= nums.length <= 104`\n- `-231 <= nums[i] <= 231 - 1`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @return {void} Do not return anything, modify nums in-place instead.\n */\nvar moveZeroes = function(nums) {\n    \n};"
+              },
+              {
+                "id": "dsa-e-04",
+                "title": "Contains Duplicate",
+                "description": "Given an integer array nums, return true if any value appears at least twice in the array, and return false if every element is distinct.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [1,2,3,1]\nOutput: true\nExplanation:\nThe element 1 occurs at the indices 0 and 3.\n```\n\n**Example 2:**\n```\nInput: nums = [1,2,3,4]\nOutput: false\nExplanation:\nAll elements are distinct.\n```\n\n**Example 3:**\n```\nInput: nums = [1,1,1,3,3,4,3,2,4,2]\nOutput: true\n```\n\n\n**Constraints:**\n- `1 <= nums.length <= 105`\n- `-109 <= nums[i] <= 109`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @return {boolean}\n */\nvar containsDuplicate = function(nums) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Medium",
+            "questions": [
+              {
+                "id": "dsa-m-01",
+                "title": "Longest Substring Without Repeating Characters",
+                "description": "Given a string s, find the length of the longest substring without duplicate characters.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"abcabcbb\"\nOutput: 3\nExplanation: The answer is \"abc\", with the length of 3.\n```\n\n**Example 2:**\n```\nInput: s = \"bbbbb\"\nOutput: 1\nExplanation: The answer is \"b\", with the length of 1.\n```\n\n**Example 3:**\n```\nInput: s = \"pwwkew\"\nOutput: 3\nExplanation: The answer is \"wke\", with the length of 3.\nNotice that the answer must be a substring, \"pwke\" is a subsequence and not a substring.\n```\n\n\n**Constraints:**\n- `0 <= s.length <= 5 * 104`\n- `s consists of English letters, digits, symbols and spaces.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {number}\n */\nvar lengthOfLongestSubstring = function(s) {\n    \n};"
+              },
+              {
+                "id": "dsa-m-02",
+                "title": "3Sum",
+                "description": "Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.\nNotice that the solution set must not contain duplicate triplets.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: nums = [-1,0,1,2,-1,-4]\nOutput: [[-1,-1,2],[-1,0,1]]\nExplanation: \nnums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0.\nnums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0.\nnums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0.\nThe distinct triplets are [-1,0,1] and [-1,-1,2].\nNotice that the order of the output and the order of the triplets does not matter.\n```\n\n**Example 2:**\n```\nInput: nums = [0,1,1]\nOutput: []\nExplanation: The only possible triplet does not sum up to 0.\n```\n\n**Example 3:**\n```\nInput: nums = [0,0,0]\nOutput: [[0,0,0]]\nExplanation: The only possible triplet sums up to 0.\n```\n\n\n**Constraints:**\n- `3 <= nums.length <= 3000`\n- `-105 <= nums[i] <= 105`",
+                "starter_code": "/**\n * @param {number[]} nums\n * @return {number[][]}\n */\nvar threeSum = function(nums) {\n    \n};"
+              },
+              {
+                "id": "dsa-m-03",
+                "title": "Group Anagrams",
+                "description": "Given an array of strings strs, group the anagrams together. You can return the answer in any order.\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]\nExplanation:\n```\n\n**Example 2:**\n```\nInput: strs = [\"\"]\nOutput: [[\"\"]]\n```\n\n**Example 3:**\n```\nInput: strs = [\"a\"]\nOutput: [[\"a\"]]\n```\n\n\n**Constraints:**\n- `1 <= strs.length <= 104`\n- `0 <= strs[i].length <= 100`\n- `strs[i] consists of lowercase English letters.`",
+                "starter_code": "/**\n * @param {string[]} strs\n * @return {string[][]}\n */\nvar groupAnagrams = function(strs) {\n    \n};"
+              },
+              {
+                "id": "dsa-m-04",
+                "title": "Longest Palindromic Substring",
+                "description": "Given a string s, return the longest palindromic substring in s.\nExample 1:\n\n**Example 1:**\n```\nInput: s = \"babad\"\nOutput: \"bab\"\nExplanation: \"aba\" is also a valid answer.\n```\n\n**Example 2:**\n```\nInput: s = \"cbbd\"\nOutput: \"bb\"\n```\n\n\n**Constraints:**\n- `1 <= s.length <= 1000`\n- `s consist of only digits and English letters.`",
+                "starter_code": "/**\n * @param {string} s\n * @return {string}\n */\nvar longestPalindrome = function(s) {\n    \n};"
+              }
+            ]
+          },
+          {
+            "level_name": "Hard",
+            "questions": [
+              {
+                "id": "dsa-h-01",
+                "title": "Median of Two Sorted Arrays",
+                "description": "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.\nThe overall run time complexity should be O(log (m+n)).\nExample 1:\n\n**Example 1:**\n```\nInput: nums1 = [1,3], nums2 = [2]\nOutput: 2.00000\nExplanation: merged array = [1,2,3] and median is 2.\n```\n\n**Example 2:**\n```\nInput: nums1 = [1,2], nums2 = [3,4]\nOutput: 2.50000\nExplanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.\n```\n\n\n**Constraints:**\n- `nums1.length == m`\n- `nums2.length == n`\n- `0 <= m <= 1000`\n- `0 <= n <= 1000`\n- `1 <= m + n <= 2000`\n- `-106 <= nums1[i], nums2[i] <= 106`",
+                "starter_code": "/**\n * @param {number[]} nums1\n * @param {number[]} nums2\n * @return {number}\n */\nvar findMedianSortedArrays = function(nums1, nums2) {\n    \n};"
+              },
+              {
+                "id": "dsa-h-02",
+                "title": "Trapping Rain Water",
+                "description": "Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.\nExample 1:\n\n**Example 1:**\n```\nInput: height = [0,1,0,2,1,0,1,3,2,1,2,1]\nOutput: 6\nExplanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped.\n```\n\n**Example 2:**\n```\nInput: height = [4,2,0,3,2,5]\nOutput: 9\n```\n\n\n**Constraints:**\n- `n == height.length`\n- `1 <= n <= 2 * 104`\n- `0 <= height[i] <= 105`",
+                "starter_code": "/**\n * @param {number[]} height\n * @return {number}\n */\nvar trap = function(height) {\n    \n};"
+              },
+              {
+                "id": "dsa-h-03",
+                "title": "Minimum Window Substring",
+                "description": "Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return the empty string \"\".\nThe testcases will be generated such that the answer is unique.\nExample 1:\nExample 2:\nExample 3:\nConstraints:\nFollow up: Could you find an algorithm that runs in O(m + n) time?\n\n**Example 1:**\n```\nInput: s = \"ADOBECODEBANC\", t = \"ABC\"\nOutput: \"BANC\"\nExplanation: The minimum window substring \"BANC\" includes 'A', 'B', and 'C' from string t.\n```\n\n**Example 2:**\n```\nInput: s = \"a\", t = \"a\"\nOutput: \"a\"\nExplanation: The entire string s is the minimum window.\n```\n\n**Example 3:**\n```\nInput: s = \"a\", t = \"aa\"\nOutput: \"\"\nExplanation: Both 'a's from t must be included in the window.\nSince the largest window of s only has one 'a', return empty string.\n```\n\n\n**Constraints:**\n- `m == s.length`\n- `n == t.length`\n- `1 <= m, n <= 105`\n- `s and t consist of uppercase and lowercase English letters.`",
+                "starter_code": "/**\n * @param {string} s\n * @param {string} t\n * @return {string}\n */\nvar minWindow = function(s, t) {\n    \n};"
+              },
+              {
+                "id": "dsa-h-04",
+                "title": "Wildcard Matching",
+                "description": "Given an input string (s) and a pattern (p), implement wildcard pattern matching with support for '?' and '*' where:\nThe matching should cover the entire input string (not partial).\nExample 1:\nExample 2:\n\n**Example 1:**\n```\nInput: s = \"aa\", p = \"a\"\nOutput: false\nExplanation: \"a\" does not match the entire string \"aa\".\n```\n\n**Example 2:**\n```\nInput: s = \"aa\", p = \"*\"\nOutput: true\nExplanation: '*' matches any sequence.\n```\n\n**Example 3:**\n```\nInput: s = \"cb\", p = \"?a\"\nOutput: false\nExplanation: '?' matches 'c', but the second letter is 'a', which does not match 'b'.\n```\n\n\n**Constraints:**\n- `0 <= s.length, p.length <= 2000`\n- `s contains only lowercase English letters.`\n- `p contains only lowercase English letters, '?' or '*'.`",
+                "starter_code": "/**\n * @param {string} s\n * @param {string} p\n * @return {boolean}\n */\nvar isMatch = function(s, p) {\n    \n};"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
