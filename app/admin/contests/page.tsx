@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import AppLayout from '@/src/components/AppLayout'
 import Card from '@/src/components/ui/Card'
 import Badge from '@/src/components/ui/Badge'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Trophy, Search, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Trophy, Search, X, Loader2 } from 'lucide-react'
+import { supabase } from '@/src/utils/supabaseClient'
 
 interface Problem {
   id: string
@@ -41,6 +42,7 @@ export default function AdminContestsPage() {
   const [profileId, setProfileId] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [probSearch, setProbSearch] = useState('')
   const [diffFilter, setDiffFilter] = useState('')
   const [showProbPicker, setShowProbPicker] = useState(false)
@@ -73,9 +75,26 @@ export default function AdminContestsPage() {
     loadProblems()
     const stored = localStorage.getItem('codenode_profile_id')
     if (stored) setProfileId(stored)
-    const email = localStorage.getItem('codenode_user_email') || ''
-    setUserEmail(email)
-    setIsAdmin(email.endsWith('gmail.com') || email === 'deepika.tiwari.1408@gmail.com')
+
+    ;(async () => {
+      let email = localStorage.getItem('codenode_user_email') || ''
+
+      if (!email) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email) {
+          email = session.user.email
+          localStorage.setItem('codenode_user_email', email)
+          if (session.user.id) {
+            setProfileId(session.user.id)
+            localStorage.setItem('codenode_profile_id', session.user.id)
+          }
+        }
+      }
+
+      setUserEmail(email)
+      setIsAdmin(email.endsWith('gmail.com') || email === 'deepika.tiwari.1408@gmail.com')
+      setAuthLoading(false)
+    })()
   }, [loadContests, loadProblems])
 
   const filteredProblems = useMemo(() => {
@@ -152,6 +171,19 @@ export default function AdminContestsPage() {
     .map((id) => problems.find((p) => p.id === id))
     .filter(Boolean) as Problem[]
 
+  if (authLoading) {
+    return (
+      <AppLayout>
+        <div className="max-w-md mx-auto mt-20 text-center">
+          <Card className="p-8 flex flex-col items-center gap-3">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <p className="text-xs text-text-muted">Checking authentication...</p>
+          </Card>
+        </div>
+      </AppLayout>
+    )
+  }
+
   if (!isAdmin) {
     return (
       <AppLayout>
@@ -161,7 +193,7 @@ export default function AdminContestsPage() {
               <EyeOff className="w-6 h-6 text-rose-500" />
             </div>
             <h2 className="text-sm font-bold text-text-main">Access Restricted</h2>
-            <p className="text-xs text-text-muted">Only admins can manage contests. Sign in with an admin account.</p>
+            <p className="text-xs text-text-muted">Only admins can manage contests. Sign in with an admin account (deepika.tiwari.1408@gmail.com).</p>
           </Card>
         </div>
       </AppLayout>
