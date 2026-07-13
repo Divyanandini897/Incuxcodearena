@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { GameProvider } from '@/src/lib/gameState';
+import ThemeWrapper from '@/src/components/ThemeWrapper';
 
 export const metadata: Metadata = {
-  title: 'My Google AI Studio App',
+  title: 'CodeNode - Playful Coding Platform',
+  description: 'An interactive, gamified LeetCode & HackerRank clone!',
 };
 
 export default function RootLayout({
@@ -11,8 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <GameProvider>
+        <ThemeWrapper>
+          {children}
+        </ThemeWrapper>
+      </GameProvider>
     </html>
   );
 }
