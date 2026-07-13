@@ -35,6 +35,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      MAX_MAX_PROCESSES_AND_OR_THREADS: "300"
       JAVA_TOOL_OPTIONS: "-Xmx64m -Xms32m -XX:MaxMetaspaceSize=32m -XX:+UseSerialGC -XX:CICompilerCount=2"
     depends_on:
       db:
@@ -51,6 +52,7 @@ services:
   workers:
     image: judge0/judge0:1.13.1
     container_name: judge0-workers
+    command: ["/api/scripts/workers"]
     privileged: true
     env_file: judge0.env
     environment:
@@ -59,6 +61,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      MAX_MAX_PROCESSES_AND_OR_THREADS: "300"
       JAVA_TOOL_OPTIONS: "-Xmx64m -Xms32m -XX:MaxMetaspaceSize=32m -XX:+UseSerialGC -XX:CICompilerCount=2"
     depends_on:
       db:

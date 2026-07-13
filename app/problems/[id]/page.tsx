@@ -25,7 +25,7 @@ export default function ProblemPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main flex flex-col antialiased">
+    <div className="h-screen bg-bg-base text-text-main flex flex-col antialiased">
       <Workspace
         problemId={problemId}
         problems={PROBLEMS_DATA}

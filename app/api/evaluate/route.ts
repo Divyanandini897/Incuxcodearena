@@ -8,7 +8,9 @@ import { PROBLEMS_DATA } from '@/src/data/data';
 import { cacheKey, cacheGet, cacheSet } from './cache';
 
 const execFileAsync = promisify(execFile);
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 10000;
+const JUDGE0_TIMEOUT_MS = 25000;
+const OVERALL_TIMEOUT_MS = 60000;
 
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || '';
@@ -100,7 +102,7 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
   }
   if (paramTypes.length === 0) {
     const sig = extractSignature(code, language, name);
-    if (sig) paramTypes = extractParamTypes(sig);
+    if (sig) paramTypes = extractParamTypes(sig, language);
   }
 
   return { name, isClassMethod, paramTypes, returnType };
@@ -129,11 +131,12 @@ function toCanonicalType(raw: string): string {
   if (lower === 'double' || lower === 'float') return 'double';
   if (lower === 'string' || lower === 'str' || s === 'String') return 'string';
   if (lower === 'bool' || lower === 'boolean') return 'boolean';
+  if (lower.includes('string') && (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']')))) return 'vector<string>';
   if (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']'))) return 'vector<int>';
   return 'string';
 }
 
-function extractParamTypes(sig: string): string[] {
+function extractParamTypes(sig: string, language?: string): string[] {
   const paramsMatch = sig.match(/\(([^)]*)\)/);
   if (!paramsMatch) return [];
   const paramsStr = paramsMatch[1].trim();
@@ -163,6 +166,12 @@ function extractParamTypes(sig: string): string[] {
     // Handle Python type hints: `param: Type` or `param: Type = default`
     const pyMatch = clean.match(/:\s*(\w+(?:\[.*?\])?)/);
     if (pyMatch) return toCanonicalType(pyMatch[1]);
+    // Handle Go style: `name type` (type is after the first space)
+    if (language === 'Go') {
+      const parts = clean.split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return toCanonicalType(parts.slice(1).join(' '));
+      return 'string';
+    }
     // Handle C++/Java style: `Type param` or `Type& param`
     const parts = clean.split(/\s+/).filter(Boolean);
     return toCanonicalType(parts[0] || 'string');
@@ -177,8 +186,14 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
     if (language === 'Java') return `new int[]{${arr.join(',')}}`;
     if (language === 'Go') return `[]int{${arr.join(',')}}`;
   }
+  if (type === 'vector<string>') {
+    const arr = val as string[];
+    if (language === 'C++') return `{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+    if (language === 'Java') return `new String[]{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+    if (language === 'Go') return `[]string{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+  }
   if (type === 'listnode') {
-    return jsonStr; // raw JSON array, handled by argDefs in buildWrapperCode
+    return jsonStr;
   }
   if (type === 'int') return String(val);
   if (type === 'double') return String(val);
@@ -226,6 +241,8 @@ __args = [json.loads(l) for l in __lines]
     // Serialize result
     const serialize = fn.returnType === 'listnode'
       ? `print(__listToStr(__result))`
+      : fn.returnType === 'string'
+      ? `print(__result)`
       : `print(json.dumps(__result, separators=(',', ':')))`;
 
     wrapper += `__result = ${call}
@@ -257,6 +274,13 @@ def __listToStr(head):
 
   if (language === 'JavaScript') {
     const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    if (rawArgs.length === 0) {
+      return `// --- Error: No input arguments provided ---
+${code}
+// --- Judge harness ---
+process.stdout.write(JSON.stringify(${fn.name}()));
+`;
+    }
     const typedArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       return jsonToLiteral(a, t, 'JavaScript');
@@ -279,6 +303,9 @@ def __listToStr(head):
     if (fn.returnType === 'listnode') {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(__listToStr(__result));`;
+    } else if (fn.returnType === 'string') {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(__result);`;
     } else {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(JSON.stringify(__result));`;
@@ -319,11 +346,13 @@ ${resultLine}
       return jsonToLiteral(a, t, 'C++');
     });
 
-    // Build variable declarations for complex types (vector<int>, listnode)
+    // Build variable declarations for complex types (vector<int>, vector<string>, listnode)
     const argDefs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       if (t === 'vector<int>' || t === 'int[]')
         return `  vector<int> __arg${i} = ${jsonToLiteral(a, t, 'C++')};`;
+      if (t === 'vector<string>')
+        return `  vector<string> __arg${i} = ${jsonToLiteral(a, t, 'C++')};`;
       if (t === 'listnode') {
         const arr = JSON.parse(a) as number[];
         const vals = arr.map(v => String(v)).join(',');
@@ -334,7 +363,7 @@ ${resultLine}
 
     const callArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
-      return (t === 'vector<int>' || t === 'int[]' || t === 'listnode') ? `__arg${i}` : typedArgs[i];
+      return (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode') ? `__arg${i}` : typedArgs[i];
     }).join(', ');
 
     // Add listnode result serialization if return type is listnode
@@ -381,6 +410,14 @@ ${resultStrOverload}string __resultStr(const vector<int>& v) {
   }
   return r + "]";
 }
+string __resultStr(const vector<string>& v) {
+  string r = "[";
+  for (size_t i = 0; i < v.size(); i++) {
+    if (i) r += ",";
+    r += "\"" + v[i] + "\"";
+  }
+  return r + "]";
+}
 string __resultStr(int x) { return to_string(x); }
 string __resultStr(double x) { ostringstream oss; oss << x; return oss.str(); }
 string __resultStr(bool x) { return x ? "true" : "false"; }
@@ -405,6 +442,8 @@ ${argDefs}
     const argDefs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       if (t === 'vector<int>' || t === 'int[]')
+        return jsonToLiteral(a, t, 'Java');
+      if (t === 'vector<string>')
         return jsonToLiteral(a, t, 'Java');
       if (t === 'listnode') {
         const arr = JSON.parse(a) as number[];
@@ -431,7 +470,7 @@ ${argDefs}
 
     const callArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
-      if (t === 'vector<int>' || t === 'int[]' || t === 'listnode')
+      if (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode')
         return argDefs[i] || typedArgs[i];
       return typedArgs[i];
     }).join(', ');
@@ -464,6 +503,9 @@ ${listNodeDef}${patchedCode}
   }
 ${resultStrOverload}  static String __resultStr(int[] v) {
     return Arrays.stream(v).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+  }
+  static String __resultStr(String[] v) {
+    return Arrays.stream(v).collect(Collectors.joining(",", "[", "]"));
   }
   static String __resultStr(int x) { return String.valueOf(x); }
   static String __resultStr(double x) { return String.valueOf(x); }
@@ -499,6 +541,13 @@ func __resultStr(v interface{}) string {
       s += strconv.Itoa(n)
     }
     return s + "]"
+  case []string:
+    s := "["
+    for i, n := range x {
+      if i > 0 { s += "," }
+      s += fmt.Sprintf("\\\"%s\\\"", n)
+    }
+    return s + "]"
   case int: return strconv.Itoa(x)
   case float64: return fmt.Sprint(x)
   case bool: return fmt.Sprintf("%v", x)
@@ -532,9 +581,10 @@ async function runLocal(code: string, language: string, fn: ExtractedFn, inputSt
     });
     const runtimeMs = Date.now() - start;
     await unlink(srcFile).catch(() => {});
-    const lines = stdout.split('\n').filter((l: string) => l.trim());
-    const actual = lines.length > 0 ? lines[lines.length - 1] : '(no output)';
-    const debugOutput = lines.length > 1 ? lines.slice(0, -1).join('\n') : '';
+    let lines = stdout.split('\n');
+    if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+    const actual = lines.pop() ?? '';
+    const debugOutput = lines.join('\n');
     return { actual, stderr: debugOutput || stderr, runtimeMs };
   } catch (err: any) {
     const runtimeMs = Date.now() - start;
@@ -561,34 +611,55 @@ async function runViaJudge0(code: string, language: string): Promise<{
   if (JUDGE0_AUTH_TOKEN) headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
 
   const isJava = language === 'Java';
-  const response = await fetch(`${JUDGE0_API_URL}/submissions?wait=true`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      source_code: code,
-      language_id: langId,
-      stdin: '',
-      cpu_time_limit: 5,
-      memory_limit: isJava ? 768000 : 256000,
-      enable_per_process_and_thread_time_limit: true,
-      enable_per_process_and_thread_memory_limit: true,
-    }),
-  });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw { type: 'Compile Error', message: `Judge0 API error (${response.status}): ${text}` };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), JUDGE0_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${JUDGE0_API_URL}/submissions?wait=true`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        source_code: code,
+        language_id: langId,
+        stdin: '',
+        cpu_time_limit: 5,
+        memory_limit: isJava ? 768000 : 256000,
+        enable_per_process_and_thread_time_limit: true,
+        enable_per_process_and_thread_memory_limit: true,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw { type: 'Compile Error', message: `Judge0 API error (${response.status}): ${text}` };
+    }
+
+    const data = await response.json();
+
+    // Judge0 may return status 1 (In Queue) or 2 (Processing) despite ?wait=true
+    // in rare race conditions. Treat these as internal errors.
+    if (data.status?.id === 1 || data.status?.id === 2) {
+      throw { type: 'Runtime Error', message: 'Judge0 did not process the submission. Try again.' };
+    }
+
+    return {
+      stdout: data.stdout || '',
+      stderr: data.stderr || '',
+      compileOutput: data.compile_output || '',
+      statusId: data.status?.id || 0,
+      time: data.time || '0',
+      memory: data.memory || '0',
+    };
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw { type: 'Time Limit Exceeded', message: 'Judge0 did not respond within the time limit' };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  return {
-    stdout: data.stdout || '',
-    stderr: data.stderr || '',
-    compileOutput: data.compile_output || '',
-    statusId: data.status?.id || 0,
-    time: data.time || '0',
-    memory: data.memory || '0',
-  };
 }
 
 function judge0StatusToResult(statusId: number, stdout: string, stderr: string, compileOutput: string): {
@@ -596,8 +667,9 @@ function judge0StatusToResult(statusId: number, stdout: string, stderr: string, 
   error?: string;
   actual: string;
 } {
-  const lines = stdout.split('\n').filter(l => l.trim());
-  const actual = lines.length > 0 ? lines[lines.length - 1] : '(no output)';
+  let lines = stdout.split('\n');
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+  const actual = lines.pop() ?? '';
 
   if (statusId === 6) {
     return { status: 'Compile Error', error: compileOutput || stderr || 'Compilation failed', actual };
@@ -642,10 +714,21 @@ function parseExampleInput(s: string): string[] {
 
 function getTestcases(problem: typeof PROBLEMS_DATA[0]): { input: string; expectedOutput: string }[] {
   if (problem.testcases.length > 0) return problem.testcases;
-  return problem.examples.map((ex) => ({
-    input: parseExampleInput(ex.input).join('\n'),
-    expectedOutput: ex.output,
-  }));
+  return problem.examples
+    .filter((ex) => {
+      const parsed = parseExampleInput(ex.input);
+      return parsed.length > 0 && parsed.some((p) => p.trim() !== '');
+    })
+    .map((ex) => {
+      let expected = ex.output;
+      if (expected.startsWith('"') && expected.endsWith('"')) {
+        expected = expected.slice(1, -1);
+      }
+      return {
+        input: parseExampleInput(ex.input).join('\n'),
+        expectedOutput: expected,
+      };
+    });
 }
 
 function normalizeOutput(output: string): string {
@@ -653,7 +736,41 @@ function normalizeOutput(output: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { problemId, language, code, action, customInput } = await req.json();
+  const controller = new AbortController();
+  const overallTimeout = setTimeout(() => controller.abort(), OVERALL_TIMEOUT_MS);
+
+  try {
+    return await Promise.race([
+      handleEvaluate(req),
+      new Promise<Response>((_, reject) => {
+        controller.signal.addEventListener('abort', () => {
+          reject(new Error('OVERALL_TIMEOUT'));
+        });
+      }),
+    ]);
+  } catch (err: any) {
+    if (err.message === 'OVERALL_TIMEOUT') {
+      return NextResponse.json({
+        status: 'Time Limit Exceeded',
+        compileError: 'Overall evaluation timed out. Check for infinite loops or excessive recursion.',
+        runtime: '0ms', memory: '0MB',
+        testResults: [],
+      });
+    }
+    const msg = typeof err === 'string' ? err : err?.message || 'Unexpected error';
+    return NextResponse.json({
+      status: 'Runtime Error',
+      compileError: msg,
+      runtime: '0ms', memory: '0MB',
+      testResults: [],
+    });
+  } finally {
+    clearTimeout(overallTimeout);
+  }
+}
+
+async function handleEvaluate(req: NextRequest): Promise<Response> {
+  const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
   const problem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
   if (!problem) {
@@ -669,7 +786,7 @@ export async function POST(req: NextRequest) {
   }
 
   const testcasesToRun = customInput
-    ? [{ input: customInput, expectedOutput: 'N/A' }]
+    ? [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }]
     : getTestcases(problem);
 
   const fn = extractFunction(code, language);
