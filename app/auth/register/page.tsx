@@ -24,6 +24,7 @@ export default function RegisterPage() {
     confirmPassword: false,
   });
   const [showOtpSent, setShowOtpSent] = useState(false);
+  const [devOtp, setDevOtp] = useState('');
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -46,6 +47,12 @@ export default function RegisterPage() {
               We&apos;ve sent a 6-digit verification code to{' '}
               <span className="text-[#f5f5f5] font-semibold">{email}</span>
             </p>
+            {devOtp && (
+              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <p className="text-[10px] text-amber-400 font-mono font-bold uppercase mb-1">⚠ Dev Mode — OTP</p>
+                <p className="text-2xl font-bold text-amber-400 tracking-[8px] font-mono">{devOtp}</p>
+              </div>
+            )}
             <button
               onClick={() => router.push(`/auth/verify-otp?email=${encodeURIComponent(email)}`)}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold text-sm py-2.5 rounded-lg transition cursor-pointer"
@@ -83,6 +90,10 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed');
         setIsLoading(false);
         return;
+      }
+      if (data.dev_otp) {
+        setDevOtp(data.dev_otp);
+        localStorage.setItem('dev_otp', data.dev_otp);
       }
       setShowOtpSent(true);
       setIsLoading(false);

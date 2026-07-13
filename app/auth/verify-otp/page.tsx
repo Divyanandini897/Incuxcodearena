@@ -17,6 +17,7 @@ function VerifyOTPContent() {
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [devOtp, setDevOtp] = useState(typeof window !== 'undefined' ? localStorage.getItem('dev_otp') || '' : '');
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -104,6 +105,7 @@ function VerifyOTPContent() {
 
       if (type === 'signup') {
         localStorage.removeItem('pending_email');
+        localStorage.removeItem('dev_otp');
         router.push('/auth/login?verified=true');
       } else if (type === 'reset') {
         router.push('/auth/reset-password');
@@ -166,6 +168,12 @@ function VerifyOTPContent() {
             We&apos;ve sent a 6-digit code to{' '}
             <span className="text-[#f5f5f5] font-semibold">{email}</span>
           </p>
+          {devOtp && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+              <p className="text-[10px] text-amber-400 font-mono font-bold uppercase mb-1">⚠ Dev Mode — OTP</p>
+              <p className="text-2xl font-bold text-amber-400 tracking-[8px] font-mono">{devOtp}</p>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-2.5 my-8">
             {otp.map((digit, index) => (

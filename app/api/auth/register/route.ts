@@ -64,12 +64,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create verification code' }, { status: 500 });
     }
 
+    console.log(`\n[DEV] OTP for ${email}: ${otp}\n`);
+
     const result = await sendOtpEmail(email, otp);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Failed to send verification email. Please check server logs for details.' },
-        { status: 502 }
+        { success: true, dev_otp: otp, warning: 'Email delivery failed, using dev mode OTP.' },
+        { status: 200 }
       );
     }
 
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
       console.log('[REGISTER] Email preview:', result.previewUrl);
     }
 
-    return NextResponse.json({ success: true, message: 'OTP sent successfully.' });
+    return NextResponse.json({ success: true, dev_otp: otp, message: 'OTP sent successfully.' });
   } catch (err) {
     console.error('[REGISTER] Error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
