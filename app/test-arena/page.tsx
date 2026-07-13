@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/src/components/AppLayout';
-import { Terminal, Clock, Award, CheckCircle, ArrowRight, Play, Check, AlertCircle } from 'lucide-react';
+import { Terminal, Clock, Award, CheckCircle, ArrowRight, Play, Check, AlertCircle, Trophy } from 'lucide-react';
 import { useGameState } from '@/src/lib/gameState';
 import Link from 'next/link';
 import Card from '@/src/components/ui/Card';
@@ -27,48 +27,9 @@ interface TestData {
   durationMins: number;
   maxPoints: number;
   questions: TestQuestion[];
+  isUpcoming?: boolean;
+  scheduledDate?: string;
 }
-
-const ACTIVE_TESTS: TestData[] = [
-  {
-    id: 'google-mock',
-    title: 'Google Assessment Mock',
-    description: 'Evaluate candidate algorithm proficiency. Solve array aggregations and string validations under time limits.',
-    durationMins: 60,
-    maxPoints: 200,
-    questions: [
-      { id: 1, title: 'Two Sum', points: 100 },
-      { id: 20, title: 'Valid Parentheses', points: 100 }
-    ]
-  },
-  {
-    id: 'deloitte-sql',
-    title: 'Deloitte SQL Prep Assessment',
-    description: 'Practice database join operations, CTE lookups, and window aggregations.',
-    durationMins: 45,
-    maxPoints: 100,
-    questions: [
-      { id: 175, title: 'Combine Two Tables', points: 100 }
-    ]
-  },
-  {
-    id: 'weekly-contest',
-    title: 'Weekly Coding Contest 405',
-    description: 'Compete on algorithmic complexity, dynamic programming, and array partitions.',
-    durationMins: 90,
-    maxPoints: 300,
-    questions: [
-      { id: 3, title: 'Longest Substring Without Repeating Characters', points: 150 },
-      { id: 11, title: 'Container With Most Water', points: 150 }
-    ]
-  }
-];
-
-const UPCOMING_TESTS = [
-  { id: 'meta-hack', title: 'Meta Hacker Cup Round 1', date: 'July 18, 2026', duration: '120 mins', questions: 4 },
-  { id: 'amazon-sde', title: 'Amazon OA Simulation Prep', date: 'July 24, 2026', duration: '90 mins', questions: 2 },
-  { id: 'netflix-sys', title: 'Netflix Systems Architecture OA', date: 'Aug 02, 2026', duration: '60 mins', questions: 1 }
-];
 
 export default function TestArenaPage() {
   const { solvedIds } = useGameState();
@@ -76,6 +37,43 @@ export default function TestArenaPage() {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [testSubmitted, setTestSubmitted] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<{ score: number; passed: boolean } | null>(null);
+  const [contests, setContests] = useState<TestData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadContests = useCallback(async () => {
+    try {
+      const res = await fetch('/api/contests');
+      if (res.ok) {
+        const data = await res.json();
+        const published = data.filter((c: { isPublished: boolean }) => c.isPublished);
+        const mapped: TestData[] = published.map((c: {
+  id: string; title: string; description: string | null;
+  durationMins: number; maxPoints: number; startsAt: string | null;
+  problems: Array<{ problem: { leetcodeId: number; title: string }; points: number }>
+}) => ({
+  id: c.id,
+  title: c.title,
+  description: c.description || '',
+  durationMins: c.durationMins,
+  maxPoints: c.maxPoints,
+  isUpcoming: c.startsAt ? new Date(c.startsAt) > new Date() : false,
+  scheduledDate: c.startsAt ? new Date(c.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined,
+  questions: c.problems.map((cp) => ({
+    id: cp.problem.leetcodeId,
+    title: cp.problem.title,
+    points: cp.points || Math.round(c.maxPoints / c.problems.length),
+  })),
+}));
+        setContests(mapped);
+      }
+    } catch {
+      // fallback to empty
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadContests() }, [loadContests]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -84,7 +82,6 @@ export default function TestArenaPage() {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            // Auto submit
             handleSubmitTest();
             return 0;
           }
@@ -95,14 +92,26 @@ export default function TestArenaPage() {
     return () => clearInterval(timer);
   }, [activeTest, testSubmitted, timeRemaining]);
 
-  const handleStartTest = (test: TestData) => {
+  const [leaderboard, setLeaderboard] = useState<Array<{ rank: number; name: string; score: number }>>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const profileId = typeof window !== 'undefined' ? localStorage.getItem('codenode_profile_id') : null;
+
+  const handleStartTest = async (test: TestData) => {
     setActiveTest(test);
     setTimeRemaining(test.durationMins * 60);
     setTestSubmitted(false);
     setTestResult(null);
+    setShowLeaderboard(false);
+    if (profileId) {
+      await fetch(`/api/contests/${test.id}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profileId }),
+      }).catch(() => {});
+    }
   };
 
-  const handleSubmitTest = () => {
+  const handleSubmitTest = async () => {
     if (!activeTest) return;
 
     let earnedPoints = 0;
@@ -112,9 +121,20 @@ export default function TestArenaPage() {
       }
     });
 
-    const passed = earnedPoints >= (activeTest.maxPoints * 0.5); // 50% pass bound
+    const passed = earnedPoints >= (activeTest.maxPoints * 0.5);
     setTestResult({ score: earnedPoints, passed });
     setTestSubmitted(true);
+
+    if (profileId) {
+      await fetch(`/api/contests/${activeTest.id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profileId, score: earnedPoints }),
+      }).catch(() => {});
+    }
+
+    const lb = await fetch(`/api/contests/${activeTest.id}/leaderboard`).then((r) => r.ok ? r.json() : []).catch(() => []);
+    setLeaderboard(lb);
   };
 
   const formatTime = (seconds: number) => {
@@ -146,7 +166,13 @@ export default function TestArenaPage() {
                 Active Assessments
               </h2>
               <div className="flex flex-col gap-3">
-                {ACTIVE_TESTS.map((test) => (
+                {loading && <p className="text-xs text-text-muted">Loading contests...</p>}
+                {!loading && contests.length === 0 && (
+                  <Card className="p-4 text-center">
+                    <p className="text-xs text-text-muted">No published contests available yet.</p>
+                  </Card>
+                )}
+                {contests.map((test) => (
                   <Card 
                     key={test.id}
                     className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
@@ -187,25 +213,30 @@ export default function TestArenaPage() {
             </div>
 
             {/* Upcoming Assessments */}
-            <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card/50 pb-2">
-                Upcoming Assessments
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {UPCOMING_TESTS.map((test) => (
-                  <Card key={test.id} className="flex flex-col gap-2 leading-snug">
-                    <div className="flex justify-between items-center gap-2">
-                      <h3 className="text-xs font-bold text-text-main truncate">{test.title}</h3>
-                      <Badge variant="medium">{test.date}</Badge>
-                    </div>
-                    <div className="flex gap-3 mt-1.5 text-[9px] font-mono text-text-muted font-bold">
-                      <span>Duration: {test.duration}</span>
-                      <span>Questions: {test.questions} challenges</span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            {(() => {
+              const upcoming = contests.filter((c) => c.isUpcoming);
+              return upcoming.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  <h2 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main border-b border-border-card/50 pb-2">
+                    Upcoming Assessments
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {upcoming.map((test) => (
+                      <Card key={test.id} className="flex flex-col gap-2 leading-snug">
+                        <div className="flex justify-between items-center gap-2">
+                          <h3 className="text-xs font-bold text-text-main truncate">{test.title}</h3>
+                          <Badge variant="medium">{test.scheduledDate || ''}</Badge>
+                        </div>
+                        <div className="flex gap-3 mt-1.5 text-[9px] font-mono text-text-muted font-bold">
+                          <span>Duration: {test.durationMins} mins</span>
+                          <span>Questions: {test.questions.length} challenges</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
           </>
         )}
 
@@ -359,6 +390,30 @@ export default function TestArenaPage() {
                 })}
               </div>
             </div>
+
+            {leaderboard.length > 0 && (
+              <div className="w-full max-w-xs mt-2 border-t border-border-card/50 pt-4">
+                <button onClick={() => setShowLeaderboard(!showLeaderboard)}
+                  className="text-[10px] font-mono font-bold text-primary hover:underline flex items-center justify-center gap-1 w-full">
+                  <Trophy className="w-3 h-3" /> {showLeaderboard ? 'Hide' : 'Show'} Leaderboard ({leaderboard.length} participants)
+                </button>
+                {showLeaderboard && (
+                  <div className="mt-2 border border-border-card rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {leaderboard.map((entry) => (
+                      <div key={entry.rank} className="flex items-center justify-between px-3 py-1.5 text-[10px] font-mono border-b border-border-card/30 last:border-none">
+                        <span className="flex items-center gap-2">
+                          <span className={`font-bold ${entry.rank <= 3 ? (entry.rank === 1 ? 'text-amber-400' : entry.rank === 2 ? 'text-slate-300' : 'text-amber-600') : 'text-text-muted'}`}>
+                            #{entry.rank}
+                          </span>
+                          <span className="text-text-main font-semibold">{entry.name}</span>
+                        </span>
+                        <span className="font-bold text-text-main">{entry.score} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <Button
               variant="primary"

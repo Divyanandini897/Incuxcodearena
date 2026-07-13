@@ -586,8 +586,10 @@ model Profile {
   updated_at DateTime? @default(now()) @db.Timestamptz(6)
 
   users        users                 @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction) @ignore
-  submissions  Submission[]
-  userProgress UserProblemProgress[]
+  submissions      Submission[]
+  userProgress     UserProblemProgress[]
+  contests         Contest[]
+  contestAttempts  ContestAttempt[]
 
   @@map("profiles")
   @@schema("public")
@@ -616,6 +618,7 @@ model Problem {
   testCases        TestCase[]
   submissions      Submission[]
   userProgress     UserProblemProgress[]
+  contestProblems  ContestProblem[]
 
   @@index([difficulty])
   @@index([category])
@@ -849,6 +852,65 @@ model UserProblemProgress {
   @@index([problemId])
   @@index([status])
   @@map("user_progress")
+  @@schema("public")
+}
+
+model Contest {
+  id          String            @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  durationMins Int              @map("duration_mins")
+  maxPoints   Int               @default(0) @map("max_points")
+  startsAt    DateTime?         @map("starts_at")
+  endsAt      DateTime?         @map("ends_at")
+  isPublished Boolean           @default(false) @map("is_published")
+  createdBy   String            @map("created_by") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  creator  Profile          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  problems      ContestProblem[]
+  attempts      ContestAttempt[]
+
+  @@index([isPublished])
+  @@index([createdBy])
+  @@index([startsAt])
+  @@map("contests")
+  @@schema("public")
+}
+
+model ContestProblem {
+  id        String @id @default(uuid()) @db.Uuid
+  contestId String @map("contest_id") @db.Uuid
+  problemId String @map("problem_id") @db.Uuid
+  sortOrder Int    @default(0) @map("sort_order")
+  points    Int    @default(0)
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, problemId])
+  @@index([contestId])
+  @@index([problemId])
+  @@map("contest_problems")
+  @@schema("public")
+}
+
+model ContestAttempt {
+  id         String   @id @default(uuid()) @db.Uuid
+  contestId  String   @map("contest_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  score      Int      @default(0)
+  startedAt  DateTime @default(now()) @map("started_at")
+  submittedAt DateTime? @map("submitted_at")
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@map("contest_attempts")
   @@schema("public")
 }
 

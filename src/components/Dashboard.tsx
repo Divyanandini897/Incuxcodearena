@@ -87,6 +87,24 @@ const CAREER_ROLES = [
 ];
 
 export default function Dashboard({ solvedProblemIds, onSelectProblem }: DashboardProps) {
+  const [liveContests, setLiveContests] = useState<Array<{ name: string; time: string; reward: string }>>([]);
+
+  useEffect(() => {
+    fetch('/api/contests')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        const published = (data as Array<Record<string, unknown>>).filter((c) => c.isPublished);
+        const mapped = published.map((c: Record<string, unknown>) => ({
+          name: c.title as string,
+          time: c.startsAt
+            ? new Date(c.startsAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : `${(c.durationMins as number) || 60} min`,
+          reward: `${(c.maxPoints as number) || 0} pts`,
+        }));
+        setLiveContests(mapped.slice(0, 3));
+      })
+      .catch(() => {});
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
@@ -220,11 +238,9 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
     { title: 'Advanced CSS Layouts & Flex', progress: 10, difficulty: 'Easy', time: '3 hours left', icon: Clock }
   ];
 
-  // Upcoming contests mock
-  const upcomingContests = [
-    { name: 'Weekly Algorithmic Sprint 82', time: 'Tomorrow, 6:00 PM', reward: '500 XP' },
-    { name: 'IncuXai AI Cup #4', time: 'July 15, 9:00 AM', reward: '1000 XP + Gold' }
-  ];
+  const upcomingContests = liveContests.length > 0
+    ? liveContests
+    : [{ name: 'No contests yet', time: 'Create one in admin', reward: '' }];
 
   return (
     <div className="flex flex-col gap-6 w-full font-sans max-w-[1200px] mx-auto select-none">

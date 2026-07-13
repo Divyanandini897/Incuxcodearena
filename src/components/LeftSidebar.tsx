@@ -40,6 +40,7 @@ export default function LeftSidebar({
     { name: 'Practice', icon: Swords, path: '/test-arena' },
     { name: 'Problems', icon: Code2, path: '/' },
     { name: 'Contests', icon: Trophy, path: '/test-arena' },
+    { name: 'Admin', icon: Settings, path: '/admin/contests' },
     { name: 'AI Assistant', icon: Bot, path: '/', isAi: true },
     { name: 'Learn', icon: BookOpen, path: '/journey/frontend' },
     { name: 'Leaderboard', icon: TrendingUp, path: '/profile' },
