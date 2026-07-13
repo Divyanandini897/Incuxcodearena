@@ -863,7 +863,8 @@ model Contest {
   maxPoints   Int               @default(0) @map("max_points")
   startsAt    DateTime?         @map("starts_at")
   endsAt      DateTime?         @map("ends_at")
-  isPublished Boolean           @default(false) @map("is_published")
+  isPublished  Boolean           @default(false) @map("is_published")
+  reminderSent Boolean           @default(false) @map("reminder_sent")
   createdBy   String            @map("created_by") @db.Uuid
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
