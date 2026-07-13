@@ -25,11 +25,13 @@ export interface GameState {
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
   solveProblem: (id: number, difficulty: 'Easy' | 'Medium' | 'Hard') => void;
+  toggleProblemCompletion: (problemId: number) => void;
   updateAvatar: (avatar: string) => void;
   updateTitle: (title: string) => void;
   buyAccessory: (accessory: string, cost: number) => boolean;
   toggleAccessory: (accessory: string) => void;
   updateTheme: (theme: string) => void;
+  toggleTheme: () => void;
   updateUserName: (name: string) => void;
   incrementStreak: () => void;
   resetGame: () => void;
@@ -42,20 +44,20 @@ const LOCAL_STORAGE_KEY = 'codenode_game_state_v1';
 export const getXpForNextLevel = (lvl: number) => lvl * 200;
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const [xp, setXp] = useState(75);
+  const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
-  const [gold, setGold] = useState(10);
-  const [streak, setStreak] = useState(5);
-  const [solvedIds, setSolvedIds] = useState<number[]>([1, 20]);
+  const [gold, setGold] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [solvedIds, setSolvedIds] = useState<number[]>([]);
   const [avatar, setAvatar] = useState('sherlock');
   const [title, setTitle] = useState('Bug Rookie');
   const [unlockedTitles, setUnlockedTitles] = useState<string[]>(['Bug Rookie']);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>(['First Semicolon']);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
   const [petName, setPetName] = useState('Byte');
   const [petAccessories, setPetAccessories] = useState<string[]>([]);
   const [activeAccessories, setActiveAccessories] = useState<string[]>([]);
   const [theme, setTheme] = useState('theme-light');
-  const [userName, setUserName] = useState('Sravan');
+  const [userName, setUserName] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage
@@ -214,6 +216,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
   };
+  
+  const toggleProblemCompletion = (problemId: number) => {
+    let updatedSolvedIds: number[];
+
+    if (solvedIds.includes(problemId)) {
+      // If already solved, the user is unchecking it -> remove it
+      updatedSolvedIds = solvedIds.filter(id => id !== problemId);
+    } else {
+      // If not solved, the user is checking it or submitting code -> add it
+      updatedSolvedIds = [...solvedIds, problemId];
+    }
+
+    setSolvedIds(updatedSolvedIds);
+
+    // Dynamically recalculate streak / XP based on the new array length
+    const totalSolved = updatedSolvedIds.length;
+    const calculatedXp = totalSolved * 25; // Example: 25 XP per problem
+    const nextStreak = totalSolved > 0 ? (streak === 0 ? 1 : streak) : 0;
+
+    setXp(calculatedXp);
+    setStreak(nextStreak);
+    
+    // Also update achievements if checking
+    if (updatedSolvedIds.length > 0) {
+      const newAchievements = [...unlockedAchievements];
+      if (!newAchievements.includes('First Semicolon')) {
+        newAchievements.push('First Semicolon');
+        setUnlockedAchievements(newAchievements);
+      }
+    }
+  };
 
   const updateAvatar = (newAvatar: string) => {
     setAvatar(newAvatar);
@@ -255,6 +288,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setTheme(newTheme);
   };
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'theme-light' ? 'theme-dark' : 'theme-light'));
+  };
+
   const updateUserName = (name: string) => {
     setUserName(name);
   };
@@ -282,7 +319,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setPetAccessories([]);
     setActiveAccessories([]);
     setTheme('theme-light');
-    setUserName('Sravan');
+    setUserName('');
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
@@ -306,11 +343,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         addXp,
         addGold,
         solveProblem,
+        toggleProblemCompletion,
         updateAvatar,
         updateTitle,
         buyAccessory,
         toggleAccessory,
         updateTheme,
+        toggleTheme,
         updateUserName,
         incrementStreak,
         resetGame,
