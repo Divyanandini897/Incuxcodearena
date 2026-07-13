@@ -92,7 +92,7 @@ export default function AdminContestsPage() {
       }
 
       setUserEmail(email)
-      setIsAdmin(email.endsWith('gmail.com') || email === 'deepika.tiwari.1408@gmail.com')
+      setIsAdmin(email === 'deepika.tiwari.1408@gmail.com')
       setAuthLoading(false)
     })()
   }, [loadContests, loadProblems])

@@ -332,7 +332,45 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
         </div>
       </div>
 
-      {/* 5. Core Library Filters & Table View */}
+      {/* 5. Contests & Leaderboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
+        <Link href="/test-arena" className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs hover:border-primary/20 transition-all">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Trophy className="w-4 h-4 text-primary" /> Upcoming Contests</h4>
+          <div className="flex flex-col gap-2.5">
+            {upcomingContests.map((c, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="font-bold text-text-main truncate">{c.name}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-text-muted font-mono">{c.time}</span>
+                  {c.reward && <Badge variant="hard">+{c.reward}</Badge>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-[10px] font-mono font-bold text-primary flex items-center gap-1">View all contests <ArrowRight className="w-3 h-3" /></div>
+        </Link>
+
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Award className="w-4 h-4 text-primary" /> Global Leaderboard</h4>
+          <div className="flex flex-col gap-2">
+            {leaderboard.map((entry) => (
+              <div key={entry.rank} className={`flex items-center justify-between text-xs py-1 px-2 rounded ${entry.isUser ? 'bg-primary/10 border border-primary/20' : ''}`}>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-text-muted w-4">#{entry.rank}</span>
+                  <span className="font-bold text-text-main">{entry.name}</span>
+                  {entry.isUser && <Badge variant="easy">You</Badge>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-text-muted">{entry.country}</span>
+                  <span className="font-mono font-bold text-text-main">{entry.score.toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 6. Core Library Filters & Table View */}
       <div className="flex flex-col gap-4 border-t border-border-card/65 pt-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-card p-4 rounded-xl border border-border-card shadow-xs">
           <div className="flex flex-wrap items-center gap-2">
@@ -409,7 +447,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
         </div>
       </div>
 
-      {/* 6. Metrics Visualization */}
+      {/* 7. Metrics Visualization */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
         <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs flex flex-col gap-4">
           <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5"><TrendingUp className="w-4 h-4" /> Weekly Practice Output</h4>
