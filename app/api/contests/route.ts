@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
+import { isAdminEmail } from '@/src/lib/admin'
 
 export async function GET() {
   const contests = await prisma.contest.findMany({
@@ -17,6 +18,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const body = await request.json()
   const { title, description, durationMins, maxPoints, startsAt, endsAt, createdBy, problemIds } = body
+
+  const adminEmail = request.headers.get('x-admin-email') || ''
+  if (!isAdminEmail(adminEmail)) {
+    return NextResponse.json({ error: 'Only admins can create contests' }, { status: 403 })
+  }
 
   if (!title || !durationMins || !createdBy) {
     return NextResponse.json({ error: 'Missing required fields: title, durationMins, createdBy' }, { status: 400 })

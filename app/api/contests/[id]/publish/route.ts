@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
 import { notifyContestPublished } from '@/src/lib/email'
+import { isAdminEmail } from '@/src/lib/admin'
 
-export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+
+  const adminEmail = request.headers.get('x-admin-email') || ''
+  if (!isAdminEmail(adminEmail)) {
+    return NextResponse.json({ error: 'Only admins can publish contests' }, { status: 403 })
+  }
   const contest = await prisma.contest.findUnique({ where: { id } })
   if (!contest) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

@@ -142,19 +142,20 @@ export default function AdminContestsPage() {
     }
     const url = editingId ? `/api/contests/${editingId}` : '/api/contests'
     const method = editingId ? 'PATCH' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const headers = { 'Content-Type': 'application/json', 'x-admin-email': userEmail }
+    const res = await fetch(url, { method, headers, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadContests() }
     else { const err = await res.json(); alert(err.error || 'Failed to save') }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this contest?')) return
-    const res = await fetch(`/api/contests/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/contests/${id}`, { method: 'DELETE', headers: { 'x-admin-email': userEmail } })
     if (res.ok) loadContests()
   }
 
   const handleTogglePublish = async (id: string) => {
-    const res = await fetch(`/api/contests/${id}/publish`, { method: 'POST' })
+    const res = await fetch(`/api/contests/${id}/publish`, { method: 'POST', headers: { 'x-admin-email': userEmail } })
     if (res.ok) loadContests()
   }
 
