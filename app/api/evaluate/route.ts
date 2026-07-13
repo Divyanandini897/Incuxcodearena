@@ -10,10 +10,8 @@ import { cacheKey, cacheGet, cacheSet } from './cache';
 const execFileAsync = promisify(execFile);
 const TIMEOUT_MS = 5000;
 
-// Judge0 configuration
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || '';
-const USE_JUDGE0 = true; // always try Judge0 first
 
 const JUDGE0_LANG_IDS: Record<string, number> = {
   'JavaScript': 63,
@@ -27,11 +25,13 @@ interface ExtractedFn {
   name: string;
   isClassMethod: boolean;
   paramTypes: string[];
+  returnType: string;
 }
 
 function extractFunction(code: string, language: string): ExtractedFn | null {
   let name: string | null = null;
   let isClassMethod = false;
+  let returnType = 'string';
 
   if (language === 'JavaScript') {
     const varMatch = code.match(/var\s+(\w+)\s*=\s*function\s*(?:\w+\s*)?\(/);
@@ -44,12 +44,19 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
         if (funcMatch) name = funcMatch[1];
       }
     }
+    // Detect return type from JSDoc @return
+    const returnMatch = code.match(/@return\s+\{(\w+)\}/);
+    if (returnMatch) returnType = toCanonicalType(returnMatch[1]);
   }
 
   if (language === 'Python') {
-    isClassMethod = /^class\s+\w+/m.test(code);
-    const defMatch = code.match(/def\s+(\w+)\s*\(/);
+    const codeNoCommentsPy = code.replace(/#.*$/gm, '');
+    isClassMethod = /^\s*class\s+\w+/m.test(codeNoCommentsPy);
+    const defMatch = codeNoCommentsPy.match(/def\s+(\w+)\s*\(/);
     if (defMatch) name = defMatch[1];
+    // Detect return type from type hint (handle Optional[ListNode] etc.)
+    const retHint = codeNoCommentsPy.match(/\)\s*->\s*(\w+(?:\[.*?\])?)/);
+    if (retHint) returnType = toCanonicalType(retHint[1]);
   }
 
   if (language === 'C++') {
@@ -57,9 +64,10 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
     const lines = code.split('\n');
     for (const line of lines) {
       const trimmed = line.trim();
-      const match = trimmed.match(/^\w+(?:<[^>]*>)?\s+(\w+)\s*\(/);
-      if (match && !['if', 'for', 'while', 'switch', 'catch'].includes(match[1])) {
-        name = match[1];
+      const match = trimmed.match(/^(\w+(?:\s*<[^>]*>)?(?:\s*\*)?)\s+(\w+)\s*\(/);
+      if (match && !['if', 'for', 'while', 'switch', 'catch'].includes(match[2])) {
+        name = match[2];
+        returnType = toCanonicalType(match[1]);
         break;
       }
     }
@@ -70,6 +78,7 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
     const methodMatch = code.match(/(?:public\s+)?(\w+(?:\[\])?(?:<[^>]*>)?)\s+(\w+)\s*\(/);
     if (methodMatch && methodMatch[2] !== 'main' && methodMatch[2] !== 'Solution') {
       name = methodMatch[2];
+      if (methodMatch[1]) returnType = toCanonicalType(methodMatch[1]);
     }
   }
 
@@ -81,10 +90,20 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
   if (!name) return null;
 
   let paramTypes: string[] = [];
-  const sig = extractSignature(code, language, name);
-  if (sig) paramTypes = extractParamTypes(sig);
+  if (language === 'JavaScript') {
+    // Read param types from JSDoc @param {Type} name annotations (supports Type and Type[])
+    const paramRegex = /@param\s+\{(\w+(?:\[\])?(?:<[\w,\s>]*>)?)\}\s+\w+/g;
+    let m;
+    while ((m = paramRegex.exec(code)) !== null) {
+      paramTypes.push(toCanonicalType(m[1]));
+    }
+  }
+  if (paramTypes.length === 0) {
+    const sig = extractSignature(code, language, name);
+    if (sig) paramTypes = extractParamTypes(sig);
+  }
 
-  return { name, isClassMethod, paramTypes };
+  return { name, isClassMethod, paramTypes, returnType };
 }
 
 function extractSignature(code: string, language: string, fnName: string): string | null {
@@ -103,9 +122,10 @@ function extractSignature(code: string, language: string, fnName: string): strin
 function toCanonicalType(raw: string): string {
   const s = raw.replace(/&/g, '').replace(/\s+/g, ' ').trim();
   const lower = s.toLowerCase();
+  if (lower.includes('listnode')) return 'listnode';
   if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
   if (lower.includes('int') && lower.includes('[')) return 'int[]';
-  if (lower === 'int' || lower === 'integer') return 'int';
+  if (lower === 'int' || lower === 'integer' || lower === 'number') return 'int';
   if (lower === 'double' || lower === 'float') return 'double';
   if (lower === 'string' || lower === 'str' || s === 'String') return 'string';
   if (lower === 'bool' || lower === 'boolean') return 'boolean';
@@ -134,8 +154,16 @@ function extractParamTypes(sig: string): string[] {
   }
   if (current.trim()) rawTypes.push(current.trim());
 
-  return rawTypes.map((t) => {
+  const rawTrimmed = rawTypes.map(t => t.replace(/[&*]/g, '').trim());
+  // Strip `self`/`cls` prefix for Python class methods
+  const filtered = (rawTrimmed[0] === 'self' || rawTrimmed[0] === 'cls') ? rawTypes.slice(1) : rawTypes;
+
+  return filtered.map((t) => {
     const clean = t.replace(/[&*]/g, '').trim();
+    // Handle Python type hints: `param: Type` or `param: Type = default`
+    const pyMatch = clean.match(/:\s*(\w+(?:\[.*?\])?)/);
+    if (pyMatch) return toCanonicalType(pyMatch[1]);
+    // Handle C++/Java style: `Type param` or `Type& param`
     const parts = clean.split(/\s+/).filter(Boolean);
     return toCanonicalType(parts[0] || 'string');
   });
@@ -149,6 +177,9 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
     if (language === 'Java') return `new int[]{${arr.join(',')}}`;
     if (language === 'Go') return `[]int{${arr.join(',')}}`;
   }
+  if (type === 'listnode') {
+    return jsonStr; // raw JSON array, handled by argDefs in buildWrapperCode
+  }
   if (type === 'int') return String(val);
   if (type === 'double') return String(val);
   if (type === 'boolean') return val ? 'true' : 'false';
@@ -159,46 +190,190 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
 // --------------- WRAPPER CODE GENERATION ---------------
 
 function buildWrapperCode(code: string, language: string, fn: ExtractedFn, inputStr: string): string {
-  const lines = JSON.stringify(inputStr);
 
   if (language === 'Python') {
+    // Inject ListNode class if not defined in user code
+    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/#.*$/gm, ''));
+    const listNodeDef = hasListNode ? '' : `
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next`;
+
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+
     const call = fn.isClassMethod
       ? `Solution().${fn.name}(*__args)`
       : `${fn.name}(*__args)`;
-    return `${code}
+
+    let wrapper = `${code}
 # --- Judge harness ---
 import json, sys
-__judge_input = ${lines}
+from typing import Optional
+__judge_input = ${JSON.stringify(inputStr)}
 __lines = [l for l in __judge_input.split('\\n') if l.strip()]
 __args = [json.loads(l) for l in __lines]
-__result = ${call}
-print(json.dumps(__result, separators=(',', ':')))
 `;
+
+    // Convert listnode params from arrays to ListNode objects
+    rawArgs.forEach((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'listnode') {
+        wrapper += `__args[${i}] = __makeList(__args[${i}])\n`;
+      }
+    });
+
+    // Serialize result
+    const serialize = fn.returnType === 'listnode'
+      ? `print(__listToStr(__result))`
+      : `print(json.dumps(__result, separators=(',', ':')))`;
+
+    wrapper += `__result = ${call}
+${serialize}
+`;
+
+    // Prepend helper functions and ListNode def (with Optional import before user code)
+    wrapper = `from typing import List, Optional
+${listNodeDef}
+# --- ListNode helpers ---
+def __makeList(arr):
+    dummy = ListNode(0)
+    tail = dummy
+    for v in arr:
+        tail.next = ListNode(v)
+        tail = tail.next
+    return dummy.next
+def __listToStr(head):
+    r = []
+    cur = head
+    while cur:
+        r.append(str(cur.val))
+        cur = cur.next
+    return '[' + ','.join(r) + ']'
+` + wrapper;
+
+    return wrapper;
   }
 
   if (language === 'JavaScript') {
-    return `${code}
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    const typedArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return jsonToLiteral(a, t, 'JavaScript');
+    });
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return t === 'listnode' ? `__arg${i}` : typedArgs[i];
+    }).join(', ');
+
+    // Build arg defs for listnode
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'listnode')
+        return `const __arg${i} = __makeList(${typedArgs[i]});`;
+      return '';
+    }).filter(Boolean).join('\n');
+
+    // Build result serialization
+    let resultLine = `const __result = ${fn.name}(${callArgs});`;
+    if (fn.returnType === 'listnode') {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(__listToStr(__result));`;
+    } else {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(JSON.stringify(__result));`;
+    }
+
+    // Inject ListNode constructor if not in user code (strip comments first)
+    const jsCodeClean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hasListNode = /\bfunction\s+ListNode\b/.test(jsCodeClean);
+    const listNodeDef = hasListNode ? '' : `
+function ListNode(val, next) {
+  this.val = (val===undefined ? 0 : val);
+  this.next = (next===undefined ? null : next);
+}`;
+
+    return `${listNodeDef}
+// --- ListNode helpers ---
+function __makeList(arr) {
+    let dummy = new ListNode(0), tail = dummy;
+    for (let v of arr) { tail.next = new ListNode(v); tail = tail.next; }
+    return dummy.next;
+}
+function __listToStr(head) {
+    let r = [];
+    for (let cur = head; cur; cur = cur.next) r.push(cur.val);
+    return JSON.stringify(r);
+}
+${code}
 // --- Judge harness ---
-const __judgeInput = ${lines};
-const __lines = __judgeInput.split('\\n').filter(l => l.trim() !== '');
-const __args = __lines.map(l => JSON.parse(l));
-const __result = ${fn.name}(...__args);
-process.stdout.write(JSON.stringify(__result));
+${argDefs}
+${resultLine}
 `;
   }
 
   if (language === 'C++') {
-    const args = inputStr.split('\n').filter(l => l.trim());
-    const typedArgs = args.map((a, i) => {
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    const typedArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       return jsonToLiteral(a, t, 'C++');
     });
 
+    // Build variable declarations for complex types (vector<int>, listnode)
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]')
+        return `  vector<int> __arg${i} = ${jsonToLiteral(a, t, 'C++')};`;
+      if (t === 'listnode') {
+        const arr = JSON.parse(a) as number[];
+        const vals = arr.map(v => String(v)).join(',');
+        return `  ListNode* __arg${i} = __makeList({${vals}});`;
+      }
+      return '';
+    }).filter(Boolean).join('\n');
+
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return (t === 'vector<int>' || t === 'int[]' || t === 'listnode') ? `__arg${i}` : typedArgs[i];
+    }).join(', ');
+
+    // Add listnode result serialization if return type is listnode
+    let resultStrOverload = '';
+    if (fn.returnType === 'listnode') {
+      resultStrOverload = `string __resultStr(ListNode* head) {
+  string r = "[";
+  for (ListNode* cur = head; cur; cur = cur->next) {
+    if (r.size() > 1) r += ",";
+    r += to_string(cur->val);
+  }
+  return r + "]";
+}
+`;
+    }
+
+    // If user code doesn't define ListNode struct (outside comments), inject it
+    const codeNoCommentsCpp = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hasListNode = /\bstruct\s+ListNode\b/.test(codeNoCommentsCpp);
+    const listNodeDef = hasListNode ? '' : `
+struct ListNode {
+  int val;
+  ListNode *next;
+  ListNode() : val(0), next(nullptr) {}
+  ListNode(int x) : val(x), next(nullptr) {}
+  ListNode(int x, ListNode *next) : val(x), next(next) {}
+};`;
+
     return `#include <bits/stdc++.h>
 using namespace std;
-
+${listNodeDef}
 ${code}
-string __resultStr(const vector<int>& v) {
+// --- ListNode helpers ---
+ListNode* __makeList(initializer_list<int> vals) {
+  ListNode dummy(0), *tail = &dummy;
+  for (int v : vals) tail = tail->next = new ListNode(v);
+  return dummy.next;
+}
+${resultStrOverload}string __resultStr(const vector<int>& v) {
   string r = "[";
   for (size_t i = 0; i < v.size(); i++) {
     if (i) r += ",";
@@ -212,27 +387,82 @@ string __resultStr(bool x) { return x ? "true" : "false"; }
 string __resultStr(const string& s) { return s; }
 
 int main() {
+${argDefs}
   ${fn.isClassMethod ? 'Solution __sol;' : ''}
-  cout << __resultStr(${fn.isClassMethod ? '__sol.' : ''}${fn.name}(${typedArgs.join(', ')})) << endl;
+  cout << __resultStr(${fn.isClassMethod ? '__sol.' : ''}${fn.name}(${callArgs})) << endl;
   return 0;
 }
 `;
   }
 
   if (language === 'Java') {
-    const args = inputStr.split('\n').filter(l => l.trim());
-    const typedArgs = args.map((a, i) => {
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    const typedArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       return jsonToLiteral(a, t, 'Java');
     });
+
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]')
+        return jsonToLiteral(a, t, 'Java');
+      if (t === 'listnode') {
+        const arr = JSON.parse(a) as number[];
+        const vals = arr.map(v => String(v)).join(',');
+        return `__makeList(new int[]{${vals}})`;
+      }
+      return '';
+    }).filter(Boolean);
+
+    // Inject ListNode class if not defined in user code
+    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+    const listNodeDef = hasListNode ? '' : `
+  static class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+  }`;
+
+    // Strip import statements (we already have import java.util.*)
+    const codeWithoutImports = code.replace(/^import\s+.*;$/gm, '');
+    const patchedCode = codeWithoutImports.replace(/\bclass\b/g, 'static class');
+
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]' || t === 'listnode')
+        return argDefs[i] || typedArgs[i];
+      return typedArgs[i];
+    }).join(', ');
+
+    // Add ListNode result serialization
+    let resultStrOverload = '';
+    if (fn.returnType === 'listnode') {
+      resultStrOverload = `  static String __resultStr(ListNode head) {
+    StringBuilder sb = new StringBuilder("[");
+    for (ListNode cur = head; cur != null; cur = cur.next) {
+      if (sb.length() > 1) sb.append(",");
+      sb.append(cur.val);
+    }
+    return sb.append("]").toString();
+  }
+`;
+    }
 
     return `import java.util.*;
 import java.util.stream.*;
 
 public class Main {
-${code}
+${listNodeDef}${patchedCode}
 
-  static String __resultStr(int[] v) {
+  // --- ListNode helpers ---
+  static ListNode __makeList(int[] vals) {
+    ListNode dummy = new ListNode(0), tail = dummy;
+    for (int v : vals) { tail.next = new ListNode(v); tail = tail.next; }
+    return dummy.next;
+  }
+${resultStrOverload}  static String __resultStr(int[] v) {
     return Arrays.stream(v).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
   }
   static String __resultStr(int x) { return String.valueOf(x); }
@@ -242,7 +472,7 @@ ${code}
 
   public static void main(String[] args) {
     ${fn.isClassMethod ? 'Solution __sol = new Solution();' : ''}
-    System.out.print(__resultStr(${fn.isClassMethod ? '__sol.' : 'new Main().'}${fn.name}(${typedArgs.join(', ')})));
+    System.out.print(__resultStr(${fn.isClassMethod ? '__sol.' : 'new Main().'}${fn.name}(${callArgs})));
   }
 }
 `;
@@ -330,6 +560,7 @@ async function runViaJudge0(code: string, language: string): Promise<{
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (JUDGE0_AUTH_TOKEN) headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
 
+  const isJava = language === 'Java';
   const response = await fetch(`${JUDGE0_API_URL}/submissions?wait=true`, {
     method: 'POST',
     headers,
@@ -338,7 +569,9 @@ async function runViaJudge0(code: string, language: string): Promise<{
       language_id: langId,
       stdin: '',
       cpu_time_limit: 5,
-      memory_limit: 256000,
+      memory_limit: isJava ? 768000 : 256000,
+      enable_per_process_and_thread_time_limit: true,
+      enable_per_process_and_thread_memory_limit: true,
     }),
   });
 
@@ -363,14 +596,6 @@ function judge0StatusToResult(statusId: number, stdout: string, stderr: string, 
   error?: string;
   actual: string;
 } {
-  // Judge0 status IDs:
-  // 3 = Accepted (output matches expected)
-  // 4 = Wrong Answer (output mismatch)
-  // 5 = Time Limit Exceeded
-  // 6 = Compilation Error
-  // 7-12 = Runtime Error (SIGSEGV, SIGXFSZ, etc)
-  // 13 = Internal Error
-
   const lines = stdout.split('\n').filter(l => l.trim());
   const actual = lines.length > 0 ? lines[lines.length - 1] : '(no output)';
 
@@ -423,8 +648,6 @@ function getTestcases(problem: typeof PROBLEMS_DATA[0]): { input: string; expect
   }));
 }
 
-// --------------- SHARED ---------------
-
 function normalizeOutput(output: string): string {
   return output.replace(/\s+/g, '');
 }
@@ -473,7 +696,6 @@ export async function POST(req: NextRequest) {
       let debugOut: string | undefined;
       let runtimeMs: number;
 
-      // Try Judge0 first (with Redis cache)
       try {
         const ck = cacheKey(language, wrapped, tc.input);
         let resultStr = await cacheGet(ck);
@@ -505,13 +727,25 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // Skip Judge0 for JS (Node.js SIGSEGV in isolate sandbox) – run locally
+        if (language === 'JavaScript') {
+          const localResult = await runLocal(code, language, fn, tc.input);
+          actual = localResult.actual;
+          debugOut = localResult.stderr || undefined;
+          runtimeMs = localResult.runtimeMs;
+          totalRuntime += runtimeMs;
+          const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
+          if (!passed) overallStatus = 'Wrong Answer';
+          continue;
+        }
+
         const result = await runViaJudge0(wrapped, language);
         runtimeMs = Math.round(parseFloat(result.time) * 1000);
 
         const jResult = judge0StatusToResult(result.statusId, result.stdout, result.stderr, result.compileOutput);
         actual = jResult.actual;
 
-        // Cache Judge0 result
         cacheSet(ck, JSON.stringify({
           runtimeMs, actual, error: jResult.error,
           overallStatus: jResult.status,
@@ -538,13 +772,11 @@ export async function POST(req: NextRequest) {
 
         const lines = result.stdout.split('\n').filter(l => l.trim());
         debugOut = lines.length > 1 ? lines.slice(0, -1).join('\n') : undefined;
-        // Update cached entry with debug output
         cacheSet(ck, JSON.stringify({
           runtimeMs, actual, error: jResult.error,
           overallStatus: jResult.status, debugOut,
         }));
       } catch (judge0Err: any) {
-        // Judge0 failed — fall back to local for JS/Python
         if (['JavaScript', 'Python'].includes(language)) {
           const localResult = await runLocal(code, language, fn, tc.input);
           actual = localResult.actual;
