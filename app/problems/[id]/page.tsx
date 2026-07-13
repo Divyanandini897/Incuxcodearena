@@ -1,42 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { useParams, useRouter } from 'next/navigation';
 import Workspace from '@/src/components/Workspace';
 import { PROBLEMS_DATA } from '@/src/data/data';
+import { useGameState } from '@/src/lib/gameState';
 
 export default function ProblemPage() {
   const params = useParams();
   const router = useRouter();
   const problemId = Number(params.id);
-  const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
+  const { solvedIds, solveProblem } = useGameState();
 
-  useEffect(() => {
-    const savedSolved = localStorage.getItem('leetcode_solved_ids');
-    if (savedSolved) {
-      try {
-        setSolvedProblemIds(JSON.parse(savedSolved));
-      } catch (err) {
-        console.error('Error loading solved IDs:', err);
-      }
-    }
-  }, []);
+  const problem = PROBLEMS_DATA.find((p) => p.id === problemId);
 
   const handleMarkSolved = (id: number) => {
-    setSolvedProblemIds((prev) => {
-      if (prev.includes(id)) return prev;
-      const updated = [...prev, id];
-      localStorage.setItem('leetcode_solved_ids', JSON.stringify(updated));
-      return updated;
-    });
+    if (problem) {
+      solveProblem(id, problem.difficulty);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-page text-primary flex flex-col antialiased">
+    <div className="min-h-screen bg-bg-base text-text-main flex flex-col antialiased">
       <Workspace
         problemId={problemId}
         problems={PROBLEMS_DATA}
-        solvedProblemIds={solvedProblemIds}
+        solvedProblemIds={solvedIds}
         onBackToDashboard={() => router.push('/')}
         onMarkSolved={handleMarkSolved}
       />
