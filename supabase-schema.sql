@@ -1,6 +1,8 @@
--- Run this in your Supabase project's SQL Editor (https://supabase.com/dashboard → SQL Editor)
 -- ════════════════════════════════════════════════════════════════
--- Creates profiles and otps tables for the custom auth flow.
+-- Run this in your Supabase project's SQL Editor:
+--   https://supabase.com/dashboard → SQL Editor → New Query
+-- ════════════════════════════════════════════════════════════════
+-- Creates / updates the profiles and otps tables.
 -- ════════════════════════════════════════════════════════════════
 
 -- 1. Profiles table (app-level user data, linked to auth.users)
@@ -19,32 +21,59 @@ create table if not exists public.profiles (
 create table if not exists public.otps (
   id          uuid primary key default gen_random_uuid(),
   email       text not null,
-  otp_hash    text not null,              -- SHA-256 hash of the 6-digit OTP
+  otp_hash    text not null,
   type        text not null default 'signup',
-  temp_data   jsonb,                       -- { name, password } (plaintext, 5-min TTL)
+  temp_data   jsonb,
   expires_at  timestamptz not null,
   used        boolean default false,
   created_at  timestamptz default now()
 );
 
--- Index for fast OTP lookups
 create index if not exists idx_otps_email_type on public.otps(email, type);
 
--- 3. Enable Row-Level Security (default: only service_role can write)
+-- 3. Enable Row-Level Security
 alter table public.profiles enable row level security;
 alter table public.otps enable row level security;
 
--- 4. Allow authenticated users to read their own profile
+-- 4. RLS policies for profiles
+drop policy if exists "Users can view own profile" on public.profiles;
 create policy "Users can view own profile"
   on public.profiles for select
   using (auth.uid() = id);
 
--- 5. Allow authenticated users to update their own profile
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
--- 6. Disable OTP access from the client entirely (only server-side service_role)
+drop policy if exists "Users can insert own profile" on public.profiles;
+create policy "Users can insert own profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+-- Allow service_role to bypass RLS (needed for OAuth and OTP flows)
+drop policy if exists "Service role full access" on public.profiles;
+create policy "Service role full access"
+  on public.profiles for all
+  using (true)
+  with check (true);
+
+-- 5. No public OTP access
+drop policy if exists "No public OTP access" on public.otps;
 create policy "No public OTP access"
   on public.otps for all
   using (false);
+
+-- 6. Auto-update updated_at on profile changes
+create or replace function public.update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists set_updated_at on public.profiles;
+create trigger set_updated_at
+  before update on public.profiles
+  for each row execute function public.update_updated_at_column();

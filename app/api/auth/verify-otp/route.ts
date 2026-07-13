@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         password,
         email_confirm: true,
-        user_metadata: { name, username, display_name: name },
+        user_metadata: { name, username },
       });
 
       if (createError) {

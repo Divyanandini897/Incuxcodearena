@@ -48,7 +48,7 @@ function LoginContent() {
       return;
     }
 
-    router.push('/problems');
+    router.push('/');
   };
 
   const handleGoogleLogin = async () => {

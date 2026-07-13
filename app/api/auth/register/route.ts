@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { isStrongPassword } from '@/src/lib/password-validator';
 import { sendOtpEmail } from '@/src/lib/email';
 import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
+import { checkRateLimit } from '@/src/lib/rate-limit';
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -25,6 +26,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character' },
         { status: 400 }
+      );
+    }
+
+    const { allowed, retryAfter } = checkRateLimit(`register:${email.toLowerCase()}`);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Too many requests. Please wait ${retryAfter} seconds.` },
+        { status: 429 }
       );
     }
 

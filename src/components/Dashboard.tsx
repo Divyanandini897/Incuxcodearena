@@ -7,35 +7,46 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Search, 
-  CheckCircle, 
-  Lock, 
-  Unlock, 
-  Calendar, 
-  BookOpen, 
-  Award, 
-  ChevronRight, 
-  Flame, 
-  SlidersHorizontal, 
-  Bell, 
-  Globe, 
-  Layers, 
-  Compass, 
-  Bookmark, 
-  FolderLock, 
+import {
+  Search,
+  CheckCircle,
+  Lock,
+  Unlock,
+  Calendar,
+  BookOpen,
+  Award,
+  ChevronRight,
+  Flame,
+  SlidersHorizontal,
+  Bell,
+  Globe,
+  Layers,
+  Compass,
+  Bookmark,
+  FolderLock,
   ChevronDown,
-  Clock
+  Clock,
+  Mail,
+  User,
 } from 'lucide-react';
 import { Problem, Difficulty } from '../types';
 import { PROBLEMS_DATA, TOPIC_TAGS, COMPANIES_LIST } from '../data';
 
+interface UserProfile {
+  name: string | null;
+  email: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  provider?: string | null;
+}
+
 interface DashboardProps {
+  userProfile?: UserProfile | null;
   solvedProblemIds: number[];
   onSelectProblem: (id: number) => void;
 }
 
-export default function Dashboard({ solvedProblemIds, onSelectProblem }: DashboardProps) {
+export default function Dashboard({ userProfile, solvedProblemIds, onSelectProblem }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Topics');
@@ -142,6 +153,46 @@ export default function Dashboard({ solvedProblemIds, onSelectProblem }: Dashboa
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-56px)] font-sans">
       
+      {/* 1. User Profile Card (Top Banner) */}
+      {userProfile && (
+        <div className="lg:col-span-12 bg-gradient-to-r from-emerald-950/30 to-slate-900/30 border border-emerald-800/20 rounded-xl p-4 flex items-center gap-4">
+          {userProfile.avatar_url ? (
+            <img
+              src={userProfile.avatar_url}
+              alt={userProfile.name || 'User'}
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/30"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-sm font-bold text-white">
+              {(userProfile.name || '?')[0].toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-semibold text-[#f5f5f5] truncate flex items-center gap-2">
+              {userProfile.name || 'User'}
+              {userProfile.username && (
+                <span className="text-[11px] text-[#a0a0a0] font-mono font-normal">
+                  @{userProfile.username}
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-[#a0a0a0] truncate">
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3 shrink-0" />
+                {userProfile.email}
+              </span>
+            </p>
+            {userProfile.provider && userProfile.provider !== 'email' && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/80 font-mono mt-1">
+                <Globe className="w-3 h-3" />
+                Signed in with {userProfile.provider.charAt(0).toUpperCase() + userProfile.provider.slice(1)}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 2. Sidebar Navigation (Left Panel - 20% Width) */}
       <aside className="lg:col-span-2 flex flex-col gap-6 text-sm border-r border-[#1e1e1e] pr-4" id="sidebar_nav">
         {/* Section A: Main Utilities */}

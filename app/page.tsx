@@ -7,20 +7,58 @@ import { supabase } from '@/src/utils/supabaseClient';
 import Navigation from '@/src/components/Navigation';
 import Dashboard from '@/src/components/Dashboard';
 
+interface UserProfile {
+  name: string | null;
+  email: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  provider: string | null;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
   const [streakCount, setStreakCount] = useState(124);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    if (window.location.search.includes('signout')) {
+      supabase.auth.signOut();
+      router.replace('/auth/login');
+      return;
+    }
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.replace('/auth/login');
+          return;
+        }
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user || !user.email) {
+          await supabase.auth.signOut();
+          router.replace('/auth/login');
+          return;
+        }
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, email, username, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profile) {
+          setUserProfile({
+            ...profile,
+            provider: user.app_metadata?.provider || 'email',
+          } as UserProfile);
+        }
+      } catch {
         router.replace('/auth/login');
-      } else {
-        setChecking(false);
+        return;
       }
-    });
+      setChecking(false);
+    };
+    init();
   }, [router]);
 
   useEffect(() => {
@@ -51,6 +89,7 @@ export default function HomePage() {
       <Navigation streakCount={streakCount} />
       <div className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         <Dashboard
+          userProfile={userProfile}
           solvedProblemIds={solvedProblemIds}
           onSelectProblem={handleSelectProblem}
         />

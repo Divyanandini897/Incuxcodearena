@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email';
 import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
+import { checkRateLimit } from '@/src/lib/rate-limit';
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -18,6 +19,14 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    const { allowed, retryAfter } = checkRateLimit(`otp:${email.toLowerCase()}`);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Too many requests. Please wait ${retryAfter} seconds.` },
+        { status: 429 }
+      );
     }
 
     const otpType = type || 'signup';
