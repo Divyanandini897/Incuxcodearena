@@ -79,6 +79,7 @@ export default function HomePage() {
       </div>
     );
   }
+  
 
   const handleSelectProblem = (id: number) => {
     router.push(`/problems/${id}`);
