@@ -1,39 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI, Type } from '@google/genai';
-import { PROBLEMS_DATA } from '@/src/data/data';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { mkdtemp, writeFile, unlink } from 'fs/promises';
+import { writeFile, unlink, mkdtemp } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { PROBLEMS_DATA } from '@/src/data/data';
+import { cacheKey, cacheGet, cacheSet } from './cache';
 
 const execFileAsync = promisify(execFile);
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 10000;
+const JUDGE0_TIMEOUT_MS = 25000;
+const OVERALL_TIMEOUT_MS = 60000;
 
-const JDOODLE_CLIENT_ID = process.env.JDOODLE_CLIENT_ID || '';
-const JDOODLE_CLIENT_SECRET = process.env.JDOODLE_CLIENT_SECRET || '';
-const USE_JDOODLE = !!(JDOODLE_CLIENT_ID && JDOODLE_CLIENT_SECRET);
+const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || '';
 
-// Languages that compile locally via child_process
-const LOCAL_LANGS = new Set(['JavaScript', 'Python']);
-// Languages that need JDoodle API
-const JDOODLE_LANGS = new Set(['C++', 'Java', 'Go']);
-
-const JDOODLE_LANG_MAP: Record<string, { lang: string; version: string }> = {
-  'C++': { lang: 'cpp17', version: '0' },
-  'Java': { lang: 'java', version: '3' },
-  'Go': { lang: 'go', version: '1' },
+const JUDGE0_LANG_IDS: Record<string, number> = {
+  'JavaScript': 63,
+  'Python': 71,
+  'C++': 54,
+  'Java': 62,
+  'Go': 60,
 };
 
 interface ExtractedFn {
   name: string;
   isClassMethod: boolean;
   paramTypes: string[];
+  returnType: string;
 }
 
 function extractFunction(code: string, language: string): ExtractedFn | null {
   let name: string | null = null;
   let isClassMethod = false;
+  let returnType = 'string';
 
   if (language === 'JavaScript') {
     const varMatch = code.match(/var\s+(\w+)\s*=\s*function\s*(?:\w+\s*)?\(/);
@@ -46,12 +46,19 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
         if (funcMatch) name = funcMatch[1];
       }
     }
+    // Detect return type from JSDoc @return
+    const returnMatch = code.match(/@return\s+\{(\w+)\}/);
+    if (returnMatch) returnType = toCanonicalType(returnMatch[1]);
   }
 
   if (language === 'Python') {
-    isClassMethod = /^class\s+\w+/m.test(code);
-    const defMatch = code.match(/def\s+(\w+)\s*\(/);
+    const codeNoCommentsPy = code.replace(/#.*$/gm, '');
+    isClassMethod = /^\s*class\s+\w+/m.test(codeNoCommentsPy);
+    const defMatch = codeNoCommentsPy.match(/def\s+(\w+)\s*\(/);
     if (defMatch) name = defMatch[1];
+    // Detect return type from type hint (handle Optional[ListNode] etc.)
+    const retHint = codeNoCommentsPy.match(/\)\s*->\s*(\w+(?:\[.*?\])?)/);
+    if (retHint) returnType = toCanonicalType(retHint[1]);
   }
 
   if (language === 'C++') {
@@ -59,9 +66,10 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
     const lines = code.split('\n');
     for (const line of lines) {
       const trimmed = line.trim();
-      const match = trimmed.match(/^\w+(?:<[^>]*>)?\s+(\w+)\s*\(/);
-      if (match && !['if', 'for', 'while', 'switch', 'catch'].includes(match[1])) {
-        name = match[1];
+      const match = trimmed.match(/^(\w+(?:\s*<[^>]*>)?(?:\s*\*)?)\s+(\w+)\s*\(/);
+      if (match && !['if', 'for', 'while', 'switch', 'catch'].includes(match[2])) {
+        name = match[2];
+        returnType = toCanonicalType(match[1]);
         break;
       }
     }
@@ -72,6 +80,7 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
     const methodMatch = code.match(/(?:public\s+)?(\w+(?:\[\])?(?:<[^>]*>)?)\s+(\w+)\s*\(/);
     if (methodMatch && methodMatch[2] !== 'main' && methodMatch[2] !== 'Solution') {
       name = methodMatch[2];
+      if (methodMatch[1]) returnType = toCanonicalType(methodMatch[1]);
     }
   }
 
@@ -83,10 +92,20 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
   if (!name) return null;
 
   let paramTypes: string[] = [];
-  const sig = extractSignature(code, language, name);
-  if (sig) paramTypes = extractParamTypes(sig, language);
+  if (language === 'JavaScript') {
+    // Read param types from JSDoc @param {Type} name annotations (supports Type and Type[])
+    const paramRegex = /@param\s+\{(\w+(?:\[\])?(?:<[\w,\s>]*>)?)\}\s+\w+/g;
+    let m;
+    while ((m = paramRegex.exec(code)) !== null) {
+      paramTypes.push(toCanonicalType(m[1]));
+    }
+  }
+  if (paramTypes.length === 0) {
+    const sig = extractSignature(code, language, name);
+    if (sig) paramTypes = extractParamTypes(sig, language);
+  }
 
-  return { name, isClassMethod, paramTypes };
+  return { name, isClassMethod, paramTypes, returnType };
 }
 
 function extractSignature(code: string, language: string, fnName: string): string | null {
@@ -105,17 +124,19 @@ function extractSignature(code: string, language: string, fnName: string): strin
 function toCanonicalType(raw: string): string {
   const s = raw.replace(/&/g, '').replace(/\s+/g, ' ').trim();
   const lower = s.toLowerCase();
+  if (lower.includes('listnode')) return 'listnode';
   if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
   if (lower.includes('int') && lower.includes('[')) return 'int[]';
-  if (lower === 'int' || lower === 'integer') return 'int';
+  if (lower === 'int' || lower === 'integer' || lower === 'number') return 'int';
   if (lower === 'double' || lower === 'float') return 'double';
   if (lower === 'string' || lower === 'str' || s === 'String') return 'string';
   if (lower === 'bool' || lower === 'boolean') return 'boolean';
+  if (lower.includes('string') && (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']')))) return 'vector<string>';
   if (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']'))) return 'vector<int>';
   return 'string';
 }
 
-function extractParamTypes(sig: string, _language: string): string[] {
+function extractParamTypes(sig: string, language?: string): string[] {
   const paramsMatch = sig.match(/\(([^)]*)\)/);
   if (!paramsMatch) return [];
   const paramsStr = paramsMatch[1].trim();
@@ -136,8 +157,22 @@ function extractParamTypes(sig: string, _language: string): string[] {
   }
   if (current.trim()) rawTypes.push(current.trim());
 
-  return rawTypes.map((t) => {
+  const rawTrimmed = rawTypes.map(t => t.replace(/[&*]/g, '').trim());
+  // Strip `self`/`cls` prefix for Python class methods
+  const filtered = (rawTrimmed[0] === 'self' || rawTrimmed[0] === 'cls') ? rawTypes.slice(1) : rawTypes;
+
+  return filtered.map((t) => {
     const clean = t.replace(/[&*]/g, '').trim();
+    // Handle Python type hints: `param: Type` or `param: Type = default`
+    const pyMatch = clean.match(/:\s*(\w+(?:\[.*?\])?)/);
+    if (pyMatch) return toCanonicalType(pyMatch[1]);
+    // Handle Go style: `name type` (type is after the first space)
+    if (language === 'Go') {
+      const parts = clean.split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return toCanonicalType(parts.slice(1).join(' '));
+      return 'string';
+    }
+    // Handle C++/Java style: `Type param` or `Type& param`
     const parts = clean.split(/\s+/).filter(Boolean);
     return toCanonicalType(parts[0] || 'string');
   });
@@ -145,12 +180,20 @@ function extractParamTypes(sig: string, _language: string): string[] {
 
 function jsonToLiteral(jsonStr: string, type: string, language: string): string {
   const val = JSON.parse(jsonStr);
-
   if (type === 'vector<int>' || type === 'int[]') {
     const arr = val as number[];
     if (language === 'C++') return `{${arr.join(',')}}`;
     if (language === 'Java') return `new int[]{${arr.join(',')}}`;
     if (language === 'Go') return `[]int{${arr.join(',')}}`;
+  }
+  if (type === 'vector<string>') {
+    const arr = val as string[];
+    if (language === 'C++') return `{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+    if (language === 'Java') return `new String[]{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+    if (language === 'Go') return `[]string{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
+  }
+  if (type === 'listnode') {
+    return jsonStr;
   }
   if (type === 'int') return String(val);
   if (type === 'double') return String(val);
@@ -159,93 +202,219 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
   return jsonStr;
 }
 
-// --------------- LOCAL COMPILER (JS / Python) ---------------
+// --------------- WRAPPER CODE GENERATION ---------------
 
-function buildLocalWrapper(code: string, language: string, fn: ExtractedFn, inputStr: string): string {
-  const lines = JSON.stringify(inputStr);
+function buildWrapperCode(code: string, language: string, fn: ExtractedFn, inputStr: string): string {
 
   if (language === 'Python') {
+    // Inject ListNode class if not defined in user code
+    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/#.*$/gm, ''));
+    const listNodeDef = hasListNode ? '' : `
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next`;
+
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+
     const call = fn.isClassMethod
       ? `Solution().${fn.name}(*__args)`
       : `${fn.name}(*__args)`;
-    return `${code}
+
+    let wrapper = `${code}
 # --- Judge harness ---
 import json, sys
-__judge_input = ${lines}
+from typing import Optional
+__judge_input = ${JSON.stringify(inputStr)}
 __lines = [l for l in __judge_input.split('\\n') if l.strip()]
 __args = [json.loads(l) for l in __lines]
-__result = ${call}
-print(json.dumps(__result, separators=(',', ':')))
 `;
-  }
 
-  // JavaScript
-  return `${code}
-// --- Judge harness ---
-const __judgeInput = ${lines};
-const __lines = __judgeInput.split('\\n').filter(l => l.trim() !== '');
-const __args = __lines.map(l => JSON.parse(l));
-const __result = ${fn.name}(...__args);
-process.stdout.write(JSON.stringify(__result));
-`;
-}
-
-async function runLocal(code: string, language: string, fn: ExtractedFn, inputStr: string): Promise<{
-  actual: string; stderr: string; runtimeMs: number
-}> {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'judge-'));
-  const ext = language === 'JavaScript' ? '.js' : '.py';
-  const srcFile = join(tmpDir, `solution${ext}`);
-  const wrapped = buildLocalWrapper(code, language, fn, inputStr);
-  await writeFile(srcFile, wrapped, 'utf-8');
-
-  const command = language === 'JavaScript' ? process.execPath : 'python';
-  const start = Date.now();
-  try {
-    const { stdout, stderr } = await execFileAsync(command, [srcFile], {
-      timeout: TIMEOUT_MS,
-      cwd: tmpDir,
-      maxBuffer: 1024 * 1024,
+    // Convert listnode params from arrays to ListNode objects
+    rawArgs.forEach((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'listnode') {
+        wrapper += `__args[${i}] = __makeList(__args[${i}])\n`;
+      }
     });
-    const runtimeMs = Date.now() - start;
-    await unlink(srcFile).catch(() => {});
 
-    const lines = stdout.split('\n').filter((l: string) => l.trim());
-    const actual = lines.length > 0 ? lines[lines.length - 1] : '(no output)';
-    const debugOutput = lines.length > 1 ? lines.slice(0, -1).join('\n') : '';
-    return { actual, stderr: debugOutput || stderr, runtimeMs };
-  } catch (err: any) {
-    const runtimeMs = Date.now() - start;
-    await unlink(srcFile).catch(() => {});
-    if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') {
-      throw { type: 'Time Limit Exceeded', message: 'Output exceeded maximum buffer size' };
-    }
-    if (err.killed || err.signal) {
-      throw { type: 'Time Limit Exceeded', message: 'Execution timed out' };
-    }
-    throw { type: 'Runtime Error', message: err.stderr || err.message };
+    // Serialize result
+    const serialize = fn.returnType === 'listnode'
+      ? `print(__listToStr(__result))`
+      : fn.returnType === 'string'
+      ? `print(__result)`
+      : `print(json.dumps(__result, separators=(',', ':')))`;
+
+    wrapper += `__result = ${call}
+${serialize}
+`;
+
+    // Prepend helper functions and ListNode def (with Optional import before user code)
+    wrapper = `from typing import List, Optional
+${listNodeDef}
+# --- ListNode helpers ---
+def __makeList(arr):
+    dummy = ListNode(0)
+    tail = dummy
+    for v in arr:
+        tail.next = ListNode(v)
+        tail = tail.next
+    return dummy.next
+def __listToStr(head):
+    r = []
+    cur = head
+    while cur:
+        r.append(str(cur.val))
+        cur = cur.next
+    return '[' + ','.join(r) + ']'
+` + wrapper;
+
+    return wrapper;
   }
+
+  if (language === 'JavaScript') {
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    if (rawArgs.length === 0) {
+      return `// --- Error: No input arguments provided ---
+${code}
+// --- Judge harness ---
+process.stdout.write(JSON.stringify(${fn.name}()));
+`;
+    }
+    const typedArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return jsonToLiteral(a, t, 'JavaScript');
+    });
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return t === 'listnode' ? `__arg${i}` : typedArgs[i];
+    }).join(', ');
+
+    // Build arg defs for listnode
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'listnode')
+        return `const __arg${i} = __makeList(${typedArgs[i]});`;
+      return '';
+    }).filter(Boolean).join('\n');
+
+    // Build result serialization
+    let resultLine = `const __result = ${fn.name}(${callArgs});`;
+    if (fn.returnType === 'listnode') {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(__listToStr(__result));`;
+    } else if (fn.returnType === 'string') {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(__result);`;
+    } else {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(JSON.stringify(__result));`;
+    }
+
+    // Inject ListNode constructor if not in user code (strip comments first)
+    const jsCodeClean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hasListNode = /\bfunction\s+ListNode\b/.test(jsCodeClean);
+    const listNodeDef = hasListNode ? '' : `
+function ListNode(val, next) {
+  this.val = (val===undefined ? 0 : val);
+  this.next = (next===undefined ? null : next);
+}`;
+
+    return `${listNodeDef}
+// --- ListNode helpers ---
+function __makeList(arr) {
+    let dummy = new ListNode(0), tail = dummy;
+    for (let v of arr) { tail.next = new ListNode(v); tail = tail.next; }
+    return dummy.next;
 }
-
-// --------------- JDOODLE COMPILER (C++ / Java / Go) ---------------
-
-function buildJdoodleWrapper(code: string, language: string, fn: ExtractedFn, inputStr: string): string {
-  const args = inputStr.split('\n').filter(l => l.trim());
-  const typedArgs = args.map((a, i) => {
-    const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
-    return jsonToLiteral(a, t, language);
-  });
+function __listToStr(head) {
+    let r = [];
+    for (let cur = head; cur; cur = cur.next) r.push(cur.val);
+    return JSON.stringify(r);
+}
+${code}
+// --- Judge harness ---
+${argDefs}
+${resultLine}
+`;
+  }
 
   if (language === 'C++') {
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    const typedArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return jsonToLiteral(a, t, 'C++');
+    });
+
+    // Build variable declarations for complex types (vector<int>, vector<string>, listnode)
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]')
+        return `  vector<int> __arg${i} = ${jsonToLiteral(a, t, 'C++')};`;
+      if (t === 'vector<string>')
+        return `  vector<string> __arg${i} = ${jsonToLiteral(a, t, 'C++')};`;
+      if (t === 'listnode') {
+        const arr = JSON.parse(a) as number[];
+        const vals = arr.map(v => String(v)).join(',');
+        return `  ListNode* __arg${i} = __makeList({${vals}});`;
+      }
+      return '';
+    }).filter(Boolean).join('\n');
+
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode') ? `__arg${i}` : typedArgs[i];
+    }).join(', ');
+
+    // Add listnode result serialization if return type is listnode
+    let resultStrOverload = '';
+    if (fn.returnType === 'listnode') {
+      resultStrOverload = `string __resultStr(ListNode* head) {
+  string r = "[";
+  for (ListNode* cur = head; cur; cur = cur->next) {
+    if (r.size() > 1) r += ",";
+    r += to_string(cur->val);
+  }
+  return r + "]";
+}
+`;
+    }
+
+    // If user code doesn't define ListNode struct (outside comments), inject it
+    const codeNoCommentsCpp = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hasListNode = /\bstruct\s+ListNode\b/.test(codeNoCommentsCpp);
+    const listNodeDef = hasListNode ? '' : `
+struct ListNode {
+  int val;
+  ListNode *next;
+  ListNode() : val(0), next(nullptr) {}
+  ListNode(int x) : val(x), next(nullptr) {}
+  ListNode(int x, ListNode *next) : val(x), next(next) {}
+};`;
+
     return `#include <bits/stdc++.h>
 using namespace std;
-
+${listNodeDef}
 ${code}
-string __resultStr(const vector<int>& v) {
+// --- ListNode helpers ---
+ListNode* __makeList(initializer_list<int> vals) {
+  ListNode dummy(0), *tail = &dummy;
+  for (int v : vals) tail = tail->next = new ListNode(v);
+  return dummy.next;
+}
+${resultStrOverload}string __resultStr(const vector<int>& v) {
   string r = "[";
   for (size_t i = 0; i < v.size(); i++) {
     if (i) r += ",";
     r += to_string(v[i]);
+  }
+  return r + "]";
+}
+string __resultStr(const vector<string>& v) {
+  string r = "[";
+  for (size_t i = 0; i < v.size(); i++) {
+    if (i) r += ",";
+    r += "\"" + v[i] + "\"";
   }
   return r + "]";
 }
@@ -255,22 +424,88 @@ string __resultStr(bool x) { return x ? "true" : "false"; }
 string __resultStr(const string& s) { return s; }
 
 int main() {
+${argDefs}
   ${fn.isClassMethod ? 'Solution __sol;' : ''}
-  cout << __resultStr(${fn.isClassMethod ? '__sol.' : ''}${fn.name}(${typedArgs.join(', ')})) << endl;
+  cout << __resultStr(${fn.isClassMethod ? '__sol.' : ''}${fn.name}(${callArgs})) << endl;
   return 0;
 }
 `;
   }
 
   if (language === 'Java') {
+    const rawArgs = inputStr.split('\n').filter(l => l.trim());
+    const typedArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      return jsonToLiteral(a, t, 'Java');
+    });
+
+    const argDefs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]')
+        return jsonToLiteral(a, t, 'Java');
+      if (t === 'vector<string>')
+        return jsonToLiteral(a, t, 'Java');
+      if (t === 'listnode') {
+        const arr = JSON.parse(a) as number[];
+        const vals = arr.map(v => String(v)).join(',');
+        return `__makeList(new int[]{${vals}})`;
+      }
+      return '';
+    }).filter(Boolean);
+
+    // Inject ListNode class if not defined in user code
+    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+    const listNodeDef = hasListNode ? '' : `
+  static class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+  }`;
+
+    // Strip import statements (we already have import java.util.*)
+    const codeWithoutImports = code.replace(/^import\s+.*;$/gm, '');
+    const patchedCode = codeWithoutImports.replace(/\bclass\b/g, 'static class');
+
+    const callArgs = rawArgs.map((a, i) => {
+      const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+      if (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode')
+        return argDefs[i] || typedArgs[i];
+      return typedArgs[i];
+    }).join(', ');
+
+    // Add ListNode result serialization
+    let resultStrOverload = '';
+    if (fn.returnType === 'listnode') {
+      resultStrOverload = `  static String __resultStr(ListNode head) {
+    StringBuilder sb = new StringBuilder("[");
+    for (ListNode cur = head; cur != null; cur = cur.next) {
+      if (sb.length() > 1) sb.append(",");
+      sb.append(cur.val);
+    }
+    return sb.append("]").toString();
+  }
+`;
+    }
+
     return `import java.util.*;
 import java.util.stream.*;
 
 public class Main {
-${code}
+${listNodeDef}${patchedCode}
 
-  static String __resultStr(int[] v) {
+  // --- ListNode helpers ---
+  static ListNode __makeList(int[] vals) {
+    ListNode dummy = new ListNode(0), tail = dummy;
+    for (int v : vals) { tail.next = new ListNode(v); tail = tail.next; }
+    return dummy.next;
+  }
+${resultStrOverload}  static String __resultStr(int[] v) {
     return Arrays.stream(v).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+  }
+  static String __resultStr(String[] v) {
+    return Arrays.stream(v).collect(Collectors.joining(",", "[", "]"));
   }
   static String __resultStr(int x) { return String.valueOf(x); }
   static String __resultStr(double x) { return String.valueOf(x); }
@@ -279,13 +514,19 @@ ${code}
 
   public static void main(String[] args) {
     ${fn.isClassMethod ? 'Solution __sol = new Solution();' : ''}
-    System.out.print(__resultStr(${fn.isClassMethod ? '__sol.' : 'new Main().'}${fn.name}(${typedArgs.join(', ')})));
+    System.out.print(__resultStr(${fn.isClassMethod ? '__sol.' : 'new Main().'}${fn.name}(${callArgs})));
   }
 }
 `;
   }
 
   // Go
+  const args = inputStr.split('\n').filter(l => l.trim());
+  const typedArgs = args.map((a, i) => {
+    const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
+    return jsonToLiteral(a, t, 'Go');
+  });
+
   return `package main
 import "fmt"
 import "strconv"
@@ -298,6 +539,13 @@ func __resultStr(v interface{}) string {
     for i, n := range x {
       if i > 0 { s += "," }
       s += strconv.Itoa(n)
+    }
+    return s + "]"
+  case []string:
+    s := "["
+    for i, n := range x {
+      if i > 0 { s += "," }
+      s += fmt.Sprintf("\\\"%s\\\"", n)
     }
     return s + "]"
   case int: return strconv.Itoa(x)
@@ -314,65 +562,232 @@ func main() {
 `;
 }
 
-async function runViaJdoodle(code: string, language: string): Promise<{
-  output: string; error: string; cpuTime: string; statusCode: number
+// --------------- LOCAL COMPILER (fallback for JS/Python) ---------------
+
+async function runLocal(code: string, language: string, fn: ExtractedFn, inputStr: string): Promise<{
+  actual: string; stderr: string; runtimeMs: number
 }> {
-  const langInfo = JDOODLE_LANG_MAP[language];
-  const response = await fetch('https://api.jdoodle.com/v1/execute', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      clientId: JDOODLE_CLIENT_ID,
-      clientSecret: JDOODLE_CLIENT_SECRET,
-      script: code,
-      stdin: '',
-      language: langInfo.lang,
-      versionIndex: langInfo.version,
-    }),
-  });
-  const data = await response.json();
-  return {
-    output: data.output || '',
-    error: data.error || '',
-    cpuTime: data.cpuTime || '0',
-    statusCode: data.statusCode || 200,
-  };
+  const tmpDir = await mkdtemp(join(tmpdir(), 'judge-'));
+  const ext = language === 'JavaScript' ? '.js' : '.py';
+  const srcFile = join(tmpDir, `solution${ext}`);
+  const wrapped = buildWrapperCode(code, language, fn, inputStr);
+  await writeFile(srcFile, wrapped, 'utf-8');
+
+  const command = language === 'JavaScript' ? process.execPath : 'python';
+  const start = Date.now();
+  try {
+    const { stdout, stderr } = await execFileAsync(command, [srcFile], {
+      timeout: TIMEOUT_MS, cwd: tmpDir, maxBuffer: 1024 * 1024,
+    });
+    const runtimeMs = Date.now() - start;
+    await unlink(srcFile).catch(() => {});
+    let lines = stdout.split('\n');
+    if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+    const actual = lines.pop() ?? '';
+    const debugOutput = lines.join('\n');
+    return { actual, stderr: debugOutput || stderr, runtimeMs };
+  } catch (err: any) {
+    const runtimeMs = Date.now() - start;
+    await unlink(srcFile).catch(() => {});
+    if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') {
+      throw { type: 'Time Limit Exceeded', message: 'Output exceeded maximum buffer size' };
+    }
+    if (err.killed || err.signal) {
+      throw { type: 'Time Limit Exceeded', message: 'Execution timed out' };
+    }
+    throw { type: 'Runtime Error', message: err.stderr || err.message };
+  }
 }
 
-// --------------- SHARED ---------------
+// --------------- JUDGE0 COMPILER ---------------
+
+async function runViaJudge0(code: string, language: string): Promise<{
+  stdout: string; stderr: string; compileOutput: string; statusId: number; time: string; memory: string;
+}> {
+  const langId = JUDGE0_LANG_IDS[language];
+  if (!langId) throw { type: 'Compile Error', message: `No Judge0 language ID for "${language}"` };
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (JUDGE0_AUTH_TOKEN) headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
+
+  const isJava = language === 'Java';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), JUDGE0_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${JUDGE0_API_URL}/submissions?wait=true`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        source_code: code,
+        language_id: langId,
+        stdin: '',
+        cpu_time_limit: 5,
+        memory_limit: isJava ? 768000 : 256000,
+        enable_per_process_and_thread_time_limit: true,
+        enable_per_process_and_thread_memory_limit: true,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw { type: 'Compile Error', message: `Judge0 API error (${response.status}): ${text}` };
+    }
+
+    const data = await response.json();
+
+    // Judge0 may return status 1 (In Queue) or 2 (Processing) despite ?wait=true
+    // in rare race conditions. Treat these as internal errors.
+    if (data.status?.id === 1 || data.status?.id === 2) {
+      throw { type: 'Runtime Error', message: 'Judge0 did not process the submission. Try again.' };
+    }
+
+    return {
+      stdout: data.stdout || '',
+      stderr: data.stderr || '',
+      compileOutput: data.compile_output || '',
+      statusId: data.status?.id || 0,
+      time: data.time || '0',
+      memory: data.memory || '0',
+    };
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw { type: 'Time Limit Exceeded', message: 'Judge0 did not respond within the time limit' };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function judge0StatusToResult(statusId: number, stdout: string, stderr: string, compileOutput: string): {
+  status: 'Accepted' | 'Wrong Answer' | 'Compile Error' | 'Runtime Error' | 'Time Limit Exceeded';
+  error?: string;
+  actual: string;
+} {
+  let lines = stdout.split('\n');
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+  const actual = lines.pop() ?? '';
+
+  if (statusId === 6) {
+    return { status: 'Compile Error', error: compileOutput || stderr || 'Compilation failed', actual };
+  }
+  if (statusId === 5) {
+    return { status: 'Time Limit Exceeded', error: 'Time limit exceeded', actual };
+  }
+  if (statusId === 4) {
+    return { status: 'Wrong Answer', actual };
+  }
+  if (statusId >= 7) {
+    return { status: 'Runtime Error', error: stderr || compileOutput || 'Runtime error', actual };
+  }
+  if (statusId === 3) {
+    return { status: 'Accepted', actual };
+  }
+
+  return { status: 'Runtime Error', error: `Unknown status: ${statusId}`, actual };
+}
+
+// --------------- EXAMPLES → TESTCASES ---------------
+
+function parseExampleInput(s: string): string[] {
+  s = s.replace(/^Input:\s*/i, '').trim();
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+
+  for (let i = 0; i <= s.length; i++) {
+    if (i === s.length || (s[i] === ',' && depth === 0)) {
+      const part = s.slice(start, i).trim();
+      const eqIdx = part.lastIndexOf('=');
+      if (eqIdx >= 0) parts.push(part.slice(eqIdx + 1).trim());
+      start = i + 1;
+      continue;
+    }
+    if (s[i] === '[' || s[i] === '{' || s[i] === '(') depth++;
+    else if (s[i] === ']' || s[i] === '}' || s[i] === ')') depth--;
+  }
+  return parts;
+}
+
+function getTestcases(problem: typeof PROBLEMS_DATA[0]): { input: string; expectedOutput: string }[] {
+  if (problem.testcases.length > 0) return problem.testcases;
+  return problem.examples
+    .filter((ex) => {
+      const parsed = parseExampleInput(ex.input);
+      return parsed.length > 0 && parsed.some((p) => p.trim() !== '');
+    })
+    .map((ex) => {
+      let expected = ex.output;
+      if (expected.startsWith('"') && expected.endsWith('"')) {
+        expected = expected.slice(1, -1);
+      }
+      return {
+        input: parseExampleInput(ex.input).join('\n'),
+        expectedOutput: expected,
+      };
+    });
+}
 
 function normalizeOutput(output: string): string {
   return output.replace(/\s+/g, '');
 }
 
 export async function POST(req: NextRequest) {
-  const { problemId, language, code, action, customInput } = await req.json();
+  const controller = new AbortController();
+  const overallTimeout = setTimeout(() => controller.abort(), OVERALL_TIMEOUT_MS);
+
+  try {
+    return await Promise.race([
+      handleEvaluate(req),
+      new Promise<Response>((_, reject) => {
+        controller.signal.addEventListener('abort', () => {
+          reject(new Error('OVERALL_TIMEOUT'));
+        });
+      }),
+    ]);
+  } catch (err: any) {
+    if (err.message === 'OVERALL_TIMEOUT') {
+      return NextResponse.json({
+        status: 'Time Limit Exceeded',
+        compileError: 'Overall evaluation timed out. Check for infinite loops or excessive recursion.',
+        runtime: '0ms', memory: '0MB',
+        testResults: [],
+      });
+    }
+    const msg = typeof err === 'string' ? err : err?.message || 'Unexpected error';
+    return NextResponse.json({
+      status: 'Runtime Error',
+      compileError: msg,
+      runtime: '0ms', memory: '0MB',
+      testResults: [],
+    });
+  } finally {
+    clearTimeout(overallTimeout);
+  }
+}
+
+async function handleEvaluate(req: NextRequest): Promise<Response> {
+  const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
   const problem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
   if (!problem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
   }
 
-  const allLangs = new Set([...LOCAL_LANGS, ...JDOODLE_LANGS]);
-  if (!allLangs.has(language)) {
+  if (!JUDGE0_LANG_IDS[language]) {
     return NextResponse.json({
       status: 'Compile Error',
-      compileError: `"${language}" is not supported. Supported: ${[...allLangs].join(', ')}`,
-      runtime: '0ms', memory: '0MB', testResults: [],
-    });
-  }
-
-  if (JDOODLE_LANGS.has(language) && !USE_JDOODLE) {
-    return NextResponse.json({
-      status: 'Compile Error',
-      compileError: `"${language}" requires JDoodle API. Set JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET env vars, or use JavaScript/Python which compile locally.`,
+      compileError: `"${language}" is not supported. Supported: ${Object.keys(JUDGE0_LANG_IDS).join(', ')}`,
       runtime: '0ms', memory: '0MB', testResults: [],
     });
   }
 
   const testcasesToRun = customInput
-    ? [{ input: customInput, expectedOutput: 'N/A' }]
-    : problem.testcases;
+    ? [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }]
+    : getTestcases(problem);
 
   const fn = extractFunction(code, language);
   if (!fn) {
@@ -393,34 +808,105 @@ export async function POST(req: NextRequest) {
 
   for (const tc of testcasesToRun) {
     try {
+      const wrapped = buildWrapperCode(code, language, fn, tc.input);
       let actual: string;
-      let stderr: string;
+      let debugOut: string | undefined;
       let runtimeMs: number;
 
-      if (LOCAL_LANGS.has(language)) {
-        // Compile locally via child_process
-        const result = await runLocal(code, language, fn, tc.input);
-        actual = result.actual;
-        stderr = result.stderr;
-        runtimeMs = result.runtimeMs;
-      } else {
-        // Compile via JDoodle API
-        const wrapped = buildJdoodleWrapper(code, language, fn, tc.input);
-        const { output, error, cpuTime, statusCode } = await runViaJdoodle(wrapped, language);
-        runtimeMs = Math.round(parseFloat(cpuTime) * 1000);
-
-        if (statusCode !== 200 && statusCode !== 0) {
-          throw { type: 'Compile Error', message: error || output || 'JDoodle error' };
+      try {
+        const ck = cacheKey(language, wrapped, tc.input);
+        let resultStr = await cacheGet(ck);
+        if (resultStr) {
+          const cached = JSON.parse(resultStr);
+          runtimeMs = cached.runtimeMs;
+          actual = cached.actual;
+          if (cached.overallStatus === 'Compile Error') {
+            overallStatus = 'Compile Error';
+            compileError = cached.error ?? null;
+            results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed: false });
+            break;
+          }
+          if (cached.overallStatus === 'Time Limit Exceeded') {
+            if (overallStatus === 'Accepted') overallStatus = 'Time Limit Exceeded';
+            results.push({ input: tc.input, expected: tc.expectedOutput, actual: 'Time limit exceeded', passed: false });
+            break;
+          }
+          if (cached.overallStatus === 'Runtime Error') {
+            if (overallStatus === 'Accepted') overallStatus = 'Runtime Error';
+            results.push({ input: tc.input, expected: tc.expectedOutput, actual: cached.error || 'Runtime error', passed: false });
+            compileError = (compileError || cached.error) ?? null;
+            continue;
+          }
+          totalRuntime += runtimeMs;
+          const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: cached.debugOut });
+          if (!passed) overallStatus = 'Wrong Answer';
+          continue;
         }
 
-        const lines = output.split('\n').filter((l: string) => l.trim());
-        actual = lines.length > 0 ? lines[lines.length - 1] : '(no output)';
-        stderr = lines.length > 1 ? lines.slice(0, -1).join('\n') : '';
+        // Skip Judge0 for JS (Node.js SIGSEGV in isolate sandbox) – run locally
+        if (language === 'JavaScript') {
+          const localResult = await runLocal(code, language, fn, tc.input);
+          actual = localResult.actual;
+          debugOut = localResult.stderr || undefined;
+          runtimeMs = localResult.runtimeMs;
+          totalRuntime += runtimeMs;
+          const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
+          if (!passed) overallStatus = 'Wrong Answer';
+          continue;
+        }
+
+        const result = await runViaJudge0(wrapped, language);
+        runtimeMs = Math.round(parseFloat(result.time) * 1000);
+
+        const jResult = judge0StatusToResult(result.statusId, result.stdout, result.stderr, result.compileOutput);
+        actual = jResult.actual;
+
+        cacheSet(ck, JSON.stringify({
+          runtimeMs, actual, error: jResult.error,
+          overallStatus: jResult.status,
+          debugOut: undefined as string | undefined,
+        }));
+
+        if (jResult.status === 'Compile Error') {
+          overallStatus = 'Compile Error';
+          compileError = jResult.error ?? null;
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed: false });
+          break;
+        }
+        if (jResult.status === 'Time Limit Exceeded') {
+          if (overallStatus === 'Accepted') overallStatus = 'Time Limit Exceeded';
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual: 'Time limit exceeded', passed: false });
+          break;
+        }
+        if (jResult.status === 'Runtime Error') {
+          if (overallStatus === 'Accepted') overallStatus = 'Runtime Error';
+          results.push({ input: tc.input, expected: tc.expectedOutput, actual: jResult.error || 'Runtime error', passed: false });
+          compileError = (compileError || jResult.error) ?? null;
+          continue;
+        }
+
+        const lines = result.stdout.split('\n').filter(l => l.trim());
+        debugOut = lines.length > 1 ? lines.slice(0, -1).join('\n') : undefined;
+        cacheSet(ck, JSON.stringify({
+          runtimeMs, actual, error: jResult.error,
+          overallStatus: jResult.status, debugOut,
+        }));
+      } catch (judge0Err: any) {
+        if (['JavaScript', 'Python'].includes(language)) {
+          const localResult = await runLocal(code, language, fn, tc.input);
+          actual = localResult.actual;
+          debugOut = localResult.stderr || undefined;
+          runtimeMs = localResult.runtimeMs;
+        } else {
+          throw judge0Err;
+        }
       }
 
       totalRuntime += runtimeMs;
       const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
-      results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: stderr || undefined });
+      results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
       if (!passed) overallStatus = 'Wrong Answer';
     } catch (err: any) {
       const errType = err.type || 'Runtime Error';

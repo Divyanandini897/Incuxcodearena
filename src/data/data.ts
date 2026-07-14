@@ -293,14 +293,6 @@ export const PROBLEMS_DATA: Problem[] = [
     "description": "The string \"PAYPALISHIRING\" is written in a zigzag pattern on a given number of rows like this: (you may want to display this pattern in a fixed font for better legibility)\nAnd then read line by line: \"PAHNAPLSIIGYIR\"\nWrite the code that will take a string and make this conversion given a number of rows:\nExample 1:\nExample 2:\nExample 3:\nConstraints:\n\nConstraints:\n- 1 <= s.length <= 1000\n- s consists of English letters (lower-case and upper-case), ',' and '.'.\n- 1 <= numRows <= 1000",
     "examples": [
       {
-        "input": "",
-        "output": ""
-      },
-      {
-        "input": "",
-        "output": ""
-      },
-      {
         "input": "s = \"PAYPALISHIRING\", numRows = 3",
         "output": "\"PAHNAPLSIIGYIR\""
       },
