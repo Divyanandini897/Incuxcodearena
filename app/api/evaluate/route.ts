@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI, Type } from '@google/genai';
-import { PROBLEMS_DATA } from '@/src/data/data';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { mkdtemp, writeFile, unlink } from 'fs/promises';
@@ -349,8 +347,8 @@ function normalizeOutput(output: string): string {
 export async function POST(req: NextRequest) {
   const { problemId, language, code, action, customInput } = await req.json();
 
-  const problem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
-  if (!problem) {
+  const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
+  if (!dbProblem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
   }
 
@@ -376,22 +374,13 @@ export async function POST(req: NextRequest) {
   if (customInput) {
     testcasesToRun = [{ input: customInput, expectedOutput: 'N/A' }];
   } else {
-    const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
-    if (dbProblem) {
-      const dbTestCases = await prisma.testCase.findMany({
-        where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
-        orderBy: { sortOrder: 'asc' },
-      });
-      testcasesToRun = dbTestCases.length > 0
-        ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
-        : problem.testcases.length > 0
-          ? problem.testcases
-          : [{ input: '[]', expectedOutput: 'N/A' }];
-    } else {
-      testcasesToRun = problem.testcases.length > 0
-        ? problem.testcases
-        : [{ input: '[]', expectedOutput: 'N/A' }];
-    }
+    const dbTestCases = await prisma.testCase.findMany({
+      where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
+      orderBy: { sortOrder: 'asc' },
+    });
+    testcasesToRun = dbTestCases.length > 0
+      ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+      : [{ input: '[]', expectedOutput: 'N/A' }];
   }
 
   const fn = extractFunction(code, language);
