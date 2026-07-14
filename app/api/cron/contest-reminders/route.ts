@@ -12,46 +12,44 @@ export async function GET() {
   }
 
   const now = new Date()
-  const inOneHour = new Date(now.getTime() + 60 * 60 * 1000)
-  const in45Min = new Date(now.getTime() + 45 * 60 * 1000)
-
   const contests = await prisma.contest.findMany({
     where: {
       isPublished: true,
       reminderSent: false,
-      startsAt: { gte: in45Min, lte: inOneHour },
+      startsAt: { not: null },
     },
+    include: { registrations: { include: { user: { select: { email: true, name: true } } } } },
   })
-
-  if (contests.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0, message: 'No contests starting within 1 hour' })
-  }
-
-  const profiles = await prisma.profile.findMany({
-    select: { email: true, name: true },
-  })
-  const emails = profiles.map((p) => p.email).filter(Boolean) as string[]
-
-  if (emails.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0, message: 'No user emails found' })
-  }
 
   let totalSent = 0
   for (const contest of contests) {
+    const reminderMins = contest.reminderMinutes ?? 10
+    const startsAt = contest.startsAt!
+    const reminderTime = new Date(startsAt.getTime() - reminderMins * 60 * 1000)
+    const windowEnd = new Date(reminderTime.getTime() + 60 * 1000) // 1 min window
+
+    if (now < reminderTime || now > windowEnd) continue
+
+    const recipients = contest.registrations.length > 0
+      ? contest.registrations.map((r) => r.user.email).filter(Boolean) as string[]
+      : (await prisma.profile.findMany({ select: { email: true } })).map((p) => p.email).filter(Boolean) as string[]
+
+    if (recipients.length === 0) continue
+
     const body = [
-      `Reminder: "${contest.title}" starts in about 1 hour!`,
+      `Reminder: "${contest.title}" starts in ${reminderMins} minutes!`,
       '',
       `Duration: ${contest.durationMins} minutes`,
       `Max Points: ${contest.maxPoints}`,
-      contest.startsAt ? `Starts at: ${contest.startsAt.toLocaleString()}` : null,
+      `Starts at: ${startsAt.toLocaleString()}`,
       '',
       `Visit ${APP_URL}/test-arena to join!`,
-    ].filter(Boolean).join('\n')
+    ].join('\n')
 
     const { error } = await resend.emails.send({
       from: FROM,
-      to: emails,
-      subject: `Reminder: "${contest.title}" starts in 1 hour`,
+      to: recipients,
+      subject: `Reminder: "${contest.title}" starts in ${reminderMins} minutes`,
       text: body,
     })
 
@@ -66,5 +64,5 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({ ok: true, sent: totalSent, totalContests: contests.length })
+  return NextResponse.json({ ok: true, sent: totalSent })
 }

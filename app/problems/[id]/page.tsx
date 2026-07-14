@@ -5,12 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import Workspace from '@/src/components/Workspace';
 import { PROBLEMS_DATA } from '@/src/data/data';
 import { useGameState } from '@/src/lib/gameState';
+import { supabase } from '@/src/utils/supabaseClient';
 
 export default function ProblemPage() {
   const params = useParams();
   const router = useRouter();
   const problemId = Number(params.id);
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const savedSolved = localStorage.getItem('leetcode_solved_ids');
@@ -21,6 +23,15 @@ export default function ProblemPage() {
         console.error('Error loading solved IDs:', err);
       }
     }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        localStorage.setItem('codenode_profile_id', session.user.id);
+      } else {
+        const stored = localStorage.getItem('codenode_profile_id');
+        if (stored) setUserId(stored);
+      }
+    });
   }, []);
 
   const handleMarkSolved = (id: number) => {
@@ -40,6 +51,7 @@ export default function ProblemPage() {
         solvedProblemIds={solvedProblemIds}
         onBackToDashboard={() => router.push('/')}
         onMarkSolved={handleMarkSolved}
+        userId={userId}
       />
     </div>
   );

@@ -590,6 +590,7 @@ model Profile {
   userProgress     UserProblemProgress[]
   contests         Contest[]
   contestAttempts  ContestAttempt[]
+  contestRegistrations ContestRegistration[]
 
   @@map("profiles")
   @@schema("public")
@@ -856,27 +857,45 @@ model UserProblemProgress {
 }
 
 model Contest {
-  id          String            @id @default(uuid()) @db.Uuid
-  title       String
-  description String?
-  durationMins Int              @map("duration_mins")
-  maxPoints   Int               @default(0) @map("max_points")
-  startsAt    DateTime?         @map("starts_at")
-  endsAt      DateTime?         @map("ends_at")
-  isPublished  Boolean           @default(false) @map("is_published")
-  reminderSent Boolean           @default(false) @map("reminder_sent")
-  createdBy   String            @map("created_by") @db.Uuid
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
+  id            String            @id @default(uuid()) @db.Uuid
+  title         String
+  description   String?
+  durationMins  Int               @map("duration_mins")
+  maxPoints     Int               @default(0) @map("max_points")
+  startsAt      DateTime?         @map("starts_at")
+  endsAt        DateTime?         @map("ends_at")
+  isPublished   Boolean           @default(false) @map("is_published")
+  reminderSent  Boolean           @default(false) @map("reminder_sent")
+  reminderMinutes Int?            @default(10) @map("reminder_minutes")
+  createdBy     String            @map("created_by") @db.Uuid
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   creator  Profile          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   problems      ContestProblem[]
   attempts      ContestAttempt[]
+  registrations ContestRegistration[]
 
   @@index([isPublished])
   @@index([createdBy])
   @@index([startsAt])
   @@map("contests")
+  @@schema("public")
+}
+
+model ContestRegistration {
+  id         String   @id @default(uuid()) @db.Uuid
+  contestId  String   @map("contest_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@map("contest_registrations")
   @@schema("public")
 }
 

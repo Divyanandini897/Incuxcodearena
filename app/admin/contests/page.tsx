@@ -54,6 +54,7 @@ export default function AdminContestsPage() {
     maxPoints: 100,
     startsAt: '',
     endsAt: '',
+    reminderMinutes: 10,
     selectedProblems: [] as string[],
   })
 
@@ -108,7 +109,7 @@ export default function AdminContestsPage() {
   }, [problems, probSearch, diffFilter])
 
   const resetForm = () => {
-    setForm({ title: '', description: '', durationMins: 60, maxPoints: 100, startsAt: '', endsAt: '', selectedProblems: [] })
+    setForm({ title: '', description: '', durationMins: 60, maxPoints: 100, startsAt: '', endsAt: '', reminderMinutes: 10, selectedProblems: [] })
     setEditingId(null)
     setShowForm(false)
     setShowProbPicker(false)
@@ -122,6 +123,7 @@ export default function AdminContestsPage() {
       maxPoints: contest.maxPoints,
       startsAt: contest.startsAt ? new Date(contest.startsAt).toISOString().slice(0, 16) : '',
       endsAt: contest.endsAt ? new Date(contest.endsAt).toISOString().slice(0, 16) : '',
+      reminderMinutes: (contest as any).reminderMinutes ?? 10,
       selectedProblems: contest.problems.map((cp) => cp.problem.id),
     })
     setEditingId(contest.id)
@@ -137,6 +139,7 @@ export default function AdminContestsPage() {
       maxPoints: form.maxPoints,
       startsAt: form.startsAt || undefined,
       endsAt: form.endsAt || undefined,
+      reminderMinutes: form.reminderMinutes,
       problemIds: form.selectedProblems,
       createdBy: profileId,
     }
@@ -249,6 +252,11 @@ export default function AdminContestsPage() {
                 <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Ends At</label>
                 <input type="datetime-local" className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
                   value={form.endsAt} onChange={(e) => setForm((p) => ({ ...p, endsAt: e.target.value }))} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Reminder (mins before)</label>
+                <input type="number" min={1} max={60} className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
+                  value={form.reminderMinutes} onChange={(e) => setForm((p) => ({ ...p, reminderMinutes: +e.target.value }))} />
               </div>
             </div>
 

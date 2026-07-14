@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import { mkdtemp, writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { prisma } from '@/src/lib/prisma';
 
 const execFileAsync = promisify(execFile);
 const TIMEOUT_MS = 5000;
@@ -370,9 +371,28 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const testcasesToRun = customInput
-    ? [{ input: customInput, expectedOutput: 'N/A' }]
-    : problem.testcases;
+  // Fetch test cases from DB (sample for 'run', ALL including hidden for 'submit')
+  let testcasesToRun: { input: string; expectedOutput: string }[];
+  if (customInput) {
+    testcasesToRun = [{ input: customInput, expectedOutput: 'N/A' }];
+  } else {
+    const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
+    if (dbProblem) {
+      const dbTestCases = await prisma.testCase.findMany({
+        where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
+        orderBy: { sortOrder: 'asc' },
+      });
+      testcasesToRun = dbTestCases.length > 0
+        ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+        : problem.testcases.length > 0
+          ? problem.testcases
+          : [{ input: '[]', expectedOutput: 'N/A' }];
+    } else {
+      testcasesToRun = problem.testcases.length > 0
+        ? problem.testcases
+        : [{ input: '[]', expectedOutput: 'N/A' }];
+    }
+  }
 
   const fn = extractFunction(code, language);
   if (!fn) {

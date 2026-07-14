@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Only admins can update contests' }, { status: 403 })
   }
 
-  const { title, description, durationMins, maxPoints, startsAt, endsAt, isPublished, problemIds } = body
+  const { title, description, durationMins, maxPoints, startsAt, endsAt, isPublished, problemIds, reminderMinutes } = body
 
   const updateData: Record<string, unknown> = {}
   if (title !== undefined) updateData.title = title
@@ -36,6 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (startsAt !== undefined) updateData.startsAt = startsAt ? new Date(startsAt) : null
   if (endsAt !== undefined) updateData.endsAt = endsAt ? new Date(endsAt) : null
   if (isPublished !== undefined) updateData.isPublished = isPublished
+  if (reminderMinutes !== undefined) updateData.reminderMinutes = reminderMinutes
 
   if (problemIds !== undefined) {
     await prisma.contestProblem.deleteMany({ where: { contestId: id } })
