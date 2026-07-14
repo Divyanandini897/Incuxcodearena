@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
-import { PROBLEMS_DATA } from '@/src/data/data';
+import { PROBLEMS_DATA } from '@/src/data';
 
 let aiClient: GoogleGenAI | null = null;
 
