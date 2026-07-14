@@ -24,7 +24,7 @@ interface UserProfile {
 
 export default function HomePage() {
   const router = useRouter();
-  const { solvedIds, streak } = useGameState();
+  const { solvedIds, streak, userName, updateUserName } = useGameState();
 
   const [checking, setChecking] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -89,6 +89,11 @@ export default function HomePage() {
             avatar_url: profile.avatar_url,
             provider: user.app_metadata?.provider || 'email',
           });
+          // Sync name into gameState if not already set
+          const authName = profile.username || profile.name || (user.email ? user.email.split('@')[0] : '');
+          if (!userName && authName) {
+            updateUserName(authName);
+          }
         } else {
           // Fallback if the profile doesn't exist in the database yet
           setUserProfile({
@@ -98,6 +103,9 @@ export default function HomePage() {
             avatar_url: user.user_metadata?.avatar_url || null,
             provider: user.app_metadata?.provider || 'email',
           });
+          if (!userName && (user.email || user.user_metadata?.full_name)) {
+            updateUserName(user.user_metadata?.full_name || user.email!.split('@')[0]);
+          }
         }
       } catch (error) {
         console.error('Error verifying profile login state:', error);

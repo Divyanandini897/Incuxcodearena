@@ -176,7 +176,11 @@ export default function Workspace({
       initialCode = '';
     }
     if (!initialCode) {
-      initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
+      if (problem.difficulty === 'Easy' || problem.difficulty === 'Medium') {
+        initialCode = '';
+      } else {
+        initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
+      }
     }
 
     const state = EditorState.create({
@@ -305,8 +309,9 @@ export default function Workspace({
 
   // Reset current language snippet
   const handleResetSnippet = () => {
-    if (window.confirm('Are you sure you want to reset your code to the default boilerplate?')) {
-      const defaultSnippet = problem.starterCode[language] || problem.starterCode['C++'] || '';
+    const hasBoilerplate = problem.difficulty === 'Hard' && (problem.starterCode[language] || problem.starterCode['C++'] || '');
+    if (window.confirm(hasBoilerplate ? 'Reset your code to the default boilerplate?' : 'Clear the editor?')) {
+      const defaultSnippet = hasBoilerplate ? problem.starterCode[language] || problem.starterCode['C++'] || '' : '';
       setUserCode(defaultSnippet);
       localStorage.removeItem(`leetcode_code_${problemId}_${language}`);
     }

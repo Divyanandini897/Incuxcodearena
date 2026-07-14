@@ -19,16 +19,13 @@ interface TopNavbarProps {
 }
 
 export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
-  const { theme, updateTheme, streak, level, xp, gold, userName, avatar } = useGameState();
+  const { theme, updateTheme, streak, level, xp, gold, userName, profilePicture } = useGameState();
 
   const handleToggleTheme = () => {
     updateTheme(theme === 'theme-light' ? 'theme-dark' : 'theme-light');
   };
 
   const xpNeeded = getXpForNextLevel(level);
-
-  // Avatar emoji lookup
-  const avatarEmoji = avatar === 'sherlock' ? '🦊' : avatar === 'neo' ? '🐈' : avatar === 'yoda' ? '🐸' : '🦁';
 
   return (
     <header className="sticky top-0 z-30 h-14 w-full bg-bg-card/85 backdrop-blur-md border-b border-border-card/50 flex items-center justify-between px-6 select-none font-sans">
@@ -98,8 +95,16 @@ export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
 
         {/* Profile Avatar trigger */}
         <Link href="/profile" className="flex items-center gap-2 pl-1 cursor-pointer group">
-          <div className="w-7.5 h-7.5 rounded-full bg-hover flex items-center justify-center text-sm shadow-sm border border-border-card/45 group-hover:scale-105 transition-transform duration-200">
-            {avatarEmoji}
+          <div className="w-7.5 h-7.5 rounded-full bg-gradient-to-tr from-primary/80 to-purple-500/80 p-[1.5px] shadow-sm group-hover:scale-105 transition-transform duration-200">
+            <div className="w-full h-full rounded-full bg-bg-card flex items-center justify-center overflow-hidden text-sm">
+              {profilePicture ? (
+                <img src={profilePicture} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-bold text-text-main select-none">
+                  {(userName || '?')[0].toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
           <div className="hidden lg:flex flex-col text-left leading-none">
             <span className="text-xs font-semibold text-text-main group-hover:text-primary transition-colors">{userName}</span>

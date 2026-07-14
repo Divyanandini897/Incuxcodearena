@@ -22,6 +22,7 @@ export interface GameState {
   activeAccessories: string[];
   theme: string;
   userName: string;
+  profilePicture: string;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
   solveProblem: (id: number, difficulty: 'Easy' | 'Medium' | 'Hard') => void;
@@ -33,6 +34,7 @@ export interface GameState {
   updateTheme: (theme: string) => void;
   toggleTheme: () => void;
   updateUserName: (name: string) => void;
+  updateProfilePicture: (dataUrl: string) => void;
   incrementStreak: () => void;
   resetGame: () => void;
 }
@@ -58,6 +60,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [activeAccessories, setActiveAccessories] = useState<string[]>([]);
   const [theme, setTheme] = useState('theme-light');
   const [userName, setUserName] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage
@@ -78,6 +81,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (parsed.petAccessories !== undefined) setPetAccessories(parsed.petAccessories);
         if (parsed.activeAccessories !== undefined) setActiveAccessories(parsed.activeAccessories);
         if (parsed.userName !== undefined) setUserName(parsed.userName);
+        if (parsed.profilePicture !== undefined) setProfilePicture(parsed.profilePicture);
         
         // Sanitize theme to prevent loading old deleted theme keys
         const validThemes = ['theme-light', 'theme-dark'];
@@ -129,6 +133,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       activeAccessories,
       theme,
       userName,
+      profilePicture,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
     localStorage.setItem('leetcode_solved_ids', JSON.stringify(solvedIds)); // Keep in sync with existing code
@@ -296,6 +301,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUserName(name);
   };
 
+  const updateProfilePicture = (dataUrl: string) => {
+    setProfilePicture(dataUrl);
+  };
+
   const incrementStreak = () => {
     setStreak((prev) => {
       const next = prev + 1;
@@ -320,6 +329,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setActiveAccessories([]);
     setTheme('theme-light');
     setUserName('');
+    setProfilePicture('');
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
@@ -340,6 +350,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         activeAccessories,
         theme,
         userName,
+        profilePicture,
         addXp,
         addGold,
         solveProblem,
@@ -351,6 +362,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         updateTheme,
         toggleTheme,
         updateUserName,
+        updateProfilePicture,
         incrementStreak,
         resetGame,
       }}
