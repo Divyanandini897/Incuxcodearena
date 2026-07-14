@@ -27,7 +27,7 @@ export default function ThemeWrapper({ children }: { children: React.ReactNode }
   }, [theme, mounted]);
 
   // Fallback to default theme until client hydration is complete
-  const currentTheme = mounted ? theme : 'theme-light';
+  const currentTheme = mounted ? theme : 'theme-dark';
   
   return (
     <body className={`${currentTheme} min-h-screen bg-bg-base text-text-main transition-colors duration-300 antialiased relative overflow-x-hidden`}>
