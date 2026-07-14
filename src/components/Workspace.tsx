@@ -30,6 +30,17 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { Problem, EvaluationResult, EditorialResponse, HintResponse } from '../types';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection, highlightSpecialChars } from '@codemirror/view';
+import { EditorState, Compartment } from '@codemirror/state';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { indentOnInput, bracketMatching, foldGutter, foldKeymap, syntaxTree } from '@codemirror/language';
+import { linter, lintGutter } from '@codemirror/lint';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { java } from '@codemirror/lang-java';
+import { cpp } from '@codemirror/lang-cpp';
+import { go } from '@codemirror/lang-go';
+import { oneDark } from '@codemirror/theme-one-dark';
 
 interface WorkspaceProps {
   problemId: number;
@@ -53,7 +64,12 @@ export default function Workspace({
 
   // Layout Splitting
   const [splitPercent, setSplitPercent] = useState(50);
+  const [terminalHeight, setTerminalHeight] = useState(200);
   const containerRef = useRef<HTMLDivElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const terminalContainerRef = useRef<HTMLDivElement>(null);
+  const cmViewRef = useRef<EditorView | null>(null);
+  const userCodeFromCmRef = useRef(false);
   const [isIdeFullscreen, setIsIdeFullscreen] = useState(false);
 
   // Tabs Left Panel
@@ -72,8 +88,42 @@ export default function Workspace({
   // IDE Editor State
   const [language, setLanguage] = useState('JavaScript');
   const [userCode, setUserCode] = useState('');
-  const [lineNumbers, setLineNumbers] = useState<number[]>([1]);
   const [isSaving, setIsSaving] = useState(false);
+
+
+  // CodeMirror: language extension mapping
+  const getLangExt = (lang: string) => {
+    switch (lang) {
+      case 'JavaScript': return javascript();
+      case 'Python': return python();
+      case 'Java': return java();
+      case 'C++': return cpp();
+      case 'Go': return go();
+      default: return javascript();
+    }
+  };
+
+  // Generic syntax-error linter for any Lezer-based grammar
+  const syntaxErrorLinter = linter((view) => {
+    const tree = syntaxTree(view.state);
+    const diagnostics: { from: number; to: number; message: string; severity: 'error' }[] = [];
+    tree.iterate({
+      enter: (node) => {
+        if (node.type.isError) {
+          const from = node.from;
+          const to = node.to;
+          const text = view.state.sliceDoc(from, to).slice(0, 30);
+          diagnostics.push({
+            from,
+            to: to > from ? to : from + 1,
+            message: text ? `Syntax error: unexpected "${text}"` : 'Syntax error',
+            severity: 'error',
+          });
+        }
+      },
+    });
+    return diagnostics;
+  });
 
   // Synchronize language from URL parameter on initial mount
   useEffect(() => {
@@ -100,6 +150,7 @@ export default function Workspace({
   const [isTerminalExpanded, setIsTerminalExpanded] = useState(true);
   const [activeConsoleTab, setActiveConsoleTab] = useState<'Testcase' | 'Test Result'>('Testcase');
   const [customTestcaseInput, setCustomTestcaseInput] = useState('');
+  const [customExpectedOutput, setCustomExpectedOutput] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [editorialData, setEditorialData] = useState<EditorialResponse | null>(null);
@@ -113,6 +164,7 @@ export default function Workspace({
     memory: string;
     language: string;
   }[]>([]);
+
 
   // Fetch submission history from DB on mount
   useEffect(() => {
@@ -142,49 +194,136 @@ export default function Workspace({
     }
   }, [userId, problem.id]);
 
-  // Synchronize start codes on problem/language change
+  // CodeMirror: create/recreate editor when language or problem changes
   useEffect(() => {
+    if (!editorContainerRef.current) return;
+
+    cmViewRef.current?.destroy();
+
     const savedCodeKey = `leetcode_code_${problemId}_${language}`;
-    const savedCode = localStorage.getItem(savedCodeKey);
-    if (savedCode) {
-      setUserCode(savedCode);
-    } else {
-      setUserCode(problem.starterCode[language] || problem.starterCode['C++'] || '');
+    let initialCode: string;
+    try {
+      initialCode = localStorage.getItem(savedCodeKey) ?? '';
+    } catch {
+      initialCode = '';
     }
-    
-    // Set custom testcase input to default
+    if (!initialCode) {
+      initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
+    }
+
+    const state = EditorState.create({
+      doc: initialCode,
+      extensions: [
+        lineNumbers(),
+        highlightActiveLine(),
+        drawSelection(),
+        highlightSpecialChars(),
+        EditorState.allowMultipleSelections.of(true),
+        history(),
+        indentOnInput(),
+        bracketMatching(),
+        foldGutter(),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
+        getLangExt(language),
+        lintGutter(),
+        syntaxErrorLinter,
+        oneDark,
+        EditorView.updateListener.of(update => {
+          if (update.docChanged) {
+            userCodeFromCmRef.current = true;
+            setUserCode(update.state.doc.toString());
+          }
+        }),
+        EditorView.theme({
+          '&': { backgroundColor: 'var(--color-code)' },
+          '.cm-scroller': { fontFamily: '"JetBrains Mono", monospace', fontSize: '13px', lineHeight: '21px' },
+          '.cm-content': { padding: '16px 16px 16px 8px', caretColor: 'var(--color-code-text)' },
+          '.cm-gutters': { backgroundColor: 'var(--color-line-num)', borderRight: '1px solid var(--color-border-subtle)' },
+          '.cm-lineNumbers .cm-gutterElement': { paddingLeft: '12px', paddingRight: '12px', color: 'var(--color-line-text)', fontSize: '11px' },
+          '.cm-activeLine': { backgroundColor: 'transparent' },
+          '.cm-activeLineGutter': { backgroundColor: 'transparent' },
+          '.cm-cursor': { borderLeftColor: 'var(--color-code-text)' },
+          '.cm-selectionBackground': { backgroundColor: 'rgba(255,255,255,0.08)' },
+          '.cm-foldGutter .cm-gutterElement': { color: 'var(--color-line-text)' },
+        }),
+      ],
+    });
+
+    cmViewRef.current = new EditorView({ state, parent: editorContainerRef.current });
+    setUserCode(initialCode);
+
+    // Set default testcase input
     if (problem.testcases && problem.testcases.length > 0) {
       setCustomTestcaseInput(problem.testcases[0].input);
     }
-    
     setHintText(null);
     setEvaluationResult(null);
+
+    return () => {
+      cmViewRef.current?.destroy();
+      cmViewRef.current = null;
+    };
   }, [problemId, language, problem]);
 
-  // Line number update listener
+  // Auto-save to localStorage
   useEffect(() => {
-    const lines = userCode.split('\n');
-    setLineNumbers(Array.from({ length: Math.max(lines.length, 1) }, (_, i) => i + 1));
-
-    // Save code mock auto-save
     setIsSaving(true);
     const timeout = setTimeout(() => {
       localStorage.setItem(`leetcode_code_${problemId}_${language}`, userCode);
       setIsSaving(false);
     }, 600);
-
     return () => clearTimeout(timeout);
   }, [userCode, problemId, language]);
 
-  // Handle Dragging
+  // Sync external userCode changes (reset) into CodeMirror
+  useEffect(() => {
+    if (userCodeFromCmRef.current) {
+      userCodeFromCmRef.current = false;
+      return;
+    }
+    const view = cmViewRef.current;
+    if (!view) return;
+    const curDoc = view.state.doc.toString();
+    if (curDoc !== userCode) {
+      view.dispatch({
+        changes: { from: 0, to: curDoc.length, insert: userCode },
+      });
+    }
+  }, [userCode]);
+
+  // Handle Vertical Dragging (left/right panels)
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const nextPercent = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-        if (nextPercent > 25 && nextPercent < 75) {
+        if (nextPercent > 15 && nextPercent < 85) {
           setSplitPercent(nextPercent);
+        }
+      }
+    };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Handle Horizontal Dragging (editor/terminal split)
+  const handleTerminalMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = terminalHeight;
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = startY - moveEvent.clientY;
+      if (terminalContainerRef.current) {
+        const parent = terminalContainerRef.current.parentElement;
+        if (parent) {
+          const maxHeight = parent.clientHeight - 48;
+          const newHeight = Math.min(Math.max(startHeight + deltaY, 60), maxHeight);
+          setTerminalHeight(newHeight);
         }
       }
     };
@@ -267,6 +406,8 @@ export default function Workspace({
 
     try {
       const isCustom = activeConsoleTab === 'Testcase' && customTestcaseInput.trim() !== '';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
       const res = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,9 +416,17 @@ export default function Workspace({
           language,
           code: userCode,
           action,
-          customInput: isCustom ? customTestcaseInput : undefined
-        })
+          customInput: isCustom ? customTestcaseInput : undefined,
+          customExpected: isCustom ? customExpectedOutput : undefined
+        }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text ? `Server error (${res.status})` : `HTTP ${res.status}`);
+      }
 
       const result: EvaluationResult = await res.json();
       setEvaluationResult(result);
@@ -314,11 +463,14 @@ export default function Workspace({
           }).catch((err) => console.error('Failed to save submission:', err));
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const isTimeout = err?.name === 'AbortError';
       setEvaluationResult({
-        status: 'Runtime Error',
-        compileError: 'Server failed to respond. Please check your internet connection or developer API Key.',
+        status: isTimeout ? 'Time Limit Exceeded' : 'Runtime Error',
+        compileError: isTimeout
+          ? 'Execution timed out. Your code may contain an infinite loop or may be too slow.'
+          : 'Server failed to respond. Please check your internet connection or developer API Key.',
         testResults: []
       });
     } finally {
@@ -357,7 +509,7 @@ export default function Workspace({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col h-[calc(100vh-56px)] select-none bg-page overflow-hidden"
+      className="flex flex-col flex-1 select-none bg-page overflow-hidden"
     >
       
       {/* Mini Workspace Header Bar */}
@@ -818,38 +970,30 @@ export default function Workspace({
             </div>
           </div>
 
-          {/* Code Input Console Window (With sequential vertical line numbers) */}
-          <div className="flex-1 overflow-hidden relative flex text-sm font-mono bg-code" id="code_ide">
-            
-            {/* Sequential Line Numbering System */}
-            <div className="w-12 bg-line-num text-line-text text-right pr-3 select-none py-4 border-r border-border-subtle flex flex-col overflow-hidden">
-              {lineNumbers.map((num) => (
-                <div key={num} className="h-[21px] leading-[21px] text-[11px] pr-0.5">
-                  {num}
-                </div>
-              ))}
-            </div>
+          {/* CodeMirror Editor */}
+          <div className="flex-1 overflow-auto relative" id="code_ide" style={{ minHeight: 0 }}>
+            <div ref={editorContainerRef} className="absolute inset-0" />
+          </div>
 
-            {/* Custom styled text editor */}
-            <textarea
-              value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
-              spellCheck={false}
-              className="flex-1 bg-transparent text-code-text focus:outline-none resize-none p-4 leading-[21px] text-[13px] font-mono h-full overflow-y-auto"
-              style={{ caretColor: 'var(--color-code-text)' }}
-              placeholder="// Write your code here..."
-            />
+          {/* Horizontal drag handle between editor and terminal */}
+          <div
+            className="h-1.5 bg-card hover:bg-emerald-500/30 active:bg-emerald-500 cursor-row-resize transition-colors shrink-0 relative z-10"
+            onMouseDown={handleTerminalMouseDown}
+            style={{ display: isTerminalExpanded ? 'block' : 'none' }}
+          >
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-px bg-hover" />
           </div>
 
           {/* Collapsible Execution Console Terminal */}
-          <div 
-            className="border-t border-border bg-surface flex flex-col overflow-hidden"
-            style={{ height: isTerminalExpanded ? '260px' : '40px' }}
+          <div
+            ref={terminalContainerRef}
+            className="border-t border-border bg-surface flex flex-col overflow-hidden shrink-0"
+            style={{ height: isTerminalExpanded ? `${terminalHeight}px` : '40px' }}
           >
             {/* Headers for Console panel */}
             <div 
               onClick={() => setIsTerminalExpanded(!isTerminalExpanded)}
-              className="flex items-center justify-between px-4 h-10 border-b border-border hover:bg-card transition-colors cursor-pointer select-none text-xs"
+              className="flex items-center justify-between px-4 h-10 border-b border-border hover:bg-card transition-colors cursor-pointer select-none text-xs shrink-0"
             >
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-primary font-mono">
@@ -886,20 +1030,28 @@ export default function Workspace({
 
             {/* Interactive Terminal Inner Content */}
             {isTerminalExpanded && (
-              <div className="flex-1 p-4 overflow-y-auto bg-term text-xs font-mono">
+              <div className="flex-1 p-4 overflow-y-auto bg-term text-xs font-mono min-h-0">
                 {activeConsoleTab === 'Testcase' ? (
                   <div className="flex flex-col gap-3">
                     <span className="text-muted">Enter testcase parameters:</span>
                     <textarea
                       value={customTestcaseInput}
                       onChange={(e) => setCustomTestcaseInput(e.target.value)}
-                      placeholder='[2,7,11,15]&#10;9'
+                      placeholder={`[2,7,11,15]\n9`}
                       spellCheck={false}
                       className="w-full h-24 bg-card border border-border-light focus:border-hover focus:outline-none rounded-lg p-3 text-emerald-400 placeholder-line-text"
                     />
                     <span className="text-[10px] text-muted">
                       Each line is one function argument in JSON format.
                     </span>
+                    <span className="text-muted">Expected output:</span>
+                    <textarea
+                      value={customExpectedOutput}
+                      onChange={(e) => setCustomExpectedOutput(e.target.value)}
+                      placeholder={`[0,1]`}
+                      spellCheck={false}
+                      className="w-full h-12 bg-card border border-border-light focus:border-hover focus:outline-none rounded-lg p-3 text-emerald-400 placeholder-line-text"
+                    />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
