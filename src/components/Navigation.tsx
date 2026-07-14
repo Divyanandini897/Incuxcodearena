@@ -55,11 +55,13 @@ export default function Navigation({ streakCount = 0, userProfile = null }: Navi
   const handleLogout = async () => {
     setIsDropdownOpen(false);
 
-    // 1. Clear Supabase and game-state localStorage keys
+    // 1. Clear Supabase session localStorage keys only.
+    // Progress keys (codenode_game_state_v1, leetcode_solved_ids) are preserved —
+    // they are local caches; the canonical progress lives in Supabase.
     const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('sb-') || key === 'codenode_game_state_v1' || key === 'leetcode_solved_ids')) {
+      if (key && key.startsWith('sb-')) {
         keysToRemove.push(key);
       }
     }

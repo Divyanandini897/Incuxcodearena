@@ -24,33 +24,30 @@ interface UserProfile {
 
 export default function HomePage() {
   const router = useRouter();
-  const { solvedIds, streak } = useGameState();
+  const { solvedIds, streak, hydrate } = useGameState();
 
   const [checking, setChecking] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([]);
   const [streakCount, setStreakCount] = useState<number>(0);
 
+  // Hook 1: Check auth session and fetch user profile + DB progress on login.
   useEffect(() => {
-    // Sync local state with your game context state
-    setStreakCount(streak || 0);
-    setSolvedProblemIds(solvedIds || []);
-
     const checkUserAndFetchProfile = async () => {
       try {
-        // 1. Sign-out route: clear all browser state then redirect
+        // Sign-out route: clear Supabase session keys then redirect.
+        // Progress keys (codenode_game_state_v1, leetcode_solved_ids) are
+        // intentionally preserved — they are local caches, not session tokens.
         if (typeof window !== 'undefined' && window.location.search.includes('signout')) {
-          // Clear all Supabase and game-state localStorage keys
           const keysToRemove: string[] = [];
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && (key.startsWith('sb-') || key === 'codenode_game_state_v1' || key === 'leetcode_solved_ids')) {
+            if (key && key.startsWith('sb-')) {
               keysToRemove.push(key);
             }
           }
           keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-          // Clear Supabase sb-* cookies
           document.cookie.split(';').forEach((c) => {
             const cookieName = c.trim().split('=')[0];
             if (cookieName.startsWith('sb-')) {
@@ -65,7 +62,7 @@ export default function HomePage() {
           return;
         }
 
-        // 2. Fetch the active user session
+        // Fetch the active user session.
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
           router.replace('/auth/login');
@@ -74,10 +71,10 @@ export default function HomePage() {
 
         const user = session.user;
 
-        // 3. Fetch the custom profile row from your Supabase profiles database table
-        const { data: profile, error: profileError } = await supabase
+        // Fetch profile + saved game progress from Supabase.
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('name, email, username, avatar_url')
+          .select('name, email, username, avatar_url, solved_problems, streak')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -89,8 +86,13 @@ export default function HomePage() {
             avatar_url: profile.avatar_url,
             provider: user.app_metadata?.provider || 'email',
           });
+          // Restore progress from DB into the game state provider.
+          hydrate(
+            Array.isArray(profile.solved_problems) ? profile.solved_problems : [],
+            typeof profile.streak === 'number' ? profile.streak : 0,
+            user.id
+          );
         } else {
-          // Fallback if the profile doesn't exist in the database yet
           setUserProfile({
             name: user.user_metadata?.full_name || null,
             email: user.email || null,
@@ -98,17 +100,24 @@ export default function HomePage() {
             avatar_url: user.user_metadata?.avatar_url || null,
             provider: user.app_metadata?.provider || 'email',
           });
+          // No profile row yet — still mark the user ID so progress is saved going forward.
+          hydrate([], 0, user.id);
         }
+        setChecking(false);
       } catch (error) {
         console.error('Error verifying profile login state:', error);
         router.replace('/auth/login');
-      } finally {
-        setChecking(false);
       }
     };
 
     checkUserAndFetchProfile();
-  }, [router, solvedIds, streak]);
+  }, [router]); // auth check runs once on mount
+
+  // Hook 2: Keep local UI state in sync with the game context (e.g. after a problem is solved).
+  useEffect(() => {
+    setStreakCount(streak || 0);
+    setSolvedProblemIds(solvedIds || []);
+  }, [solvedIds, streak]);
 
   const handleSelectProblem = (id: number) => {
     router.push(`/problems/${id}`);
@@ -127,7 +136,6 @@ export default function HomePage() {
       <Navigation streakCount={streakCount} userProfile={userProfile} />
       <AppLayout>
         <div className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
-          {/* Added userProfile prop back here so Dashboard receives the user details */}
           <Dashboard
             userProfile={userProfile}
             solvedProblemIds={solvedProblemIds}

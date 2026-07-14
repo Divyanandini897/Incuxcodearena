@@ -6,6 +6,8 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/src/utils/supabaseClient';
+import { saveProgressToDb } from '@/src/utils/progressSync';
 
 export interface GameState {
   xp: number;
@@ -35,6 +37,8 @@ export interface GameState {
   updateUserName: (name: string) => void;
   incrementStreak: () => void;
   resetGame: () => void;
+  /** Seed the provider with progress loaded from Supabase on login. */
+  hydrate: (solvedIds: number[], streak: number, userId: string) => void;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -59,6 +63,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState('theme-light');
   const [userName, setUserName] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  // Tracks the authenticated user's ID so we know where to save progress in DB.
+  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
   // Load from localStorage
   useEffect(() => {
@@ -310,7 +316,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setXp(0);
     setLevel(1);
     setGold(0);
-    setStreak(1);
+    setStreak(0);
     setSolvedIds([]);
     setAvatar('sherlock');
     setTitle('Bug Rookie');
@@ -320,8 +326,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setActiveAccessories([]);
     setTheme('theme-light');
     setUserName('');
+    setDbUserId(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
+
+  /**
+   * Called once after login to seed the provider with values from Supabase.
+   * Also stores the userId so the DB sync effect can write back on changes.
+   */
+  const hydrate = (newSolvedIds: number[], newStreak: number, userId: string) => {
+    setSolvedIds(newSolvedIds);
+    setStreak(newStreak);
+    setDbUserId(userId);
+  };
+
+  // Sync progress to Supabase whenever solvedIds or streak change (only after login).
+  useEffect(() => {
+    if (!isLoaded || !dbUserId) return;
+    saveProgressToDb(supabase, dbUserId, solvedIds, streak);
+  }, [solvedIds, streak, dbUserId, isLoaded]);
 
   return (
     <GameContext.Provider
@@ -353,6 +376,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         updateUserName,
         incrementStreak,
         resetGame,
+        hydrate,
       }}
     >
       {children}

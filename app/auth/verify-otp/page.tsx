@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
@@ -17,7 +18,7 @@ function VerifyOTPContent() {
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
-  const [devOtp, setDevOtp] = useState(typeof window !== 'undefined' ? localStorage.getItem('dev_otp') || '' : '');
+  const [userExists, setUserExists] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -47,6 +48,7 @@ function VerifyOTPContent() {
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
     setError('');
+    setUserExists(false);
 
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -87,6 +89,7 @@ function VerifyOTPContent() {
     if (!isComplete) return;
     setIsLoading(true);
     setError('');
+    setUserExists(false);
 
     try {
       const res = await fetch('/api/auth/verify-otp', {
@@ -95,8 +98,16 @@ function VerifyOTPContent() {
         body: JSON.stringify({ email, otp: otp.join(''), type }),
       });
       const data = await res.json();
+      
       if (!res.ok) {
-        setError(data.error || 'Incorrect code, please try again');
+        const errorMsg = data.error || 'Incorrect code, please try again';
+        setError(errorMsg);
+        
+        // If the error indicates the user is already registered / exists
+        if (errorMsg.toLowerCase().includes('already') || errorMsg.toLowerCase().includes('exist')) {
+          setUserExists(true);
+        }
+
         setOtp(Array(6).fill(''));
         inputRefs.current[0]?.focus();
         setIsLoading(false);
@@ -124,6 +135,7 @@ function VerifyOTPContent() {
     setTimer(30);
     setOtp(Array(6).fill(''));
     setError('');
+    setUserExists(false);
     inputRefs.current[0]?.focus();
 
     try {
@@ -168,12 +180,6 @@ function VerifyOTPContent() {
             We&apos;ve sent a 6-digit code to{' '}
             <span className="text-[#f5f5f5] font-semibold">{email}</span>
           </p>
-          {devOtp && (
-            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
-              <p className="text-[10px] text-amber-400 font-mono font-bold uppercase mb-1">⚠ Dev Mode — OTP</p>
-              <p className="text-2xl font-bold text-amber-400 tracking-[8px] font-mono">{devOtp}</p>
-            </div>
-          )}
 
           <div className="flex items-center justify-center gap-2.5 my-8">
             {otp.map((digit, index) => (
@@ -194,9 +200,17 @@ function VerifyOTPContent() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2 mb-4">
-              {error}
-            </p>
+            <div className="text-red-400 text-sm text-center bg-red-400/10 border border-red-400/20 rounded-lg py-3 mb-4 px-3 flex flex-col gap-1 items-center justify-center">
+              <span>{error}</span>
+              {userExists && (
+                <Link 
+                  href="/auth/login" 
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs mt-1 transition"
+                >
+                  Click here to Sign In instead →
+                </Link>
+              )}
+            </div>
           )}
 
           <button
