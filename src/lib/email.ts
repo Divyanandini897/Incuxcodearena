@@ -152,6 +152,7 @@ export async function sendOtpEmail(
   email: string,
   otp: string
 ): Promise<{ success: true; previewUrl?: string } | { success: false; error: string }> {
+  // Try Resend first if configured
   if (resend) {
     const { data, error } = await resend.emails.send({
       from: FROM,
@@ -160,14 +161,14 @@ export async function sendOtpEmail(
       text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
       html: buildOtpEmailHtml(otp),
     });
-    if (error) {
-      console.error('[EMAIL] Resend error:', error);
-      return { success: false, error: error.message };
+    if (!error) {
+      console.log('[EMAIL] OTP sent via Resend (id:', data?.id, ')');
+      return { success: true };
     }
-    console.log('[EMAIL] OTP sent via Resend (id:', data?.id, ')');
-    return { success: true };
+    console.warn('[EMAIL] Resend failed, falling back to SMTP:', error.message);
   }
 
+  // Fallback to SMTP (nodemailer)
   try {
     const transporter = await createTransporter();
     const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@codenode.app';
@@ -208,11 +209,11 @@ export async function sendWelcomeEmail(
       text: `Hi ${name},\n\nYour account has been created successfully. You can now sign in and start solving coding challenges.\n\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`,
       html: buildWelcomeEmailHtml(name),
     });
-    if (error) {
-      console.error('[EMAIL] Resend welcome error:', error);
-      return { success: false, error: error.message };
+    if (!error) {
+      console.log('[EMAIL] Welcome sent via Resend (id:', data?.id, ')');
+      return { success: true };
     }
-    return { success: true };
+    console.warn('[EMAIL] Resend welcome failed, falling back to SMTP:', error.message);
   }
 
   try {
