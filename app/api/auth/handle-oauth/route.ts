@@ -1,90 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/src/utils/supabaseAdmin';
+import { prisma } from '@/src/lib/prisma';
+import { Prisma } from '@/src/generated/prisma/client';
 import { sendWelcomeEmail } from '@/src/lib/email';
 
-const isDev = process.env.NODE_ENV === 'development';
+function makeUsername(base: string, suffix?: string): string {
+  const cleaned = base.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!cleaned) return `user_${Date.now()}`;
+  return suffix ? `${cleaned}_${suffix}` : cleaned;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { userId, email, name, username, avatarUrl } = await request.json();
-    console.log('[HANDLE-OAUTH] Received request:', { userId, email, name, username, hasAvatar: !!avatarUrl });
 
     if (!userId || !email) {
       return NextResponse.json({ error: 'userId and email are required' }, { status: 400 });
     }
 
-    const upsertData: Record<string, unknown> = {
-      id: userId,
-      email: email.toLowerCase(),
-      name: name || email.split('@')[0],
-      username: username || email.split('@')[0].toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-      avatar_url: avatarUrl || '',
-    };
+    const normalizedEmail = email.toLowerCase();
+    const displayName = name || normalizedEmail.split('@')[0];
 
-    console.log('[HANDLE-OAUTH] Running UPSERT with data:', upsertData);
+    const maxAttempts = 5;
+    let lastError: string | null = null;
 
-    const { data: preProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .maybeSingle();
-    const isNewProfile = !preProfile;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const candidateUsername = attempt === 0
+        ? makeUsername(username || normalizedEmail.split('@')[0])
+        : makeUsername(normalizedEmail.split('@')[0], `${Date.now()}_${attempt}`);
 
-    const { error: upsertError } = await supabaseAdmin
-      .from('profiles')
-      .upsert(upsertData, { onConflict: 'id', ignoreDuplicates: false });
+      try {
+        const p = await prisma.profile.upsert({
+          where: { id: userId },
+          update: {
+            email: normalizedEmail,
+            name: displayName,
+            username: candidateUsername,
+            avatar_url: avatarUrl || null,
+          },
+          create: {
+            id: userId,
+            email: normalizedEmail,
+            name: displayName,
+            username: candidateUsername,
+            avatar_url: avatarUrl || null,
+          },
+        });
 
-    if (upsertError) {
-      console.error('[HANDLE-OAUTH] UPSERT error:', {
-        code: upsertError.code,
-        message: upsertError.message,
-        details: upsertError.details,
-        hint: upsertError.hint,
-      });
-      const message = isDev
-        ? `Profile upsert failed: ${upsertError.message}${upsertError.details ? ` (${upsertError.details})` : ''}`
-        : 'Failed to create/update profile';
-      return NextResponse.json({ error: message, code: upsertError.code }, { status: 500 });
-    }
+        const isNewProfile = p.created_at === p.updated_at;
+        if (isNewProfile) {
+          const welcomeResult = await sendWelcomeEmail(normalizedEmail, displayName);
+          if (welcomeResult.success && 'previewUrl' in welcomeResult && welcomeResult.previewUrl) {
+            console.log('[HANDLE-OAUTH] Welcome email preview:', welcomeResult.previewUrl);
+          }
+        }
 
-    console.log('[HANDLE-OAUTH] UPSERT succeeded, verifying profile...');
-
-    const { data: verified, error: verifyError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, name, email, username, avatar_url')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (verifyError) {
-      console.error('[HANDLE-OAUTH] Verification query error:', verifyError);
-    }
-
-    if (!verified) {
-      console.error('[HANDLE-OAUTH] Profile NOT FOUND after UPSERT');
-      return NextResponse.json({ error: 'Profile was not created after upsert — RLS policy may be blocking' }, { status: 500 });
-    }
-
-    console.log('[HANDLE-OAUTH] Profile verified:', verified);
-
-    const displayName = (name || email.split('@')[0]) as string;
-    if (isNewProfile) {
-      const welcomeResult = await sendWelcomeEmail(email, displayName);
-      if (welcomeResult.success && welcomeResult.previewUrl) {
-        console.log('[HANDLE-OAUTH] Welcome email preview:', welcomeResult.previewUrl);
+        return NextResponse.json({
+          message: 'Profile created successfully',
+          profile: { id: p.id, name: p.name, email: p.email },
+        });
+      } catch (err) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002' &&
+          (err.meta?.target as string[])?.includes('username')
+        ) {
+          lastError = 'Username conflict';
+          continue;
+        }
+        throw err;
       }
-    } else {
-      console.log('[HANDLE-OAUTH] Skipping welcome email — returning user');
     }
 
-    return NextResponse.json({ message: 'Profile created and welcome email sent' });
+    return NextResponse.json(
+      { error: `Unable to create profile — ${lastError || 'unknown error'}. Please try again.` },
+      { status: 409 },
+    );
   } catch (err) {
     const error = err as Error;
     console.error('[HANDLE-OAUTH] Unexpected error:', {
       name: error.name,
       message: error.message,
-      stack: error.stack,
     });
-    const message = isDev ? `Internal error: ${error.message}` : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

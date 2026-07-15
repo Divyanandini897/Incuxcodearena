@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
+import { isAdminEmail } from '@/src/lib/admin'
 
 const LANG_MAP: Record<string, string> = {
   Cpp: 'C++',
@@ -10,7 +11,7 @@ const LANG_MAP: Record<string, string> = {
 }
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
@@ -18,6 +19,9 @@ export async function GET(
   if (isNaN(leetcodeId)) {
     return NextResponse.json({ error: 'Invalid problem id' }, { status: 400 })
   }
+
+  const adminEmail = request.headers.get('x-admin-email') || ''
+  const isAdmin = isAdminEmail(adminEmail)
 
   const problem = await prisma.problem.findUnique({
     where: { leetcodeId },
@@ -31,6 +35,11 @@ export async function GET(
   })
 
   if (!problem) {
+    return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+  }
+
+  // Non-admin users can only view published problems
+  if (!isAdmin && !problem.isPublished) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
   }
 

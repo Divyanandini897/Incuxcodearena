@@ -252,6 +252,55 @@ export default function Workspace({
     cmViewRef.current = new EditorView({ state, parent: editorContainerRef.current });
     setUserCode(initialCode);
 
+    // Contest mode anti-cheat: block paste, copy, cut, select-all, right-click, drag-drop
+    const contestMode = typeof window !== 'undefined' ? localStorage.getItem('codenode_contest_mode') : null;
+    const cleanups: (() => void)[] = [];
+    if (contestMode && editorContainerRef.current) {
+      const el = editorContainerRef.current;
+      // Block paste
+      const pasteHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('paste', pasteHandler, true);
+      cleanups.push(() => el.removeEventListener('paste', pasteHandler, true));
+      // Block cut
+      const cutHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('cut', cutHandler, true);
+      cleanups.push(() => el.removeEventListener('cut', cutHandler, true));
+      // Block copy
+      const copyHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('copy', copyHandler, true);
+      cleanups.push(() => el.removeEventListener('copy', copyHandler, true));
+      // Block drag-drop
+      const dragHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('drop', dragHandler, true);
+      el.addEventListener('dragover', dragHandler, true);
+      cleanups.push(() => { el.removeEventListener('drop', dragHandler, true); el.removeEventListener('dragover', dragHandler, true); });
+      // Block right-click context menu
+      const contextHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('contextmenu', contextHandler, true);
+      cleanups.push(() => el.removeEventListener('contextmenu', contextHandler, true));
+      // Block keyboard shortcuts: Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A
+      const keyHandler = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      el.addEventListener('keydown', keyHandler, true);
+      cleanups.push(() => el.removeEventListener('keydown', keyHandler, true));
+      // Show contest-mode badge
+      const badge = document.createElement('div');
+      badge.id = 'contest-cheat-block';
+      badge.textContent = 'Contest Mode — Copy/Paste disabled';
+      Object.assign(badge.style, {
+        position: 'absolute', top: '4px', right: '8px',
+        background: 'rgba(239,68,68,0.9)', color: '#fff',
+        fontSize: '10px', padding: '2px 8px', borderRadius: '4px',
+        fontFamily: 'monospace', zIndex: '10', pointerEvents: 'none',
+      });
+      el.appendChild(badge);
+      cleanups.push(() => { const b = el.querySelector('#contest-cheat-block'); if (b) b.remove(); });
+    }
+
     // Set default testcase input
     if (problem.testcases && problem.testcases.length > 0) {
       setCustomTestcaseInput(problem.testcases[0].input);
@@ -262,6 +311,7 @@ export default function Workspace({
     return () => {
       cmViewRef.current?.destroy();
       cmViewRef.current = null;
+      cleanups.forEach((fn) => fn());
     };
   }, [problemId, language, problem]);
 
@@ -447,20 +497,28 @@ export default function Workspace({
         setSubmissionHistory(prev => [subEntry, ...prev]);
 
         if (userId) {
-          fetch('/api/submissions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              problemId: problem.id,
-              language,
-              code: userCode,
-              status: result.status,
-              runtime: result.runtime || '4ms',
-              memory: result.memory || '10.2MB',
-              testResults: result.testResults || null,
-              userId,
-            }),
-          }).catch((err) => console.error('Failed to save submission:', err));
+          try {
+            const subRes = await fetch('/api/submissions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                problemId: problem.id,
+                language,
+                code: userCode,
+                status: result.status,
+                runtime: result.runtime || '4ms',
+                memory: result.memory || '10.2MB',
+                testResults: result.testResults || null,
+                userId,
+              }),
+            });
+            if (!subRes.ok) {
+              const subErr = await subRes.json().catch(() => ({ error: 'Unknown' }));
+              console.error('Failed to save submission:', subErr);
+            }
+          } catch (err) {
+            console.error('Failed to save submission:', err);
+          }
         }
       }
     } catch (err: any) {
@@ -509,7 +567,7 @@ export default function Workspace({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col flex-1 select-none bg-page overflow-hidden"
+      className="flex flex-col flex-1 h-0 select-none bg-page overflow-hidden"
     >
       
       {/* Mini Workspace Header Bar */}
@@ -536,7 +594,7 @@ export default function Workspace({
       </div>
 
       {/* Workspace Split Body */}
-      <div className="flex flex-1 w-full relative overflow-hidden">
+      <div className="flex flex-1 h-0 w-full relative overflow-hidden">
         
         {/* Left Column: Problem Specification Workspace */}
         <div 

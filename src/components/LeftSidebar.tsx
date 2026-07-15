@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useGameState } from '@/src/lib/gameState';
 
+const ADMIN_EMAIL = 'deepika.tiwari.1408@gmail.com';
+
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -36,8 +38,14 @@ export default function LeftSidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { userName } = useGameState();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const menuItems = [
+  useEffect(() => {
+    const email = localStorage.getItem('codenode_user_email') || ''
+    setIsAdmin(email === ADMIN_EMAIL)
+  }, [])
+
+  const allMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { name: 'Practice', icon: Swords, path: '/test-arena' },
     { name: 'Problems', icon: Code2, path: '/' },
@@ -50,6 +58,8 @@ export default function LeftSidebar({
     { name: 'Certificates', icon: FileBadge, path: '/profile' },
     { name: 'Settings', icon: Settings, path: '/profile' }
   ];
+
+  const menuItems = allMenuItems.filter((item) => item.name !== 'Admin' || isAdmin);
 
   return (
     <>

@@ -30,6 +30,7 @@ export default function HomePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([]);
   const [streakCount, setStreakCount] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Sync local state with your game context state
@@ -73,9 +74,38 @@ export default function HomePage() {
         }
 
         const user = session.user;
+        const email = user.email || '';
 
-        // 3. Fetch the custom profile row from your Supabase profiles database table
-        const { data: profile, error: profileError } = await supabase
+        // Store email + profile id so layouts/children can read synchronously
+        localStorage.setItem('codenode_user_email', email);
+        localStorage.setItem('codenode_user_name', user.user_metadata?.full_name || email.split('@')[0]);
+        localStorage.setItem('codenode_profile_id', user.id);
+
+        // Sync profile to DB for ALL users (required for contests, submissions, etc.)
+        const syncName = user.user_metadata?.full_name || email.split('@')[0];
+        try {
+          const syncRes = await fetch('/api/auth/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: user.id, email, name: syncName, avatar_url: user.user_metadata?.avatar_url || null }),
+          });
+          if (!syncRes.ok) {
+            const syncErr = await syncRes.json().catch(() => ({ error: 'Unknown' }));
+            console.error('[page] Profile sync failed:', syncErr);
+          }
+        } catch (syncErr) {
+          console.error('[page] Profile sync error:', syncErr);
+        }
+
+        // 3. Check if admin — redirect to admin panel
+        if (email === 'deepika.tiwari.1408@gmail.com') {
+          setIsAdmin(true);
+          router.replace('/admin/contests');
+          return;
+        }
+
+        // 4. Fetch the profile from DB (should exist now after sync)
+        const { data: profile } = await supabase
           .from('profiles')
           .select('name, email, username, avatar_url')
           .eq('id', user.id)
@@ -90,10 +120,9 @@ export default function HomePage() {
             provider: user.app_metadata?.provider || 'email',
           });
         } else {
-          // Fallback if the profile doesn't exist in the database yet
           setUserProfile({
-            name: user.user_metadata?.full_name || null,
-            email: user.email || null,
+            name: syncName,
+            email: email,
             username: null,
             avatar_url: user.user_metadata?.avatar_url || null,
             provider: user.app_metadata?.provider || 'email',

@@ -46,8 +46,8 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
         if (funcMatch) name = funcMatch[1];
       }
     }
-    // Detect return type from JSDoc @return
-    const returnMatch = code.match(/@return\s+\{(\w+)\}/);
+    // Detect return type from JSDoc @return (full type including generics/arrays)
+    const returnMatch = code.match(/@return\s+\{([^}]+)\}/);
     if (returnMatch) returnType = toCanonicalType(returnMatch[1]);
   }
 
@@ -93,8 +93,8 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
 
   let paramTypes: string[] = [];
   if (language === 'JavaScript') {
-    // Read param types from JSDoc @param {Type} name annotations (supports Type and Type[])
-    const paramRegex = /@param\s+\{(\w+(?:\[\])?(?:<[\w,\s>]*>)?)\}\s+\w+/g;
+    // Read param types from JSDoc @param annotations
+    const paramRegex = /@param\s+\{([^}]+)\}\s+\w+/g;
     let m;
     while ((m = paramRegex.exec(code)) !== null) {
       paramTypes.push(toCanonicalType(m[1]));
@@ -125,12 +125,16 @@ function toCanonicalType(raw: string): string {
   const s = raw.replace(/&/g, '').replace(/\s+/g, ' ').trim();
   const lower = s.toLowerCase();
   if (lower.includes('listnode')) return 'listnode';
-  if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
-  if (lower.includes('int') && lower.includes('[')) return 'int[]';
   if (lower === 'int' || lower === 'integer' || lower === 'number') return 'int';
   if (lower === 'double' || lower === 'float') return 'double';
   if (lower === 'string' || lower === 'str' || s === 'String') return 'string';
   if (lower === 'bool' || lower === 'boolean') return 'boolean';
+  if (lower === 'number[]') return 'int[]';
+  if (lower === 'number[][]') return 'int[][]';
+  if (lower === 'string[]') return 'vector<string>';
+  if (lower === 'string[][]') return 'vector<vector<string>>';
+  if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
+  if (lower.includes('int') && lower.includes('[')) return 'int[]';
   if (lower.includes('string') && (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']')))) return 'vector<string>';
   if (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']'))) return 'vector<int>';
   return 'string';
@@ -305,7 +309,7 @@ process.stdout.write(JSON.stringify(${fn.name}()));
 process.stdout.write(__listToStr(__result));`;
     } else if (fn.returnType === 'string') {
       resultLine = `const __result = ${fn.name}(${callArgs});
-process.stdout.write(__result);`;
+process.stdout.write(typeof __result === 'string' ? __result : JSON.stringify(__result));`;
     } else {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(JSON.stringify(__result));`;
@@ -793,10 +797,11 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     });
   }
 
-  const results: { input: string; expected: string; actual: string; passed: boolean; stdout?: string }[] = [];
+  const results: { input: string; expected: string; actual: string; passed: boolean; stdout?: string; memory?: string }[] = [];
   let overallStatus: 'Accepted' | 'Wrong Answer' | 'Compile Error' | 'Runtime Error' | 'Time Limit Exceeded' = 'Accepted';
   let compileError: string | null = null;
   let totalRuntime = 0;
+  let peakMemoryKB = 0;
 
   for (const tc of testcasesToRun) {
     try {
@@ -851,6 +856,8 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
 
         const result = await runViaJudge0(wrapped, language);
         runtimeMs = Math.round(parseFloat(result.time) * 1000);
+        const memKB = parseInt(result.memory) || 0;
+        if (memKB > peakMemoryKB) peakMemoryKB = memKB;
 
         const jResult = judge0StatusToResult(result.statusId, result.stdout, result.stderr, result.compileOutput);
         actual = jResult.actual;
@@ -910,11 +917,13 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     }
   }
 
+  const memoryMB = peakMemoryKB > 0 ? `${(peakMemoryKB / 1024).toFixed(1)}MB` : '0MB';
+
   return NextResponse.json({
     status: overallStatus,
     compileError,
     runtime: `${totalRuntime}ms`,
-    memory: '0MB',
+    memory: memoryMB,
     testResults: results,
   });
 }

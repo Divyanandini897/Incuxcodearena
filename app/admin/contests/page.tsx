@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import AppLayout from '@/src/components/AppLayout'
-import Card from '@/src/components/ui/Card'
-import Badge from '@/src/components/ui/Badge'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Trophy, Search, X, Loader2 } from 'lucide-react'
-import { supabase } from '@/src/utils/supabaseClient'
+import {
+  Plus, Edit2, Trash2, Eye, EyeOff, Trophy, Search, X, Loader2,
+  ExternalLink, Clock, AlertTriangle
+} from 'lucide-react'
 
 interface Problem {
   id: string
@@ -34,15 +33,39 @@ interface Contest {
   problems: ContestProblem[]
 }
 
+type ContestStatus = 'draft' | 'published' | 'ended'
+
+function getContestStatus(c: Contest): ContestStatus {
+  if (!c.isPublished) return 'draft'
+  if (c.endsAt && new Date(c.endsAt) < new Date()) return 'ended'
+  return 'published'
+}
+
+const StatusBadge = ({ status }: { status: ContestStatus }) => {
+  const map: Record<ContestStatus, { label: string; cls: string }> = {
+    draft: { label: 'Draft', cls: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
+    published: { label: 'Published', cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
+    ended: { label: 'Ended', cls: 'text-gray-500 bg-gray-500/10 border-gray-500/20' },
+  }
+  const { label, cls } = map[status]
+  return <span className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>
+}
+
 export default function AdminContestsPage() {
   const [contests, setContests] = useState<Contest[]>([])
   const [problems, setProblems] = useState<Problem[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState<string>('')
-  const [userEmail, setUserEmail] = useState<string>('')
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [authLoading, setAuthLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+
+  const adminHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    'x-admin-email': localStorage.getItem('codenode_user_email') || '',
+  })
+  const [violations, setViolations] = useState<Array<{ id: string; type: string; userId: string; createdAt: string; user?: { name: string; email: string } }>>([])
+  const [showViolations, setShowViolations] = useState<string | null>(null)
+  const [loadingViolations, setLoadingViolations] = useState(false)
   const [probSearch, setProbSearch] = useState('')
   const [diffFilter, setDiffFilter] = useState('')
   const [showProbPicker, setShowProbPicker] = useState(false)
@@ -52,50 +75,38 @@ export default function AdminContestsPage() {
     description: '',
     durationMins: 60,
     maxPoints: 100,
+    maxViolations: 3,
     startsAt: '',
     endsAt: '',
-    reminderMinutes: 10,
     selectedProblems: [] as string[],
   })
 
   const loadContests = useCallback(async () => {
-    const res = await fetch('/api/contests')
+    const res = await fetch('/api/contests?admin=true', {
+      headers: { 'x-admin-email': localStorage.getItem('codenode_user_email') || '' },
+    })
     if (res.ok) setContests(await res.json())
   }, [])
 
   const loadProblems = useCallback(async () => {
-    const res = await fetch('/api/problems')
-    if (res.ok) {
-      const data = await res.json()
-      setProblems(Array.isArray(data) ? data : (data.problems ?? []))
-    }
+    const res = await fetch('/api/admin/problems', {
+      headers: { 'x-admin-email': localStorage.getItem('codenode_user_email') || '' },
+    })
+    if (res.ok) setProblems(await res.json())
   }, [])
 
   useEffect(() => {
-    loadContests()
-    loadProblems()
-    const stored = localStorage.getItem('codenode_profile_id')
-    if (stored) setProfileId(stored)
-
-    ;(async () => {
-      let email = localStorage.getItem('codenode_user_email') || ''
-
-      if (!email) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user?.email) {
-          email = session.user.email
-          localStorage.setItem('codenode_user_email', email)
-          if (session.user.id) {
-            setProfileId(session.user.id)
-            localStorage.setItem('codenode_profile_id', session.user.id)
-          }
-        }
-      }
-
-      setUserEmail(email)
-      setIsAdmin(email === 'deepika.tiwari.1408@gmail.com')
-      setAuthLoading(false)
-    })()
+    Promise.all([loadContests(), loadProblems()]).finally(() => setLoading(false))
+    const pid = localStorage.getItem('codenode_profile_id')
+    if (pid) setProfileId(pid)
+    const email = localStorage.getItem('codenode_user_email') || ''
+    if (pid && email) {
+      fetch('/api/auth/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pid, email }),
+      }).catch(() => {})
+    }
   }, [loadContests, loadProblems])
 
   const filteredProblems = useMemo(() => {
@@ -109,11 +120,21 @@ export default function AdminContestsPage() {
   }, [problems, probSearch, diffFilter])
 
   const resetForm = () => {
-    setForm({ title: '', description: '', durationMins: 60, maxPoints: 100, startsAt: '', endsAt: '', reminderMinutes: 10, selectedProblems: [] })
+    setForm({ title: '', description: '', durationMins: 60, maxPoints: 100, maxViolations: 3, startsAt: '', endsAt: '', selectedProblems: [] })
     setEditingId(null)
     setShowForm(false)
     setShowProbPicker(false)
   }
+
+  const toLocalDatetime = (iso: string): string => {
+    const d = new Date(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${day}T${h}:${min}`;
+  };
 
   const handleEdit = (contest: Contest) => {
     setForm({
@@ -121,13 +142,18 @@ export default function AdminContestsPage() {
       description: contest.description || '',
       durationMins: contest.durationMins,
       maxPoints: contest.maxPoints,
-      startsAt: contest.startsAt ? new Date(contest.startsAt).toISOString().slice(0, 16) : '',
-      endsAt: contest.endsAt ? new Date(contest.endsAt).toISOString().slice(0, 16) : '',
-      reminderMinutes: (contest as any).reminderMinutes ?? 10,
+      maxViolations: (contest as any).maxViolations ?? 3,
+      startsAt: contest.startsAt ? toLocalDatetime(contest.startsAt) : '',
+      endsAt: contest.endsAt ? toLocalDatetime(contest.endsAt) : '',
       selectedProblems: contest.problems.map((cp) => cp.problem.id),
     })
     setEditingId(contest.id)
     setShowForm(true)
+  }
+
+  const toUtcIso = (localValue: string): string | undefined => {
+    if (!localValue) return undefined
+    return new Date(localValue).toISOString()
   }
 
   const handleSave = async () => {
@@ -137,29 +163,52 @@ export default function AdminContestsPage() {
       description: form.description || undefined,
       durationMins: form.durationMins,
       maxPoints: form.maxPoints,
-      startsAt: form.startsAt || undefined,
-      endsAt: form.endsAt || undefined,
-      reminderMinutes: form.reminderMinutes,
+      maxViolations: form.maxViolations,
+      startsAt: toUtcIso(form.startsAt),
+      endsAt: toUtcIso(form.endsAt),
       problemIds: form.selectedProblems,
       createdBy: profileId,
     }
     const url = editingId ? `/api/contests/${editingId}` : '/api/contests'
     const method = editingId ? 'PATCH' : 'POST'
-    const headers = { 'Content-Type': 'application/json', 'x-admin-email': userEmail }
-    const res = await fetch(url, { method, headers, body: JSON.stringify(body) })
+    const res = await fetch(url, { method, headers: adminHeaders(), body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadContests() }
-    else { const err = await res.json(); alert(err.error || 'Failed to save') }
+    else { const err = await res.json().catch(() => ({ error: 'Request failed' })); alert(err.error || 'Failed to save') }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this contest?')) return
-    const res = await fetch(`/api/contests/${id}`, { method: 'DELETE', headers: { 'x-admin-email': userEmail } })
+    if (!confirm('Delete this contest? This action cannot be undone.')) return
+    const res = await fetch(`/api/contests/${id}`, { method: 'DELETE', headers: adminHeaders() })
     if (res.ok) loadContests()
+    else { const err = await res.json().catch(() => ({ error: 'Delete failed' })); alert(err.error) }
   }
 
   const handleTogglePublish = async (id: string) => {
-    const res = await fetch(`/api/contests/${id}/publish`, { method: 'POST', headers: { 'x-admin-email': userEmail } })
+    const res = await fetch(`/api/contests/${id}/publish`, { method: 'POST', headers: adminHeaders() })
     if (res.ok) loadContests()
+    else { const err = await res.json().catch(() => ({ error: 'Publish failed' })); alert(err.error) }
+  }
+
+  const loadViolations = async (contestId: string) => {
+    setLoadingViolations(true)
+    setShowViolations(contestId)
+    const res = await fetch(`/api/contests/${contestId}/violations`, {
+      headers: { 'x-admin-email': localStorage.getItem('codenode_user_email') || '' },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const userIds = [...new Set(data.map((v: any) => v.userId))] as string[]
+      const userMap: Record<string, { name: string; email: string }> = {}
+      await Promise.all(userIds.map(async (uid) => {
+        const userRes = await fetch(`/api/profile/${uid}`)
+        if (userRes.ok) {
+          const profile = await userRes.json()
+          userMap[uid] = { name: profile.name || 'Unknown', email: profile.email || '' }
+        }
+      }))
+      setViolations(data.map((v: any) => ({ ...v, user: userMap[v.userId] })))
+    }
+    setLoadingViolations(false)
   }
 
   const toggleProblem = (id: string) => {
@@ -175,194 +224,257 @@ export default function AdminContestsPage() {
     .map((id) => problems.find((p) => p.id === id))
     .filter(Boolean) as Problem[]
 
-  if (authLoading) {
+  if (loading) {
     return (
-      <AppLayout>
-        <div className="max-w-md mx-auto mt-20 text-center">
-          <Card className="p-8 flex flex-col items-center gap-3">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            <p className="text-xs text-text-muted">Checking authentication...</p>
-          </Card>
-        </div>
-      </AppLayout>
-    )
-  }
-
-  if (!isAdmin) {
-    return (
-      <AppLayout>
-        <div className="max-w-md mx-auto mt-20 text-center">
-          <Card className="p-8 flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <EyeOff className="w-6 h-6 text-rose-500" />
-            </div>
-            <h2 className="text-sm font-bold text-text-main">Access Restricted</h2>
-            <p className="text-xs text-text-muted">Only admins can manage contests. Sign in with an admin account (deepika.tiwari.1408@gmail.com).</p>
-          </Card>
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+      </div>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto flex flex-col gap-4 font-sans">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-text-main">Contest Manager</h1>
-            <p className="text-xs text-text-muted">Create and manage coding contests — published contests appear in Test Arena and Dashboard</p>
-          </div>
-          <button onClick={() => { resetForm(); setShowForm(true) }}
-            className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors">
-            <Plus className="w-3.5 h-3.5" /> New Contest
-          </button>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-[#f5f5f5]">Contest Manager</h1>
+          <p className="text-xs text-[#888] mt-1">
+            {contests.length} contest{contests.length !== 1 ? 's' : ''} — published contests appear in Test Arena
+          </p>
         </div>
-
-        {showForm && (
-          <Card className="flex flex-col gap-3 p-4">
-            <h2 className="text-sm font-bold text-text-main">{editingId ? 'Edit Contest' : 'Create Contest'}</h2>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1 col-span-2">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Title</label>
-                <input className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1 col-span-2">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Description</label>
-                <textarea className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary resize-none h-16"
-                  value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Duration (mins)</label>
-                <input type="number" min={1} className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.durationMins} onChange={(e) => setForm((p) => ({ ...p, durationMins: +e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Max Points</label>
-                <input type="number" min={0} className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.maxPoints} onChange={(e) => setForm((p) => ({ ...p, maxPoints: +e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Starts At</label>
-                <input type="datetime-local" className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.startsAt} onChange={(e) => setForm((p) => ({ ...p, startsAt: e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Ends At</label>
-                <input type="datetime-local" className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.endsAt} onChange={(e) => setForm((p) => ({ ...p, endsAt: e.target.value }))} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Reminder (mins before)</label>
-                <input type="number" min={1} max={60} className="bg-bg-base border border-border-card rounded-lg px-3 py-2 text-xs text-text-main outline-none focus:border-primary"
-                  value={form.reminderMinutes} onChange={(e) => setForm((p) => ({ ...p, reminderMinutes: +e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-mono font-bold text-text-muted uppercase">Problems ({form.selectedProblems.length} selected)</label>
-
-              {selectedProblemData.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {selectedProblemData.map((p) => (
-                    <span key={p.id} className="flex items-center gap-1 bg-primary/10 text-primary text-[9px] font-bold px-2 py-0.5 rounded-full">
-                      #{p.leetcodeId}
-                      <button onClick={() => toggleProblem(p.id)} className="hover:text-rose-500"><X className="w-2.5 h-2.5" /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex gap-2 mb-1">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted" />
-                  <input placeholder="Search problems..." className="w-full bg-bg-base border border-border-card rounded-lg pl-7 pr-2 py-1.5 text-[10px] text-text-main outline-none focus:border-primary"
-                    value={probSearch} onChange={(e) => setProbSearch(e.target.value)} />
-                </div>
-                <select className="bg-bg-base border border-border-card rounded-lg px-2 py-1.5 text-[10px] text-text-main outline-none focus:border-primary"
-                  value={diffFilter} onChange={(e) => setDiffFilter(e.target.value)}>
-                  <option value="">All</option>
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
-              </div>
-
-              <div className="max-h-40 overflow-y-auto border border-border-card rounded-lg p-2 space-y-0.5">
-                {filteredProblems.map((p) => (
-                  <label key={p.id} className="flex items-center gap-2 text-[10px] cursor-pointer hover:bg-hover rounded px-1.5 py-1 transition-colors">
-                    <input type="checkbox" checked={form.selectedProblems.includes(p.id)} onChange={() => toggleProblem(p.id)} className="accent-primary" />
-                    <span className={`font-semibold ${p.difficulty === 'Easy' ? 'text-easy' : p.difficulty === 'Medium' ? 'text-medium' : 'text-hard'}`}>
-                      {p.leetcodeId}. {p.title}
-                    </span>
-                    <span className={`ml-auto text-[8px] font-mono font-bold px-1 py-0.5 rounded ${
-                      p.difficulty === 'Easy' ? 'bg-easy-bg text-easy' : p.difficulty === 'Medium' ? 'bg-medium-bg text-medium' : 'bg-hard-bg text-hard'
-                    }`}>{p.difficulty}</span>
-                  </label>
-                ))}
-                {filteredProblems.length === 0 && <p className="text-[10px] text-text-muted text-center py-2">No problems match your search</p>}
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end mt-2">
-              <button onClick={resetForm}
-                className="text-xs font-bold px-3 py-2 rounded-lg border border-border-card text-text-muted hover:bg-hover transition-colors">Cancel</button>
-              <button onClick={handleSave}
-                className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
-                {editingId ? 'Update Contest' : 'Create Contest'}
-              </button>
-            </div>
-          </Card>
-        )}
-
-        <div className="flex flex-col gap-2">
-          {contests.length === 0 && (
-            <Card className="p-6 text-center">
-              <p className="text-xs text-text-muted">No contests yet. Create your first contest to get started.</p>
-            </Card>
-          )}
-          {contests.map((contest) => (
-            <Card key={contest.id} className="flex items-center justify-between gap-3 p-3">
-              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold text-text-main truncate">{contest.title}</h3>
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${contest.isPublished ? 'bg-primary/10 text-primary' : 'bg-hover text-text-muted'}`}>
-                    {contest.isPublished ? 'Published' : 'Draft'}
-                  </span>
-                </div>
-                {contest.description && <p className="text-[10px] text-text-muted truncate">{contest.description}</p>}
-                <div className="flex gap-3 text-[9px] font-mono text-text-muted font-bold mt-0.5">
-                  <span>{contest.durationMins} mins</span>
-                  <span>{contest.maxPoints} pts</span>
-                  <span>{contest.problems.length} problems</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1 shrink-0">
-                <a href={`/api/contests/${contest.id}/leaderboard`} target="_blank"
-                  className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-border-card text-text-muted hover:bg-hover transition-colors flex items-center gap-1"
-                  title="Leaderboard">
-                  <Trophy className="w-3 h-3" />
-                </a>
-                <button onClick={() => handleTogglePublish(contest.id)}
-                  className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-border-card text-text-muted hover:bg-hover transition-colors"
-                  title={contest.isPublished ? 'Unpublish' : 'Publish'}>
-                  {contest.isPublished ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                </button>
-                <button onClick={() => handleEdit(contest)}
-                  className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-border-card text-text-muted hover:bg-hover transition-colors">
-                  <Edit2 className="w-3 h-3" />
-                </button>
-                <button onClick={() => handleDelete(contest.id)}
-                  className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-border-card text-rose-500 hover:bg-rose-500/10 transition-colors">
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <button onClick={() => { resetForm(); setShowForm(true) }}
+          className="bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors">
+          <Plus className="w-3.5 h-3.5" /> New Contest
+        </button>
       </div>
-    </AppLayout>
+
+      {/* Create/Edit Form */}
+      {showForm && (
+        <div className="bg-[#111] border border-[#1e1e1e] rounded-xl p-4 flex flex-col gap-3">
+          <h2 className="text-sm font-bold text-[#f5f5f5]">{editingId ? 'Edit Contest' : 'Create Contest'}</h2>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1 col-span-2">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Title</label>
+              <input className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1 col-span-2">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Description</label>
+              <textarea className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50 resize-none h-16"
+                value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Duration (mins)</label>
+              <input type="number" min={1} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                value={form.durationMins} onChange={(e) => setForm((p) => ({ ...p, durationMins: +e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Max Points</label>
+              <input type="number" min={0} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                value={form.maxPoints} onChange={(e) => setForm((p) => ({ ...p, maxPoints: +e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Max Violations</label>
+              <input type="number" min={1} max={20} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                value={form.maxViolations} onChange={(e) => setForm((p) => ({ ...p, maxViolations: +e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Starts At</label>
+              <input type="datetime-local" placeholder="YYYY-MM-DD HH:MM" style={{ colorScheme: 'dark' }} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50 [color-scheme:dark]"
+                value={form.startsAt} onChange={(e) => setForm((p) => ({ ...p, startsAt: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Ends At</label>
+              <input type="datetime-local" placeholder="YYYY-MM-DD HH:MM" style={{ colorScheme: 'dark' }} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-[#f5f5f5] outline-none focus:border-emerald-500/50 [color-scheme:dark]"
+                value={form.endsAt} onChange={(e) => setForm((p) => ({ ...p, endsAt: e.target.value }))} />
+            </div>
+          </div>
+
+          {/* Problem Picker */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-mono font-bold text-[#888] uppercase">Problems ({form.selectedProblems.length} selected)</label>
+
+            {selectedProblemData.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {selectedProblemData.map((p) => (
+                  <span key={p.id} className="flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                    #{p.leetcodeId}
+                    <button onClick={() => toggleProblem(p.id)} className="hover:text-rose-500"><X className="w-2.5 h-2.5" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 mb-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#666]" />
+                <input placeholder="Search problems..." className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg pl-7 pr-2 py-1.5 text-[10px] text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                  value={probSearch} onChange={(e) => setProbSearch(e.target.value)} />
+              </div>
+              <select className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-2 py-1.5 text-[10px] text-[#f5f5f5] outline-none focus:border-emerald-500/50"
+                value={diffFilter} onChange={(e) => setDiffFilter(e.target.value)}>
+                <option value="">All</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+
+            <div className="max-h-40 overflow-y-auto border border-[#1e1e1e] rounded-lg p-2 space-y-0.5 bg-[#0a0a0a]">
+              {filteredProblems.map((p) => (
+                <label key={p.id} className="flex items-center gap-2 text-[10px] cursor-pointer hover:bg-[#1a1a1a] rounded px-1.5 py-1 transition-colors">
+                  <input type="checkbox" checked={form.selectedProblems.includes(p.id)} onChange={() => toggleProblem(p.id)} className="accent-emerald-500" />
+                  <span className={`font-semibold ${p.difficulty === 'Easy' ? 'text-emerald-500' : p.difficulty === 'Medium' ? 'text-amber-500' : 'text-red-500'}`}>
+                    {p.leetcodeId}. {p.title}
+                  </span>
+                  <span className={`ml-auto text-[8px] font-mono font-bold px-1 py-0.5 rounded border ${
+                    p.difficulty === 'Easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' : 
+                    p.difficulty === 'Medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
+                    'text-red-500 border-red-500/20 bg-red-500/5'
+                  }`}>{p.difficulty}</span>
+                </label>
+              ))}
+              {filteredProblems.length === 0 && <p className="text-[10px] text-[#666] text-center py-2">No problems match</p>}
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end mt-2">
+            <button onClick={resetForm}
+              className="text-xs font-bold px-3 py-2 rounded-lg border border-[#2a2a2a] text-[#888] hover:bg-[#1a1a1a] transition-colors">Cancel</button>
+            <button onClick={handleSave}
+              className="bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+              {editingId ? 'Update Contest' : 'Create Contest'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Violations Modal */}
+      {showViolations && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowViolations(null)}>
+          <div className="bg-[#111] border border-[#1e1e1e] rounded-xl p-4 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-[#f5f5f5] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400" /> Violations
+              </h3>
+              <button onClick={() => setShowViolations(null)} className="text-[#888] hover:text-[#f5f5f5]"><X className="w-4 h-4" /></button>
+            </div>
+            {loadingViolations ? (
+              <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-emerald-500 animate-spin" /></div>
+            ) : violations.length === 0 ? (
+              <p className="text-xs text-[#666] text-center py-6">No violations recorded for this contest.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {violations.map((v) => (
+                  <div key={v.id} className="flex items-center justify-between bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg px-3 py-2 text-[10px] font-mono">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[#f5f5f5] font-bold capitalize">{v.type.replace(/_/g, ' ')}</span>
+                      {v.user && <span className="text-[#888]">{v.user.name} ({v.user.email})</span>}
+                    </div>
+                    <span className="text-[#666]">{new Date(v.createdAt).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contests Table */}
+      <div className="bg-[#111] border border-[#1e1e1e] rounded-xl overflow-hidden">
+        {contests.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-sm text-[#666]">No contests yet. Create your first contest to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[#1e1e1e] text-[10px] font-mono font-bold text-[#666] uppercase tracking-wider">
+                  <th className="py-3 px-4">Contest</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Duration</th>
+                  <th className="py-3 px-4">Problems</th>
+                  <th className="py-3 px-4">Starts</th>
+                  <th className="py-3 px-4">Ends</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e1e1e]/60">
+                {contests.map((contest) => {
+                  const status = getContestStatus(contest)
+                  return (
+                    <tr key={contest.id} className="hover:bg-[#1a1a1a] transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#f5f5f5]">{contest.title}</span>
+                          {contest.description && (
+                            <span className="text-[10px] text-[#666] truncate max-w-[200px]">{contest.description}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4"><StatusBadge status={status} /></td>
+                      <td className="py-3 px-4 font-mono text-[#aaa]">{contest.durationMins} min</td>
+                      <td className="py-3 px-4 font-mono text-[#aaa]">{contest.problems.length}</td>
+                      <td className="py-3 px-4 text-[#666] font-mono text-[10px]">
+                        {contest.startsAt ? new Date(contest.startsAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-[#666] font-mono text-[10px]">
+                        {contest.endsAt ? new Date(contest.endsAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* View */}
+                          <a href={`/test-arena`} target="_blank"
+                            className="p-1.5 rounded border border-[#2a2a2a] text-[#888] hover:text-[#f5f5f5] hover:bg-[#1a1a1a] transition-all"
+                            title="View in Test Arena">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                          {/* Violations */}
+                          <button onClick={() => loadViolations(contest.id)}
+                            className="p-1.5 rounded border border-[#2a2a2a] text-[#888] hover:text-red-500 hover:bg-[#1a1a1a] transition-all"
+                            title="View Violations">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Leaderboard */}
+                          <a href={`/api/contests/${contest.id}/leaderboard`} target="_blank"
+                            className="p-1.5 rounded border border-[#2a2a2a] text-[#888] hover:text-amber-500 hover:bg-[#1a1a1a] transition-all"
+                            title="Leaderboard">
+                            <Trophy className="w-3.5 h-3.5" />
+                          </a>
+                          {/* Publish / Unpublish */}
+                          {status !== 'ended' && (
+                            <button onClick={() => handleTogglePublish(contest.id)}
+                              className="p-1.5 rounded border border-[#2a2a2a] hover:bg-[#1a1a1a] transition-all"
+                              title={contest.isPublished ? 'Unpublish' : 'Publish'}>
+                              {contest.isPublished
+                                ? <EyeOff className="w-3.5 h-3.5 text-amber-500" />
+                                : <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                              }
+                            </button>
+                          )}
+                          {/* Edit */}
+                          <button onClick={() => handleEdit(contest)}
+                            className="p-1.5 rounded border border-[#2a2a2a] text-[#888] hover:text-blue-500 hover:bg-[#1a1a1a] transition-all"
+                            title="Edit">
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Delete */}
+                          <button onClick={() => handleDelete(contest.id)}
+                            className="p-1.5 rounded border border-[#2a2a2a] text-[#888] hover:text-red-500 hover:bg-red-500/5 transition-all"
+                            title="Delete">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
