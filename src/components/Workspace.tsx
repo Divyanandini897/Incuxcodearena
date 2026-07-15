@@ -27,7 +27,8 @@ import {
   Globe, 
   Lightbulb, 
   Loader2, 
-  AlertCircle 
+  AlertCircle,
+  Star 
 } from 'lucide-react';
 import { Problem, EvaluationResult, EditorialResponse, HintResponse } from '../types';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection, highlightSpecialChars } from '@codemirror/view';
@@ -74,6 +75,30 @@ export default function Workspace({
 
   // Tabs Left Panel
   const [activeTab, setActiveTab] = useState<'Description' | 'Editorial' | 'Solutions' | 'Submissions'>('Description');
+
+  // Bookmarks state
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('codenode_bookmarks');
+    if (saved) {
+      const parsed: number[] = JSON.parse(saved);
+      setIsBookmarked(parsed.includes(problemId));
+    }
+  }, [problemId]);
+
+  const handleToggleBookmark = () => {
+    const saved = localStorage.getItem('codenode_bookmarks');
+    let current: number[] = saved ? JSON.parse(saved) : [];
+    if (current.includes(problemId)) {
+      current = current.filter(x => x !== problemId);
+      setIsBookmarked(false);
+    } else {
+      current.push(problemId);
+      setIsBookmarked(true);
+    }
+    localStorage.setItem('codenode_bookmarks', JSON.stringify(current));
+  };
 
   // Interactive Metadata States
   const [showTopics, setShowTopics] = useState(false);
@@ -527,6 +552,17 @@ export default function Workspace({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Bookmark toggle button */}
+          <button
+            onClick={handleToggleBookmark}
+            className={`flex items-center justify-center p-1.5 rounded hover:bg-elevated transition-all cursor-pointer ${
+              isBookmarked ? 'text-yellow-500 hover:text-yellow-600' : 'text-text-muted hover:text-text-main'
+            }`}
+            title={isBookmarked ? "Remove Bookmark" : "Bookmark Question"}
+          >
+            <Star className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-yellow-500' : ''}`} />
+          </button>
+          <div className="h-4 w-px bg-elevated" />
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">
             JS / Python
           </span>

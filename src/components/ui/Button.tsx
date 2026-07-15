@@ -10,7 +10,7 @@ export default function Button({ variant = 'primary', size = 'md', className = '
 
   const variants = {
     primary: 'bg-primary text-white hover:bg-primary-hover shadow-sm hover:shadow active:scale-[0.99]',
-    secondary: 'bg-bg-card text-text-main border border-border-card hover:bg-hover active:scale-[0.99]',
+    secondary: 'bg-elevated text-text-main border border-border-card/40 hover:bg-hover hover:-translate-y-[1px] hover:shadow-xs active:scale-[0.99] active:translate-y-0',
     ghost: 'text-text-muted hover:text-text-main hover:bg-hover active:scale-[0.99]',
   };
 
