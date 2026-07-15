@@ -11,13 +11,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     take: 50,
   })
 
-  const ranked = attempts.map((a, i) => ({
-    rank: i + 1,
-    name: a.user.name,
-    avatar: a.user.avatar_url,
-    score: a.score,
-    submittedAt: a.submittedAt,
-  }))
+  const ranked = attempts.map((a, i) => {
+    const timeTaken = a.submittedAt && a.startedAt
+      ? Math.round((a.submittedAt.getTime() - a.startedAt.getTime()) / 1000)
+      : null
+    return {
+      rank: i + 1,
+      name: a.user.name,
+      avatar: a.user.avatar_url,
+      score: a.score,
+      submittedAt: a.submittedAt,
+      timeTaken, // seconds
+    }
+  })
 
   return NextResponse.json(ranked)
 }

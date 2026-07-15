@@ -6,6 +6,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { PROBLEMS_DATA } from '@/src/data/data';
 import { cacheKey, cacheGet, cacheSet } from './cache';
+import { prisma } from '@/src/lib/prisma';
 
 const execFileAsync = promisify(execFile);
 const TIMEOUT_MS = 10000;
@@ -772,8 +773,9 @@ export async function POST(req: NextRequest) {
 async function handleEvaluate(req: NextRequest): Promise<Response> {
   const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
-  const problem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
-  if (!problem) {
+  const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
+  const localProblem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
+  if (!dbProblem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
   }
 
@@ -785,9 +787,18 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     });
   }
 
-  const testcasesToRun = customInput
-    ? [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }]
-    : getTestcases(problem);
+  let testcasesToRun: { input: string; expectedOutput: string }[];
+  if (customInput) {
+    testcasesToRun = [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }];
+  } else {
+    const dbTestCases = await prisma.testCase.findMany({
+      where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
+      orderBy: { sortOrder: 'asc' },
+    });
+    testcasesToRun = dbTestCases.length > 0
+      ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+      : getTestcases(localProblem!);
+  }
 
   const fn = extractFunction(code, language);
   if (!fn) {

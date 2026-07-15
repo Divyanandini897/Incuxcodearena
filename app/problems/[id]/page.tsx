@@ -30,6 +30,15 @@ export default function ProblemPage() {
         console.error('Error loading solved IDs:', err);
       }
     }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        localStorage.setItem('codenode_profile_id', session.user.id);
+      } else {
+        const stored = localStorage.getItem('codenode_profile_id');
+        if (stored) setUserId(stored);
+      }
+    });
   }, []);
 
   const handleMarkSolved = (id: number) => {
@@ -53,6 +62,7 @@ export default function ProblemPage() {
         solvedProblemIds={solvedProblemIds}
         onBackToDashboard={() => router.push('/')}
         onMarkSolved={handleMarkSolved}
+        userId={userId}
       />
     </div>
   );

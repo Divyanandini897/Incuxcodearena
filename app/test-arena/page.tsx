@@ -75,6 +75,27 @@ export default function TestArenaPage() {
 
   useEffect(() => { loadContests() }, [loadContests]);
 
+  const handleRegister = async (contestId: string, register: boolean) => {
+    if (!profileId) return;
+    try {
+      if (register) {
+        await fetch(`/api/contests/${contestId}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: profileId }),
+        });
+        setRegistered((prev) => new Set(prev).add(contestId));
+      } else {
+        await fetch(`/api/contests/${contestId}/register`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: profileId }),
+        });
+        setRegistered((prev) => { const next = new Set(prev); next.delete(contestId); return next; });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (activeTest && !testSubmitted && timeRemaining > 0) {
@@ -92,8 +113,9 @@ export default function TestArenaPage() {
     return () => clearInterval(timer);
   }, [activeTest, testSubmitted, timeRemaining]);
 
-  const [leaderboard, setLeaderboard] = useState<Array<{ rank: number; name: string; score: number }>>([]);
+  const [leaderboard, setLeaderboard] = useState<Array<{ rank: number; name: string; score: number; timeTaken?: number | null }>>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [registered, setRegistered] = useState<Set<string>>(new Set());
   const profileId = typeof window !== 'undefined' ? localStorage.getItem('codenode_profile_id') : null;
 
   const handleStartTest = async (test: TestData) => {
@@ -198,15 +220,25 @@ export default function TestArenaPage() {
                       </div>
                     </div>
 
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleStartTest(test)}
-                      className="flex items-center gap-1.5 shrink-0 self-end sm:self-center"
-                    >
-                      <Play className="w-3 h-3 fill-white" />
-                      <span>Start Test</span>
-                    </Button>
+                    <div className="flex gap-2 shrink-0 self-end sm:self-center">
+                      <Button
+                        variant={registered.has(test.id) ? 'secondary' : 'primary'}
+                        size="sm"
+                        onClick={() => handleRegister(test.id, !registered.has(test.id))}
+                        className="flex items-center gap-1.5 text-[10px]"
+                      >
+                        <span>{registered.has(test.id) ? 'Unregister' : 'Register'}</span>
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleStartTest(test)}
+                        className="flex items-center gap-1.5"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        <span>Start Test</span>
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -399,17 +431,24 @@ export default function TestArenaPage() {
                 </button>
                 {showLeaderboard && (
                   <div className="mt-2 border border-border-card rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                    {leaderboard.map((entry) => (
-                      <div key={entry.rank} className="flex items-center justify-between px-3 py-1.5 text-[10px] font-mono border-b border-border-card/30 last:border-none">
-                        <span className="flex items-center gap-2">
-                          <span className={`font-bold ${entry.rank <= 3 ? (entry.rank === 1 ? 'text-amber-400' : entry.rank === 2 ? 'text-slate-300' : 'text-amber-600') : 'text-text-muted'}`}>
-                            #{entry.rank}
+                    {leaderboard.map((entry) => {
+                      const mins = entry.timeTaken ? Math.floor(entry.timeTaken / 60) : 0;
+                      const secs = entry.timeTaken ? entry.timeTaken % 60 : 0;
+                      return (
+                        <div key={entry.rank} className="flex items-center justify-between px-3 py-1.5 text-[10px] font-mono border-b border-border-card/30 last:border-none">
+                          <span className="flex items-center gap-2">
+                            <span className={`font-bold ${entry.rank <= 3 ? (entry.rank === 1 ? 'text-amber-400' : entry.rank === 2 ? 'text-slate-300' : 'text-amber-600') : 'text-text-muted'}`}>
+                              #{entry.rank}
+                            </span>
+                            <span className="text-text-main font-semibold">{entry.name}</span>
                           </span>
-                          <span className="text-text-main font-semibold">{entry.name}</span>
-                        </span>
-                        <span className="font-bold text-text-main">{entry.score} pts</span>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-3">
+                            <span className="text-text-muted text-[9px]">{mins}:{secs.toString().padStart(2, '0')}</span>
+                            <span className="font-bold text-text-main">{entry.score} pts</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
