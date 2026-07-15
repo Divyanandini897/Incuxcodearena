@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { title, description, durationMins, maxPoints, startsAt, endsAt, createdBy, problemIds } = body
+  const { title, description, durationMins, maxPoints, startsAt, endsAt, createdBy, problemIds, reminderMinutes } = body
 
   const adminEmail = request.headers.get('x-admin-email') || ''
   if (!isAdminEmail(adminEmail)) {
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       maxPoints: maxPoints ?? 0,
       startsAt: startsAt ? new Date(startsAt) : null,
       endsAt: endsAt ? new Date(endsAt) : null,
+      reminderMinutes: reminderMinutes ?? 10,
       createdBy,
       problems: problemIds?.length
         ? {

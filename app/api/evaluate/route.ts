@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execFile } from 'child_process';
+import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, unlink, mkdtemp } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { PROBLEMS_DATA } from '@/src/data/data';
 import { cacheKey, cacheGet, cacheSet } from './cache';
+import { prisma } from '@/src/lib/prisma';
 
 const execFileAsync = promisify(execFile);
+const execAsync = promisify(exec);
 const TIMEOUT_MS = 10000;
 const JUDGE0_TIMEOUT_MS = 25000;
 const OVERALL_TIMEOUT_MS = 60000;
@@ -36,15 +38,15 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
   let returnType = 'string';
 
   if (language === 'JavaScript') {
-    const varMatch = code.match(/var\s+(\w+)\s*=\s*function\s*(?:\w+\s*)?\(/);
-    if (varMatch) name = varMatch[1];
-    else {
-      const constMatch = code.match(/(?:const|let)\s+(\w+)\s*=\s*\(/);
-      if (constMatch) name = constMatch[1];
-      else {
-        const funcMatch = code.match(/function\s+(\w+)\s*\(/);
-        if (funcMatch) name = funcMatch[1];
-      }
+    const patterns = [
+      /(?:var|const|let)\s+(\w+)\s*=\s*(?:async\s+)?function\s*(?:\w+\s*)?\(/,
+      /(?:var|const|let)\s+(\w+)\s*=\s*\([^)]*\)\s*=>\s*{/,
+      /(?:var|const|let)\s+(\w+)\s*=\s*\([^)]*\)\s*=>\s*(?:[^{])/,
+      /(?:async\s+)?function\s+(\w+)\s*\(/,
+    ];
+    for (const re of patterns) {
+      const m = code.match(re);
+      if (m) { name = m[1]; break; }
     }
     // Detect return type from JSDoc @return
     const returnMatch = code.match(/@return\s+\{(\w+)\}/);
@@ -599,9 +601,39 @@ async function runLocal(code: string, language: string, fn: ExtractedFn, inputSt
   }
 }
 
-// --------------- JUDGE0 COMPILER ---------------
+async function runStandaloneLocal(code: string, language: string, inputStr: string): Promise<{
+  actual: string; stderr: string; runtimeMs: number
+}> {
+  const tmpDir = await mkdtemp(join(tmpdir(), 'judge-'));
+  const ext = language === 'JavaScript' ? '.js' : '.py';
+  const srcFile = join(tmpDir, `solution${ext}`);
+  await writeFile(srcFile, code, 'utf-8');
 
-async function runViaJudge0(code: string, language: string): Promise<{
+  const command = language === 'JavaScript' ? process.execPath : 'python';
+  const start = Date.now();
+  try {
+    const { stdout, stderr } = await execAsync(`${command} ${srcFile}`, <any>{
+      timeout: TIMEOUT_MS, cwd: tmpDir, maxBuffer: 1024 * 1024,
+      input: inputStr,
+    });
+    const runtimeMs = Date.now() - start;
+    await unlink(srcFile).catch(() => {});
+    const actual = String(stdout).replace(/\r\n/g, '\n').replace(/\n$/, '');
+    return { actual, stderr: String(stderr), runtimeMs };
+  } catch (err: any) {
+    const runtimeMs = Date.now() - start;
+    await unlink(srcFile).catch(() => {});
+    if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') {
+      throw { type: 'Time Limit Exceeded', message: 'Output exceeded maximum buffer size' };
+    }
+    if (err.killed || err.signal) {
+      throw { type: 'Time Limit Exceeded', message: 'Execution timed out' };
+    }
+    throw { type: 'Runtime Error', message: err.stderr || err.message };
+  }
+}
+
+async function runViaJudge0(code: string, language: string, inputStr = ''): Promise<{
   stdout: string; stderr: string; compileOutput: string; statusId: number; time: string; memory: string;
 }> {
   const langId = JUDGE0_LANG_IDS[language];
@@ -622,7 +654,7 @@ async function runViaJudge0(code: string, language: string): Promise<{
       body: JSON.stringify({
         source_code: code,
         language_id: langId,
-        stdin: '',
+        stdin: inputStr,
         cpu_time_limit: 5,
         memory_limit: isJava ? 768000 : 256000,
         enable_per_process_and_thread_time_limit: true,
@@ -735,6 +767,16 @@ function normalizeOutput(output: string): string {
   return output.replace(/\s+/g, '');
 }
 
+function outputsMatch(actual: string, expected: string): boolean {
+  const a = normalizeOutput(actual);
+  const e = normalizeOutput(expected);
+  if (a === e) return true;
+  const aNum = Number(a);
+  const eNum = Number(e);
+  if (!isNaN(aNum) && !isNaN(eNum)) return aNum === eNum;
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   const controller = new AbortController();
   const overallTimeout = setTimeout(() => controller.abort(), OVERALL_TIMEOUT_MS);
@@ -772,8 +814,9 @@ export async function POST(req: NextRequest) {
 async function handleEvaluate(req: NextRequest): Promise<Response> {
   const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
-  const problem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
-  if (!problem) {
+  const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
+  const localProblem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
+  if (!dbProblem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
   }
 
@@ -785,21 +828,32 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     });
   }
 
-  const testcasesToRun = customInput
-    ? [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }]
-    : getTestcases(problem);
+  let testcasesToRun: { input: string; expectedOutput: string }[];
+  if (customInput) {
+    testcasesToRun = [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }];
+  } else {
+    const dbTestCases = await prisma.testCase.findMany({
+      where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
+      orderBy: { sortOrder: 'asc' },
+    });
+    testcasesToRun = dbTestCases.length > 0
+      ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+      : getTestcases(localProblem!);
+  }
 
-  const fn = extractFunction(code, language);
-  if (!fn) {
+  if (!code || code.trim() === '') {
     return NextResponse.json({
       status: 'Compile Error',
-      compileError: 'Could not detect function signature.',
+      compileError: 'No code provided. Write your solution in the editor.',
       runtime: '0ms', memory: '0MB',
       testResults: testcasesToRun.map((tc) => ({
-        input: tc.input, expected: tc.expectedOutput, actual: 'Function not found', passed: false,
+        input: tc.input, expected: tc.expectedOutput, actual: 'No code', passed: false,
       })),
     });
   }
+
+  const fn = extractFunction(code, language);
+  const isStandalone = !fn;
 
   const results: { input: string; expected: string; actual: string; passed: boolean; stdout?: string }[] = [];
   let overallStatus: 'Accepted' | 'Wrong Answer' | 'Compile Error' | 'Runtime Error' | 'Time Limit Exceeded' = 'Accepted';
@@ -808,7 +862,40 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
 
   for (const tc of testcasesToRun) {
     try {
-      const wrapped = buildWrapperCode(code, language, fn, tc.input);
+      if (isStandalone) {
+        // ---------- STANDALONE MODE: pipe input to stdin ----------
+        const ck = `standalone:${cacheKey(language, code, tc.input)}`;
+        let actual: string;
+        let runtimeMs: number;
+
+        let resultStr = await cacheGet(ck);
+        if (resultStr) {
+          const cached = JSON.parse(resultStr);
+          runtimeMs = cached.runtimeMs;
+          actual = cached.actual;
+        } else {
+          if (language === 'JavaScript' || language === 'Python') {
+            const localResult = await runStandaloneLocal(code, language, tc.input);
+            actual = localResult.actual;
+            runtimeMs = localResult.runtimeMs;
+          } else {
+            const result = await runViaJudge0(code, language, tc.input);
+            runtimeMs = Math.round(parseFloat(result.time) * 1000);
+            const jResult = judge0StatusToResult(result.statusId, result.stdout, result.stderr, result.compileOutput);
+            actual = jResult.actual;
+          }
+          cacheSet(ck, JSON.stringify({ runtimeMs, actual }));
+        }
+
+        totalRuntime += runtimeMs;
+        const passed = outputsMatch(actual, tc.expectedOutput);
+        results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed });
+        if (!passed) overallStatus = 'Wrong Answer';
+        continue;
+      }
+
+      // ---------- WRAPPER MODE (function detected) ----------
+      const wrapped = buildWrapperCode(code, language, fn!, tc.input);
       let actual: string;
       let debugOut: string | undefined;
       let runtimeMs: number;
@@ -838,7 +925,7 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
             continue;
           }
           totalRuntime += runtimeMs;
-          const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+          const passed = outputsMatch(actual, tc.expectedOutput);
           results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: cached.debugOut });
           if (!passed) overallStatus = 'Wrong Answer';
           continue;
@@ -851,7 +938,7 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
           debugOut = localResult.stderr || undefined;
           runtimeMs = localResult.runtimeMs;
           totalRuntime += runtimeMs;
-          const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+          const passed = outputsMatch(actual, tc.expectedOutput);
           results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
           if (!passed) overallStatus = 'Wrong Answer';
           continue;
@@ -905,7 +992,7 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
       }
 
       totalRuntime += runtimeMs;
-      const passed = normalizeOutput(actual) === normalizeOutput(tc.expectedOutput);
+      const passed = outputsMatch(actual, tc.expectedOutput);
       results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
       if (!passed) overallStatus = 'Wrong Answer';
     } catch (err: any) {

@@ -49,6 +49,7 @@ interface WorkspaceProps {
   solvedProblemIds: number[];
   onBackToDashboard: () => void;
   onMarkSolved: (id: number) => void;
+  userId?: string | null;
 }
 
 export default function Workspace({ 
@@ -56,7 +57,8 @@ export default function Workspace({
   problems, 
   solvedProblemIds, 
   onBackToDashboard, 
-  onMarkSolved 
+  onMarkSolved,
+  userId
 }: WorkspaceProps) {
   const problem = problems.find((p) => p.id === problemId);
   if (!problem) return null;
@@ -187,6 +189,34 @@ export default function Workspace({
     language: string;
   }[]>([]);
 
+  // Fetch submission history from DB on mount
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/submissions?userId=${userId}&problemId=${problem.id}`)
+        .then((r) => r.ok ? r.json() : { submissions: [] })
+        .then((data) => {
+          const dbSubs = (data.submissions || []).map((s: { status: string; runtime: string | null; memory: string | null; language: string; createdAt: string }) => ({
+            timestamp: new Date(s.createdAt).toLocaleString(),
+            status: s.status,
+            runtime: s.runtime || '4ms',
+            memory: s.memory || '10.2MB',
+            language: s.language,
+          }));
+          setSubmissionHistory((prev) => {
+            const combined = [...dbSubs, ...prev];
+            const seen = new Set();
+            return combined.filter((s) => {
+              const key = `${s.timestamp}-${s.status}-${s.runtime}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+          });
+        })
+        .catch(() => {});
+    }
+  }, [userId, problem.id]);
+
   // CodeMirror: create/recreate editor when language or problem changes
   useEffect(() => {
     if (!editorContainerRef.current) return;
@@ -201,7 +231,11 @@ export default function Workspace({
       initialCode = '';
     }
     if (!initialCode) {
-      initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
+      if (problem.difficulty === 'Easy' || problem.difficulty === 'Medium') {
+        initialCode = '';
+      } else {
+        initialCode = problem.starterCode[language] || problem.starterCode['C++'] || '';
+      }
     }
 
     const state = EditorState.create({
@@ -330,8 +364,9 @@ export default function Workspace({
 
   // Reset current language snippet
   const handleResetSnippet = () => {
-    if (window.confirm('Are you sure you want to reset your code to the default boilerplate?')) {
-      const defaultSnippet = problem.starterCode[language] || problem.starterCode['C++'] || '';
+    const hasBoilerplate = problem.difficulty === 'Hard' && (problem.starterCode[language] || problem.starterCode['C++'] || '');
+    if (window.confirm(hasBoilerplate ? 'Reset your code to the default boilerplate?' : 'Clear the editor?')) {
+      const defaultSnippet = hasBoilerplate ? problem.starterCode[language] || problem.starterCode['C++'] || '' : '';
       setUserCode(defaultSnippet);
       localStorage.removeItem(`leetcode_code_${problemId}_${language}`);
     }
@@ -428,18 +463,33 @@ export default function Workspace({
         onMarkSolved(problem.id);
       }
 
-      // Append to local submission tracker
+      // Save submission to DB + local tracker
       if (action === 'submit') {
-        setSubmissionHistory(prev => [
-          {
-            timestamp: new Date().toLocaleTimeString(),
-            status: result.status,
-            runtime: result.runtime || '4ms',
-            memory: result.memory || '10.2MB',
-            language
-          },
-          ...prev
-        ]);
+        const subEntry = {
+          timestamp: new Date().toLocaleTimeString(),
+          status: result.status,
+          runtime: result.runtime || '4ms',
+          memory: result.memory || '10.2MB',
+          language
+        };
+        setSubmissionHistory(prev => [subEntry, ...prev]);
+
+        if (userId) {
+          fetch('/api/submissions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              problemId: problem.id,
+              language,
+              code: userCode,
+              status: result.status,
+              runtime: result.runtime || '4ms',
+              memory: result.memory || '10.2MB',
+              testResults: result.testResults || null,
+              userId,
+            }),
+          }).catch((err) => console.error('Failed to save submission:', err));
+        }
       }
     } catch (err: any) {
       console.error(err);
