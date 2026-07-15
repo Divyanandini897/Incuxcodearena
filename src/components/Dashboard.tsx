@@ -43,6 +43,7 @@ import { useRouter } from 'next/navigation';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
+import CodingHeroBackground from './dashboard/CodingHeroBackground';
 
 // Recharts components imported dynamically on client side
 import {
@@ -200,19 +201,8 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Welcome Hero (2/3 width) */}
         <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-border-card/25 p-8 flex flex-col justify-between gap-6 shadow-card-custom min-h-[320px] lg:h-[340px] group cursor-default transition-all duration-300 hover:shadow-lg">
-          {/* Landscape Background Illustration with smooth zoom effect */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <img 
-              src="/scenic_sunset.png" 
-              alt="Backdrop" 
-              loading="lazy"
-              className="w-full h-full object-cover opacity-65 brightness-110 contrast-110 group-hover:scale-103 transition-transform duration-700 ease-out select-none pointer-events-none"
-            />
-            {/* Dynamic themed overlays & vignette */}
-            <div className="absolute inset-0 bg-[var(--color-hero-overlay)]" />
-            <div className="absolute inset-0 bg-[var(--color-hero-gradient)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.3)_100%)] mix-blend-multiply" />
-          </div>
+          {/* Coding & AI Background Illustration with interactive canvas */}
+          <CodingHeroBackground />
 
           <div className="flex flex-col gap-2.5 relative z-10 text-white text-left w-full">
             <span className="text-[10px] font-bold font-mono uppercase text-primary tracking-wider flex items-center gap-1.5 drop-shadow-sm select-none">
