@@ -9,7 +9,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/src/utils/supabaseClient';
-import Navigation from '@/src/components/Navigation';
 import Dashboard from '@/src/components/Dashboard';
 import { useGameState } from '@/src/lib/gameState';
 import AppLayout from '@/src/components/AppLayout';
@@ -24,7 +23,7 @@ interface UserProfile {
 
 export default function HomePage() {
   const router = useRouter();
-  const { solvedIds, streak, userName, updateUserName } = useGameState();
+  const { solvedIds, streak } = useGameState();
 
   const [checking, setChecking] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -89,11 +88,6 @@ export default function HomePage() {
             avatar_url: profile.avatar_url,
             provider: user.app_metadata?.provider || 'email',
           });
-          // Sync name into gameState if not already set
-          const authName = profile.username || profile.name || (user.email ? user.email.split('@')[0] : '');
-          if (!userName && authName) {
-            updateUserName(authName);
-          }
         } else {
           // Fallback if the profile doesn't exist in the database yet
           setUserProfile({
@@ -103,9 +97,6 @@ export default function HomePage() {
             avatar_url: user.user_metadata?.avatar_url || null,
             provider: user.app_metadata?.provider || 'email',
           });
-          if (!userName && (user.email || user.user_metadata?.full_name)) {
-            updateUserName(user.user_metadata?.full_name || user.email!.split('@')[0]);
-          }
         }
       } catch (error) {
         console.error('Error verifying profile login state:', error);
@@ -131,18 +122,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] flex flex-col antialiased">
-      <Navigation streakCount={streakCount} userProfile={userProfile} />
-      <AppLayout>
-        <div className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
-          {/* Added userProfile prop back here so Dashboard receives the user details */}
-          <Dashboard
-            userProfile={userProfile}
-            solvedProblemIds={solvedProblemIds}
-            onSelectProblem={handleSelectProblem}
-          />
-        </div>
-      </AppLayout>
-    </div>
+    <AppLayout>
+      <Dashboard
+        userProfile={userProfile}
+        solvedProblemIds={solvedProblemIds}
+        onSelectProblem={handleSelectProblem}
+      />
+    </AppLayout>
   );
 }

@@ -8,7 +8,7 @@ export async function GET() {
     provider: 'google',
     options: {
       redirectTo: `${APP_URL}/auth/callback`,
-      queryParams: { access_type: 'offline', prompt: 'consent' },
+      queryParams: { access_type: 'offline', prompt: 'select_account' },
     },
   });
 

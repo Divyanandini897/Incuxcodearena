@@ -531,6 +531,7 @@ model Profile {
   submissions     Submission[]
   userProgress    UserProblemProgress[]
   contestAttempts ContestAttempt[]
+  contestRegistrations ContestRegistration[]
 
   @@map("profiles")
   @@schema("public")
@@ -789,19 +790,37 @@ model Contest {
   maxPoints    Int              @default(0) @map("max_points")
   startsAt     DateTime?        @map("starts_at") @db.Timestamptz(6)
   endsAt       DateTime?        @map("ends_at") @db.Timestamptz(6)
-  isPublished  Boolean          @default(false) @map("is_published")
-  createdBy    String           @map("created_by") @db.Uuid
+  isPublished      Boolean          @default(false) @map("is_published")
+  reminderMinutes  Int?             @default(10) @map("reminder_minutes")
+  createdBy        String           @map("created_by") @db.Uuid
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   reminderSent Boolean          @default(false) @map("reminder_sent")
   problems        ContestProblem[]
   creator         Profile          @relation(fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contestAttempts ContestAttempt[]
+  registrations   ContestRegistration[]
 
   @@index([isPublished])
   @@index([createdBy])
   @@index([startsAt])
   @@map("contests")
+  @@schema("public")
+}
+
+model ContestRegistration {
+  id         String   @id @default(uuid()) @db.Uuid
+  contestId  String   @map("contest_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@map("contest_registrations")
   @@schema("public")
 }
 

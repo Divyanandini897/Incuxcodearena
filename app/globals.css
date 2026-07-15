@@ -46,6 +46,13 @@
   --color-hard: var(--color-hard);
   --color-hard-bg: var(--color-hard-bg);
   --color-hard-border: var(--color-hard-border);
+
+  /* Newly added dynamic visual overrides */
+  --color-bg-sidebar: var(--color-bg-sidebar);
+  --color-bg-nav: var(--color-bg-nav);
+  --shadow-card-custom: var(--shadow-card-custom);
+  --color-hero-overlay: var(--color-hero-overlay);
+  --color-hero-gradient: var(--color-hero-gradient);
 }
 
 html {
@@ -53,101 +60,115 @@ html {
 }
 
 :root {
-  /* Default Theme: Light Mode (SaaS Slate & Emerald) */
-  --color-primary: #00C853; /* Vibrant Green */
-  --color-primary-hover: #00A844;
-  --color-accent-secondary: #00C853; 
-  --color-bg-base: #F8FAFC; 
-  --color-bg-card: #FFFFFF; 
-  --color-border-card: #E5E7EB; 
-  --color-text-main: #111827; 
-  --color-text-muted: #6B7280; 
-  --shadow-glow: 0 4px 20px rgba(0, 200, 83, 0.03);
-  --shadow-card: 0 4px 18px 0 rgba(17, 24, 39, 0.04);
-  --color-bg-header: #111827; 
-  --color-border-header: #E5E7EB;
-  --color-text-header: #F8FAFC; 
+  /* Default Theme: Light Mode (Softer Lavender & Emerald) */
+  --color-primary: #007A33; /* Readable dark forest green */
+  --color-primary-hover: #006128;
+  --color-accent-secondary: #007A33; 
+  --color-bg-base: #DDD7F0; /* Softer lavender-grey background */
+  --color-bg-card: #F0ECF9; /* Very light, clean lavender card background */
+  --color-border-card: #A79BBF; /* Softer purple-grey border outlines */
+  --color-text-main: #1B122C; /* Deep purple-charcoal typography */
+  --color-text-muted: #5B4F74; /* Muted purple-grey */
+  --shadow-glow: 0 4px 20px rgba(110, 80, 180, 0.05);
+  --shadow-card: 0 6px 20px rgba(70, 50, 120, 0.07);
+  --color-bg-header: #1B122C; 
+  --color-border-header: #A79BBF;
+  --color-text-header: #DDD7F0; 
 
-  /* origin/main light values mapped */
-  --color-page: #F8FAFC;
-  --color-surface: #F8FAFC;
-  --color-card: #FFFFFF;
-  --color-elevated: #F1F5F9;
-  --color-hover: #E2E8F0;
-  --color-code: #F8FAFC; 
-  --color-line-num: #E5E7EB;
-  --color-term: #F1F5F9;
-  --color-secondary: #6B7280;
-  --color-muted: #9CA3AF;
-  --color-body: #111827;
-  --color-code-text: #00C853;
-  --color-panel: #FFFFFF;
-  --color-active: #E2E8F0;
-  --color-line-text: #6B7280;
-  --color-border-subtle: #F3F4F6;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
-  --color-green: #00C853;
+  /* Light values mapped */
+  --color-page: #DDD7F0;
+  --color-surface: #DDD7F0;
+  --color-card: #F0ECF9;
+  --color-elevated: #CCC4E7;
+  --color-hover: #BCB1DF;
+  --color-code: #CCC4E7; 
+  --color-line-num: #A79BBF;
+  --color-term: #CCC4E7;
+  --color-secondary: #5B4F74;
+  --color-muted: #8F84A8;
+  --color-body: #1B122C;
+  --color-code-text: #007A33;
+  --color-panel: #F0ECF9;
+  --color-active: #BCB1DF;
+  --color-line-text: #5B4F74;
+  --color-border-subtle: #CCC4E7;
+  --color-border: #A79BBF;
+  --color-border-light: #CCC4E7;
+  --color-green: #007A33;
   --color-amber: #D97706;
   --color-rose: #DC2626;
 
-  --color-easy: #00C853;
-  --color-easy-bg: rgba(0, 200, 83, 0.08);
-  --color-easy-border: rgba(0, 200, 83, 0.15);
+  --color-easy: #007A33;
+  --color-easy-bg: rgba(0, 122, 51, 0.08);
+  --color-easy-border: rgba(0, 122, 51, 0.15);
   --color-medium: #D97706;
   --color-medium-bg: rgba(217, 119, 6, 0.08);
   --color-medium-border: rgba(217, 119, 6, 0.15);
   --color-hard: #DC2626;
   --color-hard-bg: rgba(220, 38, 38, 0.08);
   --color-hard-border: rgba(220, 38, 38, 0.15);
+
+  /* Newly added dynamic visual overrides */
+  --color-bg-sidebar: #CCC4E7;
+  --color-bg-nav: rgba(240, 236, 249, 0.85);
+  --shadow-card-custom: 0 6px 20px rgba(70, 50, 120, 0.07);
+  --color-hero-overlay: rgba(27, 18, 44, 0.45);
+  --color-hero-gradient: linear-gradient(to right, rgba(27, 18, 44, 0.85) 0%, rgba(27, 18, 44, 0.4) 50%, transparent 100%);
 }
 
 .theme-light {
-  --color-primary: #00C853;
-  --color-primary-hover: #00A844;
-  --color-accent-secondary: #00C853;
-  --color-bg-base: #F8FAFC;
-  --color-bg-card: #FFFFFF;
-  --color-border-card: #E5E7EB;
-  --color-text-main: #111827;
-  --color-text-muted: #6B7280;
-  --shadow-glow: 0 4px 20px rgba(0, 200, 83, 0.03);
-  --shadow-card: 0 4px 18px 0 rgba(17, 24, 39, 0.04);
-  --color-bg-header: #111827;
-  --color-border-header: #E5E7EB;
-  --color-text-header: #F8FAFC;
+  --color-primary: #007A33;
+  --color-primary-hover: #006128;
+  --color-accent-secondary: #007A33;
+  --color-bg-base: #DDD7F0;
+  --color-bg-card: #F0ECF9;
+  --color-border-card: #A79BBF;
+  --color-text-main: #1B122C;
+  --color-text-muted: #5B4F74;
+  --shadow-glow: 0 4px 20px rgba(110, 80, 180, 0.05);
+  --shadow-card: 0 6px 20px rgba(70, 50, 120, 0.07);
+  --color-bg-header: #1B122C;
+  --color-border-header: #A79BBF;
+  --color-text-header: #DDD7F0;
 
-  --color-page: #F8FAFC;
-  --color-surface: #F8FAFC;
-  --color-card: #FFFFFF;
-  --color-elevated: #F1F5F9;
-  --color-hover: #E2E8F0;
-  --color-code: #F8FAFC;
-  --color-line-num: #E5E7EB;
-  --color-term: #F1F5F9;
-  --color-secondary: #6B7280;
-  --color-muted: #9CA3AF;
-  --color-body: #111827;
-  --color-code-text: #00C853;
-  --color-panel: #FFFFFF;
-  --color-active: #E2E8F0;
-  --color-line-text: #6B7280;
-  --color-border-subtle: #F3F4F6;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
-  --color-green: #00C853;
+  --color-page: #DDD7F0;
+  --color-surface: #DDD7F0;
+  --color-card: #F0ECF9;
+  --color-elevated: #CCC4E7;
+  --color-hover: #BCB1DF;
+  --color-code: #CCC4E7;
+  --color-line-num: #A79BBF;
+  --color-term: #CCC4E7;
+  --color-secondary: #5B4F74;
+  --color-muted: #8F84A8;
+  --color-body: #1B122C;
+  --color-code-text: #007A33;
+  --color-panel: #F0ECF9;
+  --color-active: #BCB1DF;
+  --color-line-text: #5B4F74;
+  --color-border-subtle: #CCC4E7;
+  --color-border: #A79BBF;
+  --color-border-light: #CCC4E7;
+  --color-green: #007A33;
   --color-amber: #D97706;
   --color-rose: #DC2626;
 
-  --color-easy: #00C853;
-  --color-easy-bg: rgba(0, 200, 83, 0.08);
-  --color-easy-border: rgba(0, 200, 83, 0.15);
+  --color-easy: #007A33;
+  --color-easy-bg: rgba(0, 122, 51, 0.08);
+  --color-easy-border: rgba(0, 122, 51, 0.15);
   --color-medium: #D97706;
   --color-medium-bg: rgba(217, 119, 6, 0.08);
   --color-medium-border: rgba(217, 119, 6, 0.15);
   --color-hard: #DC2626;
   --color-hard-bg: rgba(220, 38, 38, 0.08);
   --color-hard-border: rgba(220, 38, 38, 0.15);
+
+  /* Newly added dynamic visual overrides */
+  --color-bg-sidebar: #CCC4E7;
+  --color-bg-nav: rgba(240, 236, 249, 0.85);
+  --shadow-card-custom: 0 6px 20px rgba(70, 50, 120, 0.07);
+  --color-hero-overlay: rgba(27, 18, 44, 0.45);
+  --color-hero-gradient: linear-gradient(to right, rgba(27, 18, 44, 0.85) 0%, rgba(27, 18, 44, 0.4) 50%, transparent 100%);
 }
 
 .theme-dark {
@@ -196,6 +217,13 @@ html {
   --color-hard: #EF4444;
   --color-hard-bg: rgba(239, 68, 68, 0.08);
   --color-hard-border: rgba(239, 68, 68, 0.15);
+
+  /* Newly added dynamic visual overrides */
+  --color-bg-sidebar: #161B22;
+  --color-bg-nav: rgba(22, 27, 34, 0.85);
+  --shadow-card-custom: 0 4px 18px 0 rgba(0, 0, 0, 0.25);
+  --color-hero-overlay: rgba(0, 0, 0, 0.40);
+  --color-hero-gradient: linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 45%, transparent 100%);
 }
 
 /* Custom Scrollbar styled for theme colors */

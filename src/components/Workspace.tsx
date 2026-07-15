@@ -27,7 +27,8 @@ import {
   Globe, 
   Lightbulb, 
   Loader2, 
-  AlertCircle 
+  AlertCircle,
+  Star 
 } from 'lucide-react';
 import { Problem, EvaluationResult, EditorialResponse, HintResponse } from '../types';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection, highlightSpecialChars } from '@codemirror/view';
@@ -48,6 +49,7 @@ interface WorkspaceProps {
   solvedProblemIds: number[];
   onBackToDashboard: () => void;
   onMarkSolved: (id: number) => void;
+  userId?: string | null;
 }
 
 export default function Workspace({ 
@@ -55,7 +57,8 @@ export default function Workspace({
   problems, 
   solvedProblemIds, 
   onBackToDashboard, 
-  onMarkSolved 
+  onMarkSolved,
+  userId
 }: WorkspaceProps) {
   const problem = problems.find((p) => p.id === problemId);
   if (!problem) return null;
@@ -72,6 +75,30 @@ export default function Workspace({
 
   // Tabs Left Panel
   const [activeTab, setActiveTab] = useState<'Description' | 'Editorial' | 'Solutions' | 'Submissions'>('Description');
+
+  // Bookmarks state
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('codenode_bookmarks');
+    if (saved) {
+      const parsed: number[] = JSON.parse(saved);
+      setIsBookmarked(parsed.includes(problemId));
+    }
+  }, [problemId]);
+
+  const handleToggleBookmark = () => {
+    const saved = localStorage.getItem('codenode_bookmarks');
+    let current: number[] = saved ? JSON.parse(saved) : [];
+    if (current.includes(problemId)) {
+      current = current.filter(x => x !== problemId);
+      setIsBookmarked(false);
+    } else {
+      current.push(problemId);
+      setIsBookmarked(true);
+    }
+    localStorage.setItem('codenode_bookmarks', JSON.stringify(current));
+  };
 
   // Interactive Metadata States
   const [showTopics, setShowTopics] = useState(false);
@@ -161,6 +188,34 @@ export default function Workspace({
     memory: string;
     language: string;
   }[]>([]);
+
+  // Fetch submission history from DB on mount
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/submissions?userId=${userId}&problemId=${problem.id}`)
+        .then((r) => r.ok ? r.json() : { submissions: [] })
+        .then((data) => {
+          const dbSubs = (data.submissions || []).map((s: { status: string; runtime: string | null; memory: string | null; language: string; createdAt: string }) => ({
+            timestamp: new Date(s.createdAt).toLocaleString(),
+            status: s.status,
+            runtime: s.runtime || '4ms',
+            memory: s.memory || '10.2MB',
+            language: s.language,
+          }));
+          setSubmissionHistory((prev) => {
+            const combined = [...dbSubs, ...prev];
+            const seen = new Set();
+            return combined.filter((s) => {
+              const key = `${s.timestamp}-${s.status}-${s.runtime}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+          });
+        })
+        .catch(() => {});
+    }
+  }, [userId, problem.id]);
 
   // CodeMirror: create/recreate editor when language or problem changes
   useEffect(() => {
@@ -408,18 +463,33 @@ export default function Workspace({
         onMarkSolved(problem.id);
       }
 
-      // Append to local submission tracker
+      // Save submission to DB + local tracker
       if (action === 'submit') {
-        setSubmissionHistory(prev => [
-          {
-            timestamp: new Date().toLocaleTimeString(),
-            status: result.status,
-            runtime: result.runtime || '4ms',
-            memory: result.memory || '10.2MB',
-            language
-          },
-          ...prev
-        ]);
+        const subEntry = {
+          timestamp: new Date().toLocaleTimeString(),
+          status: result.status,
+          runtime: result.runtime || '4ms',
+          memory: result.memory || '10.2MB',
+          language
+        };
+        setSubmissionHistory(prev => [subEntry, ...prev]);
+
+        if (userId) {
+          fetch('/api/submissions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              problemId: problem.id,
+              language,
+              code: userCode,
+              status: result.status,
+              runtime: result.runtime || '4ms',
+              memory: result.memory || '10.2MB',
+              testResults: result.testResults || null,
+              userId,
+            }),
+          }).catch((err) => console.error('Failed to save submission:', err));
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -487,6 +557,17 @@ export default function Workspace({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Bookmark toggle button */}
+          <button
+            onClick={handleToggleBookmark}
+            className={`flex items-center justify-center p-1.5 rounded hover:bg-elevated transition-all cursor-pointer ${
+              isBookmarked ? 'text-yellow-500 hover:text-yellow-600' : 'text-text-muted hover:text-text-main'
+            }`}
+            title={isBookmarked ? "Remove Bookmark" : "Bookmark Question"}
+          >
+            <Star className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-yellow-500' : ''}`} />
+          </button>
+          <div className="h-4 w-px bg-elevated" />
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">
             JS / Python
           </span>

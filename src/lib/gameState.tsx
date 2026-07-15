@@ -58,7 +58,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [petName, setPetName] = useState('Byte');
   const [petAccessories, setPetAccessories] = useState<string[]>([]);
   const [activeAccessories, setActiveAccessories] = useState<string[]>([]);
-  const [theme, setTheme] = useState('theme-light');
+  const [theme, setTheme] = useState('theme-dark');
   const [userName, setUserName] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -89,7 +89,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           if (validThemes.includes(parsed.theme)) {
             setTheme(parsed.theme);
           } else {
-            setTheme('theme-light');
+            setTheme('theme-dark');
           }
         }
 
@@ -106,11 +106,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         console.error('Error loading gamified state:', err);
       }
     } else {
-      // Respect user's system preference on first visit
-      if (typeof window !== 'undefined') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setTheme(systemPrefersDark ? 'theme-dark' : 'theme-light');
-      }
+      // Default to dark mode when there is no saved preference
+      setTheme('theme-dark');
     }
     setIsLoaded(true);
   }, []);
@@ -327,7 +324,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUnlockedAchievements([]);
     setPetAccessories([]);
     setActiveAccessories([]);
-    setTheme('theme-light');
+    setTheme('theme-dark');
     setUserName('');
     setProfilePicture('');
     localStorage.removeItem(LOCAL_STORAGE_KEY);
