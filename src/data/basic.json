@@ -1,0 +1,138 @@
+[
+  {
+    "leetcodeId": 5011,
+    "title": "Return Negative Number",
+    "difficulty": "Easy",
+    "languageId": "javascript",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "testCases": [
+      { "input": "n = 5", "expectedOutput": "-5", "isSample": true },
+      { "input": "n = -3", "expectedOutput": "-3", "isSample": false }
+    ],
+    "examples": [
+      { "input": "n = 0", "output": "0", "explanation": "Zero does not change its sign identity." }
+    ],
+    "constraints": [
+      { "constraintText": "Inputs evaluate within signed 32-bit bounds." }
+    ]
+  },
+  {
+    "leetcodeId": 5012,
+    "title": "Return Negative Number",
+    "difficulty": "Easy",
+    "languageId": "python",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "testCases": [
+      { "input": "n = 5", "expectedOutput": "-5", "isSample": true },
+      { "input": "n = -3", "expectedOutput": "-3", "isSample": false }
+    ],
+    "examples": [
+      { "input": "n = 0", "output": "0", "explanation": "Zero does not change its sign identity." }
+    ],
+    "constraints": [
+      { "constraintText": "Inputs evaluate within signed 32-bit bounds." }
+    ]
+  },
+  {
+    "leetcodeId": 5013,
+    "title": "Return Negative Number",
+    "difficulty": "Easy",
+    "languageId": "java",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "testCases": [
+      { "input": "n = 5", "expectedOutput": "-5", "isSample": true },
+      { "input": "n = -3", "expectedOutput": "-3", "isSample": false }
+    ],
+    "examples": [
+      { "input": "n = 0", "output": "0", "explanation": "Zero does not change its sign identity." }
+    ],
+    "constraints": [
+      { "constraintText": "Inputs evaluate within signed 32-bit bounds." }
+    ]
+  },
+  {
+    "leetcodeId": 5014,
+    "title": "Return Negative Number",
+    "difficulty": "Easy",
+    "languageId": "cpp",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "testCases": [
+      { "input": "n = 5", "expectedOutput": "-5", "isSample": true },
+      { "input": "n = -3", "expectedOutput": "-3", "isSample": false }
+    ],
+    "examples": [
+      { "input": "n = 0", "output": "0", "explanation": "Zero does not change its sign identity." }
+    ],
+    "constraints": [
+      { "constraintText": "Inputs evaluate within signed 32-bit bounds." }
+    ]
+  },
+  {
+    "leetcodeId": 5021,
+    "title": "Remainder of Division",
+    "difficulty": "Easy",
+    "languageId": "javascript",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "testCases": [
+      { "input": "dividend = 5, divisor = 2", "expectedOutput": "1", "isSample": true },
+      { "input": "dividend = 10, divisor = 5", "expectedOutput": "0", "isSample": false }
+    ],
+    "examples": [
+      { "input": "dividend = 7, divisor = 4", "output": "3", "explanation": "4 goes into 7 once, leaving a remainder of 3." }
+    ],
+    "constraints": [
+      { "constraintText": "divisor will always be greater than 0." }
+    ]
+  },
+  {
+    "leetcodeId": 5022,
+    "title": "Remainder of Division",
+    "difficulty": "Easy",
+    "languageId": "python",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "testCases": [
+      { "input": "dividend = 5, divisor = 2", "expectedOutput": "1", "isSample": true },
+      { "input": "dividend = 10, divisor = 5", "expectedOutput": "0", "isSample": false }
+    ],
+    "examples": [
+      { "input": "dividend = 7, divisor = 4", "output": "3", "explanation": "4 goes into 7 once, leaving a remainder of 3." }
+    ],
+    "constraints": [
+      { "constraintText": "divisor will always be greater than 0." }
+    ]
+  },
+  {
+    "leetcodeId": 5023,
+    "title": "Remainder of Division",
+    "difficulty": "Easy",
+    "languageId": "java",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "testCases": [
+      { "input": "dividend = 5, divisor = 2", "expectedOutput": "1", "isSample": true },
+      { "input": "dividend = 10, divisor = 5", "expectedOutput": "0", "isSample": false }
+    ],
+    "examples": [
+      { "input": "dividend = 7, divisor = 4", "output": "3", "explanation": "4 goes into 7 once, leaving a remainder of 3." }
+    ],
+    "constraints": [
+      { "constraintText": "divisor will always be greater than 0." }
+    ]
+  },
+  {
+    "leetcodeId": 5024,
+    "title": "Remainder of Division",
+    "difficulty": "Easy",
+    "languageId": "cpp",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "testCases": [
+      { "input": "dividend = 5, divisor = 2", "expectedOutput": "1", "isSample": true },
+      { "input": "dividend = 10, divisor = 5", "expectedOutput": "0", "isSample": false }
+    ],
+    "examples": [
+      { "input": "dividend = 7, divisor = 4", "output": "3", "explanation": "4 goes into 7 once, leaving a remainder of 3." }
+    ],
+    "constraints": [
+      { "constraintText": "divisor will always be greater than 0." }
+    ]
+  }
+]
