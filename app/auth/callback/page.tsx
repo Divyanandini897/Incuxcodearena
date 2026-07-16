@@ -87,7 +87,7 @@ export default function AuthCallbackPage() {
           }),
         });
         if (res.ok) {
-          router.replace('/');
+          router.replace('/practice-arena');
         } else {
           router.replace('/auth/login?oauth_error=Profile_creation_failed');
         }
@@ -124,7 +124,7 @@ export default function AuthCallbackPage() {
       return;
     }
 
-    router.replace('/');
+    router.replace('/practice-arena');
   };
 
   const clearSupabaseSession = async () => {

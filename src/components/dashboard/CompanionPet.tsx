@@ -7,39 +7,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { useGameState } from '@/src/lib/gameState';
-import { ShoppingBag, Check, Sparkles, Coins } from 'lucide-react';
+import { ShoppingBag, Check, Sparkles, Coins, Wand, Monitor, Music, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const ACC_SHOP = [
-  { id: 'wizard-hat', name: 'Wizard Hat', cost: 50, emoji: '🧙‍♂️' },
-  { id: 'cyber-visor', name: 'Cyber Visor', cost: 30, emoji: '🕶️' },
-  { id: 'dj-headphones', name: 'DJ Headphones', cost: 40, emoji: '🎧' },
-  { id: 'royal-crown', name: 'Golden Crown', cost: 100, emoji: '👑' },
+  { id: 'wizard-hat', name: 'Wizard Hat', cost: 50, icon: Wand },
+  { id: 'cyber-visor', name: 'Cyber Visor', cost: 30, icon: Monitor },
+  { id: 'dj-headphones', name: 'DJ Headphones', cost: 40, icon: Music },
+  { id: 'royal-crown', name: 'Golden Crown', cost: 100, icon: Crown },
 ];
 
 const QUOTES_ACTIVE = [
-  "Feed me more semicolons! 🍕",
-  "Is it a bug, or is it a surprise feature? 🐛",
-  "O(N^2) is fine... if you like taking coffee breaks! ☕",
-  "Your code compiles! QUICK, MAKE A WISH! 🌠",
-  "CSS alignment is my final boss. 💀",
-  "Errors are just proof that you are trying! 🧠",
-  "Have you tried turning your computer off and on again? 💻",
-  "Don't worry, even senior devs google how to exit Vim. 🚪",
+  "Feed me more semicolons!",
+  "Is it a bug, or is it a surprise feature?",
+  "O(N^2) is fine... if you like taking coffee breaks!",
+  "Your code compiles! QUICK, MAKE A WISH!",
+  "CSS alignment is my final boss.",
+  "Errors are just proof that you are trying!",
+  "Have you tried turning your computer off and on again?",
+  "Don't worry, even senior devs google how to exit Vim.",
 ];
 
 const QUOTES_SLEEPY = [
-  "Zzz... Bug detected in my dream... 😴",
-  "Yawn... Streak is looking cold, let's solve a challenge! ❄️",
-  "I'm sleeping. Wake me up with some fresh JavaScript! ☕",
-  "Need... syntax... sugar... 🍬",
+  "Zzz... Bug detected in my dream...",
+  "Yawn... Streak is looking cold, let's solve a challenge!",
+  "I'm sleeping. Wake me up with some fresh JavaScript!",
+  "Need... syntax... sugar...",
 ];
 
 const QUOTES_FIRE = [
-  "We are on FIRE! Let's crush this daily quest! ⚔️",
-  "O(1) speeds achieved! You are a coding wizard! 🧙‍♂️",
-  "Algorithms fear us! Keep the streak alive! 🔥",
-  "Compiling at the speed of sound! 🚀",
+  "We are on FIRE! Let's crush this daily quest!",
+  "O(1) speeds achieved! You are a coding wizard!",
+  "Algorithms fear us! Keep the streak alive!",
+  "Compiling at the speed of sound!",
 ];
 
 export default function CompanionPet() {
@@ -272,7 +272,7 @@ export default function CompanionPet() {
                     className="flex items-center justify-between p-3 rounded-lg bg-bg-base/70 border border-border-card text-sm"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{acc.emoji}</span>
+                      <acc.icon className="w-5 h-5 text-text-muted" />
                       <span className="font-bold text-text-main">{acc.name}</span>
                     </div>
 

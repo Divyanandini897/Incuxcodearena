@@ -161,11 +161,11 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
   ];
 
   const leaderboard = [
-    { rank: 1, name: 'algo_sorcerer', score: 3480, country: '🇺🇸', streak: 42 },
-    { rank: 2, name: 'callback_hero', score: 2950, country: '🇬🇧', streak: 18 },
-    { rank: 3, name: displayName || 'You', score: 1000 + xp, country: '🇮🇳', streak: streak, isUser: true },
-    { rank: 4, name: 'byte_cruncher', score: 940, country: '🇨🇦', streak: 9 },
-    { rank: 5, name: 'kernel_guru', score: 810, country: '🇩🇪', streak: 4 }
+    { rank: 1, name: 'algo_sorcerer', score: 3480, streak: 42 },
+    { rank: 2, name: 'callback_hero', score: 2950, streak: 18 },
+    { rank: 3, name: displayName || 'You', score: 1000 + xp, streak: streak, isUser: true },
+    { rank: 4, name: 'byte_cruncher', score: 940, streak: 9 },
+    { rank: 5, name: 'kernel_guru', score: 810, streak: 4 }
   ];
 
   const achievements = [
@@ -246,7 +246,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
               </div>
             ) : (
               <h2 className="text-3xl font-black tracking-tight leading-none drop-shadow-md select-none flex items-center gap-2 group/name">
-                <span>Welcome back, {displayName}! 👋</span>
+                <span>Welcome back, {displayName}!</span>
                 <button
                   onClick={() => {
                     setTempName(displayName === 'Coder' ? '' : displayName);

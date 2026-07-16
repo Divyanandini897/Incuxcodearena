@@ -69,7 +69,7 @@ export default function LeftSidebar({
   }, [userName]);
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Code Smash', icon: Gamepad2, path: '/code-smash' },
     { name: 'Practice Arena', icon: Swords, path: '/practice-arena' },
     { name: 'Test Arena', icon: Trophy, path: '/test-arena' },
@@ -183,8 +183,8 @@ export default function LeftSidebar({
 
         {/* Sidebar Footer */}
         <div className="p-3.5 border-t border-border-card/50 flex gap-2.5 items-center select-none shrink-0 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-hover flex items-center justify-center text-xs font-bold shrink-0">
-            🕵️‍♂️
+          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+            {profileName.charAt(0).toUpperCase()}
           </div>
           <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out origin-left ${
             isCollapsed && !isMobileOpen ? 'opacity-0 max-w-0 pointer-events-none' : 'opacity-100 max-w-[160px]'
