@@ -647,13 +647,13 @@ export default function Workspace({
                         className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border"
                         style={{
                           backgroundColor: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium-bg)' : 'var(--color-hard-bg)',
                           color: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium)' : 'var(--color-hard)',
                           borderColor: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium-border)' : 'var(--color-hard-border)',
                         }}
                       >

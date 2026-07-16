@@ -137,7 +137,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
       } else if (sortBy === 'acceptance') {
         comparison = parseFloat(a.acceptance) - parseFloat(b.acceptance);
       } else if (sortBy === 'difficulty') {
-        const order = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+        const order = { 'Basic': 0, 'Easy': 1, 'Medium': 2, 'Hard': 3 };
         comparison = order[a.difficulty] - order[b.difficulty];
       }
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -432,7 +432,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
                         <span className="text-[12.5px] font-bold text-text-main group-hover:text-primary transition-colors">{prob.id}. {prob.title}</span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <Badge variant={prob.difficulty === 'Easy' ? 'easy' : prob.difficulty === 'Medium' ? 'medium' : 'hard'}>{prob.difficulty}</Badge>
+                        <Badge variant={prob.difficulty === 'Basic' ? 'easy' : prob.difficulty === 'Easy' ? 'easy' : prob.difficulty === 'Medium' ? 'medium' : 'hard'}>{prob.difficulty}</Badge>
                       </td>
                       <td className="py-3.5 px-4 font-mono text-[11px] text-text-muted">{prob.acceptance}</td>
                       <td className="py-3.5 px-4 text-center">
