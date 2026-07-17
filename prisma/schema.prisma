@@ -547,6 +547,7 @@ model Problem {
   acceptance       Decimal?              @db.Decimal(5, 2)
   description      String
   category         ProblemCategory       @default(Algorithms)
+  language         SupportedLanguage?
   isCustom         Boolean               @default(false) @map("is_custom")
   isPublished      Boolean               @default(false) @map("is_published")
   createdAt        DateTime              @default(now()) @map("created_at")

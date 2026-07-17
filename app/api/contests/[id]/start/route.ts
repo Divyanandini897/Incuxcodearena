@@ -27,7 +27,12 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   const existing = await prisma.contestAttempt.findUnique({
     where: { contestId_userId: { contestId: id, userId } },
   })
-  if (existing) return NextResponse.json(existing)
+  if (existing) {
+    if (existing.status === 'completed') {
+      return NextResponse.json({ error: 'You have already completed this contest' }, { status: 403 })
+    }
+    return NextResponse.json(existing)
+  }
 
   const attempt = await prisma.contestAttempt.create({
     data: { contestId: id, userId },
