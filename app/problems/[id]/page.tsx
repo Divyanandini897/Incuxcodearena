@@ -12,9 +12,11 @@ export default function ProblemPage() {
   const params = useParams();
   const router = useRouter();
   const problemId = Number(params.id);
-  const { streak } = useGameState();
+  const { streak, solveProblem, solvedIds: gameSolvedIds } = useGameState();
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
   const [userId, setUserId] = useState<string | null>(null);
+
+  const problem = PROBLEMS_DATA.find((p) => p.id === problemId);
 
   useEffect(() => {
     // Get authenticated user ID for DB writes.
@@ -40,6 +42,16 @@ export default function ProblemPage() {
       }
     });
   }, []);
+
+  // Sync local solved IDs with game context when they change
+  useEffect(() => {
+    if (solvedProblemIds.length > gameSolvedIds.length) {
+      const newSolved = solvedProblemIds.find(id => !gameSolvedIds.includes(id));
+      if (newSolved && problem) {
+        solveProblem(newSolved, problem.difficulty as 'Easy' | 'Medium' | 'Hard');
+      }
+    }
+  }, [solvedProblemIds, gameSolvedIds, problem, solveProblem]);
 
   const handleMarkSolved = (id: number) => {
     setSolvedProblemIds((prev) => {
