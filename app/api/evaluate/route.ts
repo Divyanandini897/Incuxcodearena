@@ -4,9 +4,8 @@ import { promisify } from 'util';
 import { writeFile, unlink, mkdtemp } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { PROBLEMS_DATA } from '@/src/data/data';
-import { cacheKey, cacheGet, cacheSet } from './cache';
 import { prisma } from '@/src/lib/prisma';
+import { cacheKey, cacheGet, cacheSet } from './cache';
 
 const execFileAsync = promisify(execFile);
 const execAsync = promisify(exec);
@@ -48,8 +47,8 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
       const m = code.match(re);
       if (m) { name = m[1]; break; }
     }
-    // Detect return type from JSDoc @return
-    const returnMatch = code.match(/@return\s+\{(\w+)\}/);
+    // Detect return type from JSDoc @return (full type including generics/arrays)
+    const returnMatch = code.match(/@return\s+\{([^}]+)\}/);
     if (returnMatch) returnType = toCanonicalType(returnMatch[1]);
   }
 
@@ -95,8 +94,8 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
 
   let paramTypes: string[] = [];
   if (language === 'JavaScript') {
-    // Read param types from JSDoc @param {Type} name annotations (supports Type and Type[])
-    const paramRegex = /@param\s+\{(\w+(?:\[\])?(?:<[\w,\s>]*>)?)\}\s+\w+/g;
+    // Read param types from JSDoc @param annotations
+    const paramRegex = /@param\s+\{([^}]+)\}\s+\w+/g;
     let m;
     while ((m = paramRegex.exec(code)) !== null) {
       paramTypes.push(toCanonicalType(m[1]));
@@ -127,12 +126,16 @@ function toCanonicalType(raw: string): string {
   const s = raw.replace(/&/g, '').replace(/\s+/g, ' ').trim();
   const lower = s.toLowerCase();
   if (lower.includes('listnode')) return 'listnode';
-  if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
-  if (lower.includes('int') && lower.includes('[')) return 'int[]';
   if (lower === 'int' || lower === 'integer' || lower === 'number') return 'int';
   if (lower === 'double' || lower === 'float') return 'double';
   if (lower === 'string' || lower === 'str' || s === 'String') return 'string';
   if (lower === 'bool' || lower === 'boolean') return 'boolean';
+  if (lower === 'number[]') return 'int[]';
+  if (lower === 'number[][]') return 'int[][]';
+  if (lower === 'string[]') return 'vector<string>';
+  if (lower === 'string[][]') return 'vector<vector<string>>';
+  if (lower.includes('vector') && lower.includes('int')) return 'vector<int>';
+  if (lower.includes('int') && lower.includes('[')) return 'int[]';
   if (lower.includes('string') && (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']')))) return 'vector<string>';
   if (lower.startsWith('vector<') || (lower.includes('[') && lower.includes(']'))) return 'vector<int>';
   return 'string';
@@ -307,7 +310,7 @@ process.stdout.write(JSON.stringify(${fn.name}()));
 process.stdout.write(__listToStr(__result));`;
     } else if (fn.returnType === 'string') {
       resultLine = `const __result = ${fn.name}(${callArgs});
-process.stdout.write(__result);`;
+process.stdout.write(typeof __result === 'string' ? __result : JSON.stringify(__result));`;
     } else {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(JSON.stringify(__result));`;
@@ -744,25 +747,6 @@ function parseExampleInput(s: string): string[] {
   return parts;
 }
 
-function getTestcases(problem: typeof PROBLEMS_DATA[0]): { input: string; expectedOutput: string }[] {
-  if (problem.testcases.length > 0) return problem.testcases;
-  return problem.examples
-    .filter((ex) => {
-      const parsed = parseExampleInput(ex.input);
-      return parsed.length > 0 && parsed.some((p) => p.trim() !== '');
-    })
-    .map((ex) => {
-      let expected = ex.output;
-      if (expected.startsWith('"') && expected.endsWith('"')) {
-        expected = expected.slice(1, -1);
-      }
-      return {
-        input: parseExampleInput(ex.input).join('\n'),
-        expectedOutput: expected,
-      };
-    });
-}
-
 function normalizeOutput(output: string): string {
   return output.replace(/\s+/g, '');
 }
@@ -815,7 +799,6 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
   const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
   const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
-  const localProblem = PROBLEMS_DATA.find((p) => p.id === Number(problemId));
   if (!dbProblem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
   }
@@ -828,6 +811,8 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     });
   }
 
+
+  // Fetch test cases from DB (sample for 'run', ALL including hidden for 'submit')
   let testcasesToRun: { input: string; expectedOutput: string }[];
   if (customInput) {
     testcasesToRun = [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }];
@@ -838,7 +823,7 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     });
     testcasesToRun = dbTestCases.length > 0
       ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
-      : getTestcases(localProblem!);
+      : [{ input: '[]', expectedOutput: 'N/A' }];
   }
 
   if (!code || code.trim() === '') {
@@ -855,10 +840,11 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
   const fn = extractFunction(code, language);
   const isStandalone = !fn;
 
-  const results: { input: string; expected: string; actual: string; passed: boolean; stdout?: string }[] = [];
+  const results: { input: string; expected: string; actual: string; passed: boolean; stdout?: string; memory?: string }[] = [];
   let overallStatus: 'Accepted' | 'Wrong Answer' | 'Compile Error' | 'Runtime Error' | 'Time Limit Exceeded' = 'Accepted';
   let compileError: string | null = null;
   let totalRuntime = 0;
+  let peakMemoryKB = 0;
 
   for (const tc of testcasesToRun) {
     try {
@@ -946,6 +932,8 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
 
         const result = await runViaJudge0(wrapped, language);
         runtimeMs = Math.round(parseFloat(result.time) * 1000);
+        const memKB = parseInt(result.memory) || 0;
+        if (memKB > peakMemoryKB) peakMemoryKB = memKB;
 
         const jResult = judge0StatusToResult(result.statusId, result.stdout, result.stderr, result.compileOutput);
         actual = jResult.actual;
@@ -1005,11 +993,13 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
     }
   }
 
+  const memoryMB = peakMemoryKB > 0 ? `${(peakMemoryKB / 1024).toFixed(1)}MB` : '0MB';
+
   return NextResponse.json({
     status: overallStatus,
     compileError,
     runtime: `${totalRuntime}ms`,
-    memory: '0MB',
+    memory: memoryMB,
     testResults: results,
   });
 }

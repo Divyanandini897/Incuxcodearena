@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type Difficulty = 'Easy' | 'Medium' | 'Hard';
+export type Difficulty = 'Basic' | 'Easy' | 'Medium' | 'Hard';
 
 export type Category = 'All Topics' | 'Algorithms' | 'Database' | 'Shell' | 'Concurrency';
 

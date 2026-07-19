@@ -148,6 +148,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
     return PROBLEMS_DATA.find(p => !solvedProblemIds.includes(p.id)) || PROBLEMS_DATA[0];
   }, [solvedProblemIds]);
 
+
   // Charts Mock Data
   const weeklyData = [
     { day: 'Mon', solved: 2 }, { day: 'Tue', solved: 4 }, { day: 'Wed', solved: 1 },
@@ -415,23 +416,154 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
         </div>
       </div>
 
-      {/* 5. Weekly Practice Output */}
-      <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-xs flex flex-col gap-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5">
-          <TrendingUp className="w-4 h-4 text-primary" /> Weekly Coding Activity
-        </h4>
-        <div className="w-full h-56 mt-2">
-          {isMounted && (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-card)" vertical={false} />
-                <XAxis dataKey="day" tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-card)', fontSize: '10px' }} />
-                <Bar dataKey="solved" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+      {/* 5. Contests & Leaderboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
+        <Link href="/test-arena" className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs hover:border-primary/20 transition-all">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Trophy className="w-4 h-4 text-primary" /> Upcoming Contests</h4>
+          <div className="flex flex-col gap-2.5">
+            {upcomingContests.map((c, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="font-bold text-text-main truncate">{c.name}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-text-muted font-mono">{c.time}</span>
+                  {c.reward && <Badge variant="hard">+{c.reward}</Badge>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-[10px] font-mono font-bold text-primary flex items-center gap-1">View all contests <ArrowRight className="w-3 h-3" /></div>
+        </Link>
+
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Award className="w-4 h-4 text-primary" /> Global Leaderboard</h4>
+          <div className="flex flex-col gap-2">
+            {leaderboard.map((entry) => (
+              <div key={entry.rank} className={`flex items-center justify-between text-xs py-1 px-2 rounded ${entry.isUser ? 'bg-primary/10 border border-primary/20' : ''}`}>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-text-muted w-4">#{entry.rank}</span>
+                  <span className="font-bold text-text-main">{entry.name}</span>
+                  {entry.isUser && <Badge variant="easy">You</Badge>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-text-muted">{entry.country}</span>
+                  <span className="font-mono font-bold text-text-main">{entry.score.toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 6. Core Library Filters & Table View */}
+      <div className="flex flex-col gap-4 border-t border-border-card/65 pt-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-card p-4 rounded-xl border border-border-card shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {['All Topics', 'Algorithms', 'Data Structures', 'Database'].map((category) => (
+              <button
+                key={category}
+                onClick={() => { setSelectedCategory(category); setCurrentPage(1); }}
+                className={`text-[11px] font-mono font-bold uppercase tracking-wider py-1.5 px-3.5 rounded-lg border transition-all ${
+                  selectedCategory === category ? 'bg-primary text-white border-primary' : 'bg-bg-base text-text-muted border-border-card/70'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+            <input 
+              type="text" 
+              placeholder="Search challenges..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-bg-base border border-border-card focus:border-primary/45 focus:outline-none rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-main"
+            />
+          </div>
+        </div>
+
+        {/* Problems Table Rendering */}
+        <div className="bg-bg-card border border-border-card rounded-xl overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs font-semibold">
+              <thead>
+                <tr className="border-b border-border-card bg-bg-base/30 text-text-muted text-[10px] font-mono font-bold uppercase select-none">
+                  <th className="py-3.5 px-4 w-14 text-center">Status</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('title')}>Title</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('difficulty')}>Difficulty</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('acceptance')}>Acceptance</th>
+                  <th className="py-3.5 px-4 w-28 text-center">Category</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-card/30">
+                {paginatedProblems.map((prob) => {
+                  const isSolved = solvedProblemIds.includes(prob.id);
+                  return (
+                    <tr key={prob.id} onClick={() => onSelectProblem(prob.id)} className="hover:bg-hover/20 border-b border-border-card/20 last:border-0 transition-all duration-100 group cursor-pointer">
+                      <td 
+                        className="py-3.5 px-4 text-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleProblemCompletion(prob.id);
+                        }}
+                      >
+                        <div className="flex items-center justify-center cursor-pointer">
+                          {isSolved ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <div className="w-4 h-4 rounded-full border border-border-card" />}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="text-[12.5px] font-bold text-text-main group-hover:text-primary transition-colors">{prob.id}. {prob.title}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant={prob.difficulty === 'Basic' ? 'easy' : prob.difficulty === 'Easy' ? 'easy' : prob.difficulty === 'Medium' ? 'medium' : 'hard'}>{prob.difficulty}</Badge>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-text-muted">{prob.acceptance}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="text-[9.5px] font-mono font-bold text-text-muted bg-hover/40 px-2 py-0.5 rounded border border-border-card/45">{prob.category}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Metrics Visualization */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs flex flex-col gap-4">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5"><TrendingUp className="w-4 h-4" /> Weekly Practice Output</h4>
+          <div className="w-full h-48 mt-2">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-card)" vertical={false} />
+                  <XAxis dataKey="day" tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-card)', fontSize: '10px' }} />
+                  <Bar dataKey="solved" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs flex flex-col gap-4">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5"><Award className="w-4 h-4" /> Distribution by Difficulty</h4>
+          <div className="w-full h-48 mt-2 flex items-center justify-center">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={difficultyDistribution} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value">
+                    {difficultyDistribution.map((entry, idx) => <Cell key={`cell-${idx}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
       </div>
 

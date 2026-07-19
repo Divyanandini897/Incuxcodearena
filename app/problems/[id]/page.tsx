@@ -15,7 +15,6 @@ export default function ProblemPage() {
   const { streak, solveProblem, solvedIds: gameSolvedIds } = useGameState();
   const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([1, 20]);
   const [userId, setUserId] = useState<string | null>(null);
-
   const problem = PROBLEMS_DATA.find((p) => p.id === problemId);
 
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function ProblemPage() {
   };
 
   return (
-    <div className="h-screen bg-bg-base text-text-main flex flex-col antialiased">
+    <div className="h-screen bg-[#0a0a0a] text-[#f5f5f5] flex flex-col antialiased">
       <Workspace
         problemId={problemId}
         problems={PROBLEMS_DATA}

@@ -112,11 +112,15 @@ async function main() {
   }
 
   console.log('Seeding tags...')
-  for (const tag of TOPIC_TAGS) {
+  const allTopicNames = new Set<string>()
+  for (const p of PROBLEMS_DATA) {
+    for (const t of p.topics) allTopicNames.add(t)
+  }
+  for (const name of allTopicNames) {
     await prisma.tag.upsert({
-      where: { name: tag.name },
+      where: { name },
       update: {},
-      create: { name: tag.name, slug: toSlug(tag.name) },
+      create: { name, slug: toSlug(name) },
     })
   }
 
@@ -190,30 +194,32 @@ async function main() {
     const problemId = created.id
     const extra = EXTRA_DATA[problem.id]
 
-    // Create extras separately since upsert update:{} doesn't re-create nested relations
-    await prisma.problemConstraint.createMany({
-      data: extra.constraints.map((text, i) => ({
-        problemId,
-        constraintText: text,
-        sortOrder: i,
-      })),
-    })
+    if (extra) {
+      // Create extras separately since upsert update:{} doesn't re-create nested relations
+      await prisma.problemConstraint.createMany({
+        data: extra.constraints.map((text, i) => ({
+          problemId,
+          constraintText: text,
+          sortOrder: i,
+        })),
+      })
 
-    await prisma.problemHint.createMany({
-      data: extra.hints.map((text, i) => ({
-        problemId,
-        hintText: text,
-        sortOrder: i,
-      })),
-    })
+      await prisma.problemHint.createMany({
+        data: extra.hints.map((text, i) => ({
+          problemId,
+          hintText: text,
+          sortOrder: i,
+        })),
+      })
 
-    await prisma.problemFollowUp.createMany({
-      data: extra.followUps.map((text, i) => ({
-        problemId,
-        followupText: text,
-        sortOrder: i,
-      })),
-    })
+      await prisma.problemFollowUp.createMany({
+        data: extra.followUps.map((text, i) => ({
+          problemId,
+          followupText: text,
+          sortOrder: i,
+        })),
+      })
+    }
 
     for (const topicName of problem.topics) {
       const topic = await prisma.topic.findUnique({ where: { name: topicName } })

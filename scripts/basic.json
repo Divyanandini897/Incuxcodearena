@@ -1,0 +1,4202 @@
+[
+  {
+    "leetcodeId": 6001,
+    "title": "Return Negative Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "starterCode": {
+      "JavaScript": "function returnNegative(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "-5",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-3",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "0",
+        "explanation": "Zero does not change its sign identity."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6002,
+    "title": "Return Negative Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "starterCode": {
+      "Python": "def return_negative(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "-5",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-3",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "0",
+        "explanation": "Zero does not change its sign identity."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6003,
+    "title": "Return Negative Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int returnNegative(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "-5",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-3",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "0",
+        "explanation": "Zero does not change its sign identity."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6004,
+    "title": "Return Negative Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return its negative counterpart. If the number is already negative or zero, return it as is.",
+    "starterCode": {
+      "C++": "int returnNegative(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "-5",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-3",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "0",
+        "explanation": "Zero does not change its sign identity."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6011,
+    "title": "Remainder of Division",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "starterCode": {
+      "JavaScript": "function remainderOfDivision(dividend, divisor) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "expectedOutput": "1",
+        "isSample": true
+      },
+      {
+        "input": "dividend = 7, divisor = 2",
+        "expectedOutput": "1",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "output": "1",
+        "explanation": "10 divided by 3 gives quotient 3 and remainder 1."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Both dividend and divisor are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6012,
+    "title": "Remainder of Division",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "starterCode": {
+      "Python": "def remainder_of_division(dividend, divisor):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "expectedOutput": "1",
+        "isSample": true
+      },
+      {
+        "input": "dividend = 7, divisor = 2",
+        "expectedOutput": "1",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "output": "1",
+        "explanation": "10 divided by 3 gives quotient 3 and remainder 1."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Both dividend and divisor are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6013,
+    "title": "Remainder of Division",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int remainderOfDivision(int dividend, int divisor) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "expectedOutput": "1",
+        "isSample": true
+      },
+      {
+        "input": "dividend = 7, divisor = 2",
+        "expectedOutput": "1",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "output": "1",
+        "explanation": "10 divided by 3 gives quotient 3 and remainder 1."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Both dividend and divisor are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6014,
+    "title": "Remainder of Division",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given two positive integers dividend and divisor, return the remainder when the dividend is divided by the divisor.",
+    "starterCode": {
+      "C++": "int remainderOfDivision(int dividend, int divisor) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "expectedOutput": "1",
+        "isSample": true
+      },
+      {
+        "input": "dividend = 7, divisor = 2",
+        "expectedOutput": "1",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "dividend = 10, divisor = 3",
+        "output": "1",
+        "explanation": "10 divided by 3 gives quotient 3 and remainder 1."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Both dividend and divisor are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6021,
+    "title": "Minutes to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer minutes, convert it to seconds and return the resulting value.",
+    "starterCode": {
+      "JavaScript": "function minutesToSeconds(minutes) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "minutes = 1",
+        "expectedOutput": "60",
+        "isSample": true
+      },
+      {
+        "input": "minutes = 5",
+        "expectedOutput": "300",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "minutes = 2",
+        "output": "120",
+        "explanation": "2 minutes times 60 seconds per minute equals 120 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Minutes is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6022,
+    "title": "Minutes to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer minutes, convert it to seconds and return the resulting value.",
+    "starterCode": {
+      "Python": "def minutes_to_seconds(minutes):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "minutes = 1",
+        "expectedOutput": "60",
+        "isSample": true
+      },
+      {
+        "input": "minutes = 5",
+        "expectedOutput": "300",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "minutes = 2",
+        "output": "120",
+        "explanation": "2 minutes times 60 seconds per minute equals 120 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Minutes is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6023,
+    "title": "Minutes to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer minutes, convert it to seconds and return the resulting value.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int minutesToSeconds(int minutes) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "minutes = 1",
+        "expectedOutput": "60",
+        "isSample": true
+      },
+      {
+        "input": "minutes = 5",
+        "expectedOutput": "300",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "minutes = 2",
+        "output": "120",
+        "explanation": "2 minutes times 60 seconds per minute equals 120 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Minutes is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6024,
+    "title": "Minutes to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer minutes, convert it to seconds and return the resulting value.",
+    "starterCode": {
+      "C++": "int minutesToSeconds(int minutes) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "minutes = 1",
+        "expectedOutput": "60",
+        "isSample": true
+      },
+      {
+        "input": "minutes = 5",
+        "expectedOutput": "300",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "minutes = 2",
+        "output": "120",
+        "explanation": "2 minutes times 60 seconds per minute equals 120 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Minutes is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6031,
+    "title": "Calculate Total Edge Count",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer count representing the total number of regular triangles, calculate the total number of edges (count * 3).",
+    "starterCode": {
+      "JavaScript": "function calculateTotalEdgeCount(count) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "count = 1",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "count = 5",
+        "expectedOutput": "15",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "count = 3",
+        "output": "9",
+        "explanation": "3 triangles with 3 edges each gives 9 total edges."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Count is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6032,
+    "title": "Calculate Total Edge Count",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer count representing the total number of regular triangles, calculate the total number of edges (count * 3).",
+    "starterCode": {
+      "Python": "def calculate_total_edge_count(count):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "count = 1",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "count = 5",
+        "expectedOutput": "15",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "count = 3",
+        "output": "9",
+        "explanation": "3 triangles with 3 edges each gives 9 total edges."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Count is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6033,
+    "title": "Calculate Total Edge Count",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer count representing the total number of regular triangles, calculate the total number of edges (count * 3).",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int calculateTotalEdgeCount(int count) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "count = 1",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "count = 5",
+        "expectedOutput": "15",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "count = 3",
+        "output": "9",
+        "explanation": "3 triangles with 3 edges each gives 9 total edges."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Count is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6034,
+    "title": "Calculate Total Edge Count",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer count representing the total number of regular triangles, calculate the total number of edges (count * 3).",
+    "starterCode": {
+      "C++": "int calculateTotalEdgeCount(int count) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "count = 1",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "count = 5",
+        "expectedOutput": "15",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "count = 3",
+        "output": "9",
+        "explanation": "3 triangles with 3 edges each gives 9 total edges."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Count is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6041,
+    "title": "String Length",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a string s, return the total count of characters within it.",
+    "starterCode": {
+      "JavaScript": "function stringLength(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "5",
+        "isSample": true
+      },
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "4",
+        "explanation": "The string \"code\" contains 4 characters."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6042,
+    "title": "String Length",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a string s, return the total count of characters within it.",
+    "starterCode": {
+      "Python": "def string_length(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "5",
+        "isSample": true
+      },
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "4",
+        "explanation": "The string \"code\" contains 4 characters."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6043,
+    "title": "String Length",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a string s, return the total count of characters within it.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int stringLength(String s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "5",
+        "isSample": true
+      },
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "4",
+        "explanation": "The string \"code\" contains 4 characters."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6044,
+    "title": "String Length",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a string s, return the total count of characters within it.",
+    "starterCode": {
+      "C++": "int stringLength(string s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "5",
+        "isSample": true
+      },
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "4",
+        "explanation": "The string \"code\" contains 4 characters."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6051,
+    "title": "Square of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, calculate and return its square (n multiplied by itself).",
+    "starterCode": {
+      "JavaScript": "function squareOfNumber(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "9",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 5",
+        "output": "25",
+        "explanation": "5 multiplied by itself gives 25."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6052,
+    "title": "Square of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, calculate and return its square (n multiplied by itself).",
+    "starterCode": {
+      "Python": "def square_of_number(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "9",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 5",
+        "output": "25",
+        "explanation": "5 multiplied by itself gives 25."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6053,
+    "title": "Square of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, calculate and return its square (n multiplied by itself).",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int squareOfNumber(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "9",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 5",
+        "output": "25",
+        "explanation": "5 multiplied by itself gives 25."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6054,
+    "title": "Square of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, calculate and return its square (n multiplied by itself).",
+    "starterCode": {
+      "C++": "int squareOfNumber(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "9",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 5",
+        "output": "25",
+        "explanation": "5 multiplied by itself gives 25."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6061,
+    "title": "Is Number Even",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return true if the number is even, otherwise return false.",
+    "starterCode": {
+      "JavaScript": "function isNumberEven(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "true",
+        "explanation": "0 is divisible by 2, so it is even."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6062,
+    "title": "Is Number Even",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return true if the number is even, otherwise return false.",
+    "starterCode": {
+      "Python": "def is_number_even(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "true",
+        "explanation": "0 is divisible by 2, so it is even."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6063,
+    "title": "Is Number Even",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return true if the number is even, otherwise return false.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean isNumberEven(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "true",
+        "explanation": "0 is divisible by 2, so it is even."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6064,
+    "title": "Is Number Even",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return true if the number is even, otherwise return false.",
+    "starterCode": {
+      "C++": "bool isNumberEven(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 4",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "true",
+        "explanation": "0 is divisible by 2, so it is even."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6071,
+    "title": "Hours to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer hours, convert it to total seconds and return the result.",
+    "starterCode": {
+      "JavaScript": "function hoursToSeconds(hours) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "hours = 1",
+        "expectedOutput": "3600",
+        "isSample": true
+      },
+      {
+        "input": "hours = 2",
+        "expectedOutput": "7200",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "hours = 3",
+        "output": "10800",
+        "explanation": "3 hours times 3600 seconds per hour equals 10800 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Hours is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6072,
+    "title": "Hours to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer hours, convert it to total seconds and return the result.",
+    "starterCode": {
+      "Python": "def hours_to_seconds(hours):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "hours = 1",
+        "expectedOutput": "3600",
+        "isSample": true
+      },
+      {
+        "input": "hours = 2",
+        "expectedOutput": "7200",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "hours = 3",
+        "output": "10800",
+        "explanation": "3 hours times 3600 seconds per hour equals 10800 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Hours is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6073,
+    "title": "Hours to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer hours, convert it to total seconds and return the result.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int hoursToSeconds(int hours) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "hours = 1",
+        "expectedOutput": "3600",
+        "isSample": true
+      },
+      {
+        "input": "hours = 2",
+        "expectedOutput": "7200",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "hours = 3",
+        "output": "10800",
+        "explanation": "3 hours times 3600 seconds per hour equals 10800 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Hours is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6074,
+    "title": "Hours to Seconds",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer hours, convert it to total seconds and return the result.",
+    "starterCode": {
+      "C++": "int hoursToSeconds(int hours) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "hours = 1",
+        "expectedOutput": "3600",
+        "isSample": true
+      },
+      {
+        "input": "hours = 2",
+        "expectedOutput": "7200",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "hours = 3",
+        "output": "10800",
+        "explanation": "3 hours times 3600 seconds per hour equals 10800 seconds."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Hours is a non-negative integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6081,
+    "title": "Sum of Two Numbers",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given two integers a and b, return their total sum value.",
+    "starterCode": {
+      "JavaScript": "function sumOfTwoNumbers(a, b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "7",
+        "isSample": true
+      },
+      {
+        "input": "a = -1, b = 1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 20",
+        "output": "30",
+        "explanation": "10 + 20 equals 30."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6082,
+    "title": "Sum of Two Numbers",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given two integers a and b, return their total sum value.",
+    "starterCode": {
+      "Python": "def sum_of_two_numbers(a, b):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "7",
+        "isSample": true
+      },
+      {
+        "input": "a = -1, b = 1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 20",
+        "output": "30",
+        "explanation": "10 + 20 equals 30."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6083,
+    "title": "Sum of Two Numbers",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given two integers a and b, return their total sum value.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int sumOfTwoNumbers(int a, int b) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "7",
+        "isSample": true
+      },
+      {
+        "input": "a = -1, b = 1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 20",
+        "output": "30",
+        "explanation": "10 + 20 equals 30."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6084,
+    "title": "Sum of Two Numbers",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given two integers a and b, return their total sum value.",
+    "starterCode": {
+      "C++": "int sumOfTwoNumbers(int a, int b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "7",
+        "isSample": true
+      },
+      {
+        "input": "a = -1, b = 1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 20",
+        "output": "30",
+        "explanation": "10 + 20 equals 30."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6091,
+    "title": "Find Next Character",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a single ASCII alphabet character c, find and return the character right after it in alphabetical order.",
+    "starterCode": {
+      "JavaScript": "function findNextCharacter(c) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 'a'",
+        "expectedOutput": "'b'",
+        "isSample": true
+      },
+      {
+        "input": "c = 'z'",
+        "expectedOutput": "'a'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 'c'",
+        "output": "'d'",
+        "explanation": "The character after 'c' in alphabetical order is 'd'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a lowercase alphabet character."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6092,
+    "title": "Find Next Character",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a single ASCII alphabet character c, find and return the character right after it in alphabetical order.",
+    "starterCode": {
+      "Python": "def find_next_character(c):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "c = 'a'",
+        "expectedOutput": "'b'",
+        "isSample": true
+      },
+      {
+        "input": "c = 'z'",
+        "expectedOutput": "'a'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 'c'",
+        "output": "'d'",
+        "explanation": "The character after 'c' in alphabetical order is 'd'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a lowercase alphabet character."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6093,
+    "title": "Find Next Character",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a single ASCII alphabet character c, find and return the character right after it in alphabetical order.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public char findNextCharacter(char c) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 'a'",
+        "expectedOutput": "'b'",
+        "isSample": true
+      },
+      {
+        "input": "c = 'z'",
+        "expectedOutput": "'a'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 'c'",
+        "output": "'d'",
+        "explanation": "The character after 'c' in alphabetical order is 'd'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a lowercase alphabet character."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6094,
+    "title": "Find Next Character",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a single ASCII alphabet character c, find and return the character right after it in alphabetical order.",
+    "starterCode": {
+      "C++": "char findNextCharacter(char c) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 'a'",
+        "expectedOutput": "'b'",
+        "isSample": true
+      },
+      {
+        "input": "c = 'z'",
+        "expectedOutput": "'a'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 'c'",
+        "output": "'d'",
+        "explanation": "The character after 'c' in alphabetical order is 'd'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a lowercase alphabet character."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6101,
+    "title": "Find Absolute Difference",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given two integers a and b, compute and return the absolute numeric distance value between them.",
+    "starterCode": {
+      "JavaScript": "function findAbsoluteDifference(a, b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 3",
+        "expectedOutput": "2",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 4",
+        "expectedOutput": "6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 7",
+        "output": "3",
+        "explanation": "The absolute difference |10 - 7| = 3."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6102,
+    "title": "Find Absolute Difference",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given two integers a and b, compute and return the absolute numeric distance value between them.",
+    "starterCode": {
+      "Python": "def find_absolute_difference(a, b):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 3",
+        "expectedOutput": "2",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 4",
+        "expectedOutput": "6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 7",
+        "output": "3",
+        "explanation": "The absolute difference |10 - 7| = 3."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6103,
+    "title": "Find Absolute Difference",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given two integers a and b, compute and return the absolute numeric distance value between them.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int findAbsoluteDifference(int a, int b) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 3",
+        "expectedOutput": "2",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 4",
+        "expectedOutput": "6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 7",
+        "output": "3",
+        "explanation": "The absolute difference |10 - 7| = 3."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6104,
+    "title": "Find Absolute Difference",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given two integers a and b, compute and return the absolute numeric distance value between them.",
+    "starterCode": {
+      "C++": "int findAbsoluteDifference(int a, int b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 3",
+        "expectedOutput": "2",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 4",
+        "expectedOutput": "6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 7",
+        "output": "3",
+        "explanation": "The absolute difference |10 - 7| = 3."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6111,
+    "title": "Count Array Elements",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an array of integers arr, count and return the number of elements it contains.",
+    "starterCode": {
+      "JavaScript": "function countArrayElements(arr) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "arr = [1, 2, 3]",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "arr = []",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "arr = [5, 10, 15, 20]",
+        "output": "4",
+        "explanation": "The array contains 4 elements."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Array length does not exceed 10^4."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6112,
+    "title": "Count Array Elements",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an array of integers arr, count and return the number of elements it contains.",
+    "starterCode": {
+      "Python": "def count_array_elements(arr):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "arr = [1, 2, 3]",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "arr = []",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "arr = [5, 10, 15, 20]",
+        "output": "4",
+        "explanation": "The array contains 4 elements."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Array length does not exceed 10^4."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6113,
+    "title": "Count Array Elements",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an array of integers arr, count and return the number of elements it contains.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int countArrayElements(int[] arr) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "arr = [1, 2, 3]",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "arr = []",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "arr = [5, 10, 15, 20]",
+        "output": "4",
+        "explanation": "The array contains 4 elements."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Array length does not exceed 10^4."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6114,
+    "title": "Count Array Elements",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an array of integers arr, count and return the number of elements it contains.",
+    "starterCode": {
+      "C++": "int countArrayElements(vector<int> arr) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "arr = [1, 2, 3]",
+        "expectedOutput": "3",
+        "isSample": true
+      },
+      {
+        "input": "arr = []",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "arr = [5, 10, 15, 20]",
+        "output": "4",
+        "explanation": "The array contains 4 elements."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Array length does not exceed 10^4."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6121,
+    "title": "String to Uppercase",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a lowercase string s, convert all alphabetic characters within it to uppercase and return it.",
+    "starterCode": {
+      "JavaScript": "function stringToUppercase(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "\"HELLO\"",
+        "isSample": true
+      },
+      {
+        "input": "s = \"abc\"",
+        "expectedOutput": "\"ABC\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "\"CODE\"",
+        "explanation": "All lowercase letters are converted to uppercase."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String contains only lowercase alphabetic characters."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6122,
+    "title": "String to Uppercase",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a lowercase string s, convert all alphabetic characters within it to uppercase and return it.",
+    "starterCode": {
+      "Python": "def string_to_uppercase(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "\"HELLO\"",
+        "isSample": true
+      },
+      {
+        "input": "s = \"abc\"",
+        "expectedOutput": "\"ABC\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "\"CODE\"",
+        "explanation": "All lowercase letters are converted to uppercase."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String contains only lowercase alphabetic characters."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6123,
+    "title": "String to Uppercase",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a lowercase string s, convert all alphabetic characters within it to uppercase and return it.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public String stringToUppercase(String s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "\"HELLO\"",
+        "isSample": true
+      },
+      {
+        "input": "s = \"abc\"",
+        "expectedOutput": "\"ABC\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "\"CODE\"",
+        "explanation": "All lowercase letters are converted to uppercase."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String contains only lowercase alphabetic characters."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6124,
+    "title": "String to Uppercase",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a lowercase string s, convert all alphabetic characters within it to uppercase and return it.",
+    "starterCode": {
+      "C++": "string stringToUppercase(string s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "\"HELLO\"",
+        "isSample": true
+      },
+      {
+        "input": "s = \"abc\"",
+        "expectedOutput": "\"ABC\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"code\"",
+        "output": "\"CODE\"",
+        "explanation": "All lowercase letters are converted to uppercase."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String contains only lowercase alphabetic characters."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6131,
+    "title": "Cube Volumetric Calculation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given the side length s of a cube, compute its volume (s * s * s).",
+    "starterCode": {
+      "JavaScript": "function cubeVolumetricCalculation(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "s = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6132,
+    "title": "Cube Volumetric Calculation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given the side length s of a cube, compute its volume (s * s * s).",
+    "starterCode": {
+      "Python": "def cube_volumetric_calculation(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "s = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6133,
+    "title": "Cube Volumetric Calculation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given the side length s of a cube, compute its volume (s * s * s).",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int cubeVolumetricCalculation(int s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "s = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6134,
+    "title": "Cube Volumetric Calculation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given the side length s of a cube, compute its volume (s * s * s).",
+    "starterCode": {
+      "C++": "int cubeVolumetricCalculation(int s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "s = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6141,
+    "title": "Logical Inverse Flag",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a boolean flag value, return its logical opposite.",
+    "starterCode": {
+      "JavaScript": "function logicalInverseFlag(flag) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = true",
+        "expectedOutput": "false",
+        "isSample": true
+      },
+      {
+        "input": "flag = false",
+        "expectedOutput": "true",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = true",
+        "output": "false",
+        "explanation": "The logical inverse of true is false."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid boolean value."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6142,
+    "title": "Logical Inverse Flag",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a boolean flag value, return its logical opposite.",
+    "starterCode": {
+      "Python": "def logical_inverse_flag(flag):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "flag = true",
+        "expectedOutput": "false",
+        "isSample": true
+      },
+      {
+        "input": "flag = false",
+        "expectedOutput": "true",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = true",
+        "output": "false",
+        "explanation": "The logical inverse of true is false."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid boolean value."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6143,
+    "title": "Logical Inverse Flag",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a boolean flag value, return its logical opposite.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean logicalInverseFlag(boolean flag) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = true",
+        "expectedOutput": "false",
+        "isSample": true
+      },
+      {
+        "input": "flag = false",
+        "expectedOutput": "true",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = true",
+        "output": "false",
+        "explanation": "The logical inverse of true is false."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid boolean value."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6144,
+    "title": "Logical Inverse Flag",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a boolean flag value, return its logical opposite.",
+    "starterCode": {
+      "C++": "bool logicalInverseFlag(bool flag) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = true",
+        "expectedOutput": "false",
+        "isSample": true
+      },
+      {
+        "input": "flag = false",
+        "expectedOutput": "true",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = true",
+        "output": "false",
+        "explanation": "The logical inverse of true is false."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid boolean value."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6151,
+    "title": "First Character Selection",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a non-empty string s, return its first character.",
+    "starterCode": {
+      "JavaScript": "function firstCharacterSelection(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "'h'",
+        "isSample": true
+      },
+      {
+        "input": "s = \"A\"",
+        "expectedOutput": "'A'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"world\"",
+        "output": "'w'",
+        "explanation": "The first character of \"world\" is 'w'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String is non-empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6152,
+    "title": "First Character Selection",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a non-empty string s, return its first character.",
+    "starterCode": {
+      "Python": "def first_character_selection(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "'h'",
+        "isSample": true
+      },
+      {
+        "input": "s = \"A\"",
+        "expectedOutput": "'A'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"world\"",
+        "output": "'w'",
+        "explanation": "The first character of \"world\" is 'w'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String is non-empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6153,
+    "title": "First Character Selection",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a non-empty string s, return its first character.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public char firstCharacterSelection(String s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "'h'",
+        "isSample": true
+      },
+      {
+        "input": "s = \"A\"",
+        "expectedOutput": "'A'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"world\"",
+        "output": "'w'",
+        "explanation": "The first character of \"world\" is 'w'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String is non-empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6154,
+    "title": "First Character Selection",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a non-empty string s, return its first character.",
+    "starterCode": {
+      "C++": "char firstCharacterSelection(string s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "'h'",
+        "isSample": true
+      },
+      {
+        "input": "s = \"A\"",
+        "expectedOutput": "'A'",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"world\"",
+        "output": "'w'",
+        "explanation": "The first character of \"world\" is 'w'."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "String is non-empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6161,
+    "title": "Value Multiplication",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given two integers a and b, return their product.",
+    "starterCode": {
+      "JavaScript": "function valueMultiplication(a, b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "12",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 5",
+        "expectedOutput": "-10",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 6, b = 7",
+        "output": "42",
+        "explanation": "6 multiplied by 7 equals 42."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6162,
+    "title": "Value Multiplication",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given two integers a and b, return their product.",
+    "starterCode": {
+      "Python": "def value_multiplication(a, b):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "12",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 5",
+        "expectedOutput": "-10",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 6, b = 7",
+        "output": "42",
+        "explanation": "6 multiplied by 7 equals 42."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6163,
+    "title": "Value Multiplication",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given two integers a and b, return their product.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int valueMultiplication(int a, int b) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "12",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 5",
+        "expectedOutput": "-10",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 6, b = 7",
+        "output": "42",
+        "explanation": "6 multiplied by 7 equals 42."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6164,
+    "title": "Value Multiplication",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given two integers a and b, return their product.",
+    "starterCode": {
+      "C++": "int valueMultiplication(int a, int b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 3, b = 4",
+        "expectedOutput": "12",
+        "isSample": true
+      },
+      {
+        "input": "a = -2, b = 5",
+        "expectedOutput": "-10",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 6, b = 7",
+        "output": "42",
+        "explanation": "6 multiplied by 7 equals 42."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6171,
+    "title": "Is String Empty",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a string s, return true if it is empty, otherwise return false.",
+    "starterCode": {
+      "JavaScript": "function isStringEmpty(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string returns true."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6172,
+    "title": "Is String Empty",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a string s, return true if it is empty, otherwise return false.",
+    "starterCode": {
+      "Python": "def is_string_empty(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string returns true."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6173,
+    "title": "Is String Empty",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a string s, return true if it is empty, otherwise return false.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean isStringEmpty(String s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string returns true."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6174,
+    "title": "Is String Empty",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a string s, return true if it is empty, otherwise return false.",
+    "starterCode": {
+      "C++": "bool isStringEmpty(string s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string returns true."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6181,
+    "title": "Is Value Negative Check",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return true if it is negative, otherwise return false.",
+    "starterCode": {
+      "JavaScript": "function isValueNegativeCheck(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = -5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "false",
+        "explanation": "0 is not a negative number."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6182,
+    "title": "Is Value Negative Check",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return true if it is negative, otherwise return false.",
+    "starterCode": {
+      "Python": "def is_value_negative_check(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = -5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "false",
+        "explanation": "0 is not a negative number."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6183,
+    "title": "Is Value Negative Check",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return true if it is negative, otherwise return false.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean isValueNegativeCheck(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = -5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "false",
+        "explanation": "0 is not a negative number."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6184,
+    "title": "Is Value Negative Check",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return true if it is negative, otherwise return false.",
+    "starterCode": {
+      "C++": "bool isValueNegativeCheck(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = -5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 0",
+        "output": "false",
+        "explanation": "0 is not a negative number."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6191,
+    "title": "Value Increment",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "JavaScript": "function valueIncrement(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "10 + 1 = 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6192,
+    "title": "Value Increment",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "Python": "def value_increment(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "10 + 1 = 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6193,
+    "title": "Value Increment",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int valueIncrement(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "10 + 1 = 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6194,
+    "title": "Value Increment",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "C++": "int valueIncrement(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "10 + 1 = 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6201,
+    "title": "Convert Celsius to Fahrenheit",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a temperature c in Celsius, convert it to Fahrenheit and return the result.",
+    "starterCode": {
+      "JavaScript": "function celsiusToFahrenheit(c) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 0",
+        "expectedOutput": "32",
+        "isSample": true
+      },
+      {
+        "input": "c = 100",
+        "expectedOutput": "212",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 20",
+        "output": "68",
+        "explanation": "20 * 9/5 + 32 = 68."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Temperature is within integer range."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6202,
+    "title": "Convert Celsius to Fahrenheit",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a temperature c in Celsius, convert it to Fahrenheit and return the result.",
+    "starterCode": {
+      "Python": "def celsius_to_fahrenheit(c):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "c = 0",
+        "expectedOutput": "32",
+        "isSample": true
+      },
+      {
+        "input": "c = 100",
+        "expectedOutput": "212",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 20",
+        "output": "68",
+        "explanation": "20 * 9/5 + 32 = 68."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Temperature is within integer range."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6203,
+    "title": "Convert Celsius to Fahrenheit",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a temperature c in Celsius, convert it to Fahrenheit and return the result.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int celsiusToFahrenheit(int c) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 0",
+        "expectedOutput": "32",
+        "isSample": true
+      },
+      {
+        "input": "c = 100",
+        "expectedOutput": "212",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 20",
+        "output": "68",
+        "explanation": "20 * 9/5 + 32 = 68."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Temperature is within integer range."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6204,
+    "title": "Convert Celsius to Fahrenheit",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a temperature c in Celsius, convert it to Fahrenheit and return the result.",
+    "starterCode": {
+      "C++": "int celsiusToFahrenheit(int c) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "c = 0",
+        "expectedOutput": "32",
+        "isSample": true
+      },
+      {
+        "input": "c = 100",
+        "expectedOutput": "212",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "c = 20",
+        "output": "68",
+        "explanation": "20 * 9/5 + 32 = 68."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Temperature is within integer range."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6211,
+    "title": "Cube of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, calculate and return its cube (n * n * n).",
+    "starterCode": {
+      "JavaScript": "function cubeOfNumber(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6212,
+    "title": "Cube of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, calculate and return its cube (n * n * n).",
+    "starterCode": {
+      "Python": "def cube_of_number(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6213,
+    "title": "Cube of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, calculate and return its cube (n * n * n).",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int cubeOfNumber(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6214,
+    "title": "Cube of a Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, calculate and return its cube (n * n * n).",
+    "starterCode": {
+      "C++": "int cubeOfNumber(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 2",
+        "expectedOutput": "8",
+        "isSample": true
+      },
+      {
+        "input": "n = 3",
+        "expectedOutput": "27",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 4",
+        "output": "64",
+        "explanation": "4 x 4 x 4 = 64."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6221,
+    "title": "Check Equality",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given two integers a and b, return true if they are equal, otherwise return false.",
+    "starterCode": {
+      "JavaScript": "function checkEquality(a, b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "a = 3, b = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 10",
+        "output": "true",
+        "explanation": "Both values are equal."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6222,
+    "title": "Check Equality",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given two integers a and b, return true if they are equal, otherwise return false.",
+    "starterCode": {
+      "Python": "def check_equality(a, b):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "a = 3, b = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 10",
+        "output": "true",
+        "explanation": "Both values are equal."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6223,
+    "title": "Check Equality",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given two integers a and b, return true if they are equal, otherwise return false.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean checkEquality(int a, int b) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "a = 3, b = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 10",
+        "output": "true",
+        "explanation": "Both values are equal."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6224,
+    "title": "Check Equality",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given two integers a and b, return true if they are equal, otherwise return false.",
+    "starterCode": {
+      "C++": "bool checkEquality(int a, int b) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "a = 5, b = 5",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "a = 3, b = 7",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "a = 10, b = 10",
+        "output": "true",
+        "explanation": "Both values are equal."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6231,
+    "title": "Concatenate Three Strings",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given three strings s1, s2, and s3, concatenate them in order and return the result.",
+    "starterCode": {
+      "JavaScript": "function concatenateThreeStrings(s1, s2, s3) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s1 = \"a\", s2 = \"b\", s3 = \"c\"",
+        "expectedOutput": "\"abc\"",
+        "isSample": true
+      },
+      {
+        "input": "s1 = \"hello\", s2 = \" \", s3 = \"world\"",
+        "expectedOutput": "\"hello world\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s1 = \"I\", s2 = \" love\", s3 = \" coding\"",
+        "output": "\"I love coding\"",
+        "explanation": "The three strings are joined in order."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Strings may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6232,
+    "title": "Concatenate Three Strings",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given three strings s1, s2, and s3, concatenate them in order and return the result.",
+    "starterCode": {
+      "Python": "def concatenate_three_strings(s1, s2, s3):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s1 = \"a\", s2 = \"b\", s3 = \"c\"",
+        "expectedOutput": "\"abc\"",
+        "isSample": true
+      },
+      {
+        "input": "s1 = \"hello\", s2 = \" \", s3 = \"world\"",
+        "expectedOutput": "\"hello world\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s1 = \"I\", s2 = \" love\", s3 = \" coding\"",
+        "output": "\"I love coding\"",
+        "explanation": "The three strings are joined in order."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Strings may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6233,
+    "title": "Concatenate Three Strings",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given three strings s1, s2, and s3, concatenate them in order and return the result.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public String concatenateThreeStrings(String s1, String s2, String s3) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s1 = \"a\", s2 = \"b\", s3 = \"c\"",
+        "expectedOutput": "\"abc\"",
+        "isSample": true
+      },
+      {
+        "input": "s1 = \"hello\", s2 = \" \", s3 = \"world\"",
+        "expectedOutput": "\"hello world\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s1 = \"I\", s2 = \" love\", s3 = \" coding\"",
+        "output": "\"I love coding\"",
+        "explanation": "The three strings are joined in order."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Strings may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6234,
+    "title": "Concatenate Three Strings",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given three strings s1, s2, and s3, concatenate them in order and return the result.",
+    "starterCode": {
+      "C++": "string concatenateThreeStrings(string s1, string s2, string s3) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s1 = \"a\", s2 = \"b\", s3 = \"c\"",
+        "expectedOutput": "\"abc\"",
+        "isSample": true
+      },
+      {
+        "input": "s1 = \"hello\", s2 = \" \", s3 = \"world\"",
+        "expectedOutput": "\"hello world\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s1 = \"I\", s2 = \" love\", s3 = \" coding\"",
+        "output": "\"I love coding\"",
+        "explanation": "The three strings are joined in order."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Strings may be empty."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6241,
+    "title": "Area of a Rectangle",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given length and width of a rectangle, return its area.",
+    "starterCode": {
+      "JavaScript": "function areaOfRectangle(length, width) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "length = 5, width = 3",
+        "expectedOutput": "15",
+        "isSample": true
+      },
+      {
+        "input": "length = 7, width = 7",
+        "expectedOutput": "49",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "length = 10, width = 4",
+        "output": "40",
+        "explanation": "10 x 4 = 40."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Length and width are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6242,
+    "title": "Area of a Rectangle",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given length and width of a rectangle, return its area.",
+    "starterCode": {
+      "Python": "def area_of_rectangle(length, width):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "length = 5, width = 3",
+        "expectedOutput": "15",
+        "isSample": true
+      },
+      {
+        "input": "length = 7, width = 7",
+        "expectedOutput": "49",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "length = 10, width = 4",
+        "output": "40",
+        "explanation": "10 x 4 = 40."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Length and width are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6243,
+    "title": "Area of a Rectangle",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given length and width of a rectangle, return its area.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int areaOfRectangle(int length, int width) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "length = 5, width = 3",
+        "expectedOutput": "15",
+        "isSample": true
+      },
+      {
+        "input": "length = 7, width = 7",
+        "expectedOutput": "49",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "length = 10, width = 4",
+        "output": "40",
+        "explanation": "10 x 4 = 40."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Length and width are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6244,
+    "title": "Area of a Rectangle",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given length and width of a rectangle, return its area.",
+    "starterCode": {
+      "C++": "int areaOfRectangle(int length, int width) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "length = 5, width = 3",
+        "expectedOutput": "15",
+        "isSample": true
+      },
+      {
+        "input": "length = 7, width = 7",
+        "expectedOutput": "49",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "length = 10, width = 4",
+        "output": "40",
+        "explanation": "10 x 4 = 40."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Length and width are positive integers."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6251,
+    "title": "Find Next Integer",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "JavaScript": "function findNextInteger(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "The next integer after 10 is 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6252,
+    "title": "Find Next Integer",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "Python": "def find_next_integer(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "The next integer after 10 is 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6253,
+    "title": "Find Next Integer",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int findNextInteger(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "The next integer after 10 is 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6254,
+    "title": "Find Next Integer",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return n + 1.",
+    "starterCode": {
+      "C++": "int findNextInteger(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "6",
+        "isSample": true
+      },
+      {
+        "input": "n = -1",
+        "expectedOutput": "0",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "11",
+        "explanation": "The next integer after 10 is 11."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "n is a signed 32-bit integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6261,
+    "title": "Double the Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given an integer n, return n * 2.",
+    "starterCode": {
+      "JavaScript": "function doubleTheNumber(n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "10",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 7",
+        "output": "14",
+        "explanation": "7 x 2 = 14."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6262,
+    "title": "Double the Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given an integer n, return n * 2.",
+    "starterCode": {
+      "Python": "def double_the_number(n):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "10",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 7",
+        "output": "14",
+        "explanation": "7 x 2 = 14."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6263,
+    "title": "Double the Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given an integer n, return n * 2.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int doubleTheNumber(int n) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "10",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 7",
+        "output": "14",
+        "explanation": "7 x 2 = 14."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6264,
+    "title": "Double the Number",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given an integer n, return n * 2.",
+    "starterCode": {
+      "C++": "int doubleTheNumber(int n) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "n = 5",
+        "expectedOutput": "10",
+        "isSample": true
+      },
+      {
+        "input": "n = -3",
+        "expectedOutput": "-6",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "n = 7",
+        "output": "14",
+        "explanation": "7 x 2 = 14."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Inputs evaluate within signed 32-bit bounds."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6271,
+    "title": "String Blank Validation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Return true if the string s is empty, otherwise return false.",
+    "starterCode": {
+      "JavaScript": "function stringBlankValidation(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string is considered blank."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6272,
+    "title": "String Blank Validation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Return true if the string s is empty, otherwise return false.",
+    "starterCode": {
+      "Python": "def string_blank_validation(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string is considered blank."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6273,
+    "title": "String Blank Validation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Return true if the string s is empty, otherwise return false.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public boolean stringBlankValidation(String s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string is considered blank."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6274,
+    "title": "String Blank Validation",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Return true if the string s is empty, otherwise return false.",
+    "starterCode": {
+      "C++": "bool stringBlankValidation(string s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = \"\"",
+        "expectedOutput": "true",
+        "isSample": true
+      },
+      {
+        "input": "s = \"hello\"",
+        "expectedOutput": "false",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = \"\"",
+        "output": "true",
+        "explanation": "An empty string is considered blank."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input is a valid string."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6281,
+    "title": "Perimeter of a Square",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given the side length s of a square, return its perimeter (4 * s).",
+    "starterCode": {
+      "JavaScript": "function perimeterOfSquare(s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "s = 10",
+        "expectedOutput": "40",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 5",
+        "output": "20",
+        "explanation": "5 x 4 = 20."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6282,
+    "title": "Perimeter of a Square",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given the side length s of a square, return its perimeter (4 * s).",
+    "starterCode": {
+      "Python": "def perimeter_of_square(s):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "s = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "s = 10",
+        "expectedOutput": "40",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 5",
+        "output": "20",
+        "explanation": "5 x 4 = 20."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6283,
+    "title": "Perimeter of a Square",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given the side length s of a square, return its perimeter (4 * s).",
+    "starterCode": {
+      "Java": "public class Solution {\n  public int perimeterOfSquare(int s) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "s = 10",
+        "expectedOutput": "40",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 5",
+        "output": "20",
+        "explanation": "5 x 4 = 20."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6284,
+    "title": "Perimeter of a Square",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given the side length s of a square, return its perimeter (4 * s).",
+    "starterCode": {
+      "C++": "int perimeterOfSquare(int s) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "s = 4",
+        "expectedOutput": "16",
+        "isSample": true
+      },
+      {
+        "input": "s = 10",
+        "expectedOutput": "40",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "s = 5",
+        "output": "20",
+        "explanation": "5 x 4 = 20."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Side length is a positive integer."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6291,
+    "title": "Invert Boolean String",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "javascript",
+    "description": "Given a string flag containing 'true' or 'false', return the inverted value.",
+    "starterCode": {
+      "JavaScript": "function invertBooleanString(flag) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = \"true\"",
+        "expectedOutput": "\"false\"",
+        "isSample": true
+      },
+      {
+        "input": "flag = \"false\"",
+        "expectedOutput": "\"true\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = \"true\"",
+        "output": "\"false\"",
+        "explanation": "Inverting \"true\" gives \"false\"."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input string is either \"true\" or \"false\"."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6292,
+    "title": "Invert Boolean String",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "python",
+    "description": "Given a string flag containing 'true' or 'false', return the inverted value.",
+    "starterCode": {
+      "Python": "def invert_boolean_string(flag):\n    pass"
+    },
+    "testCases": [
+      {
+        "input": "flag = \"true\"",
+        "expectedOutput": "\"false\"",
+        "isSample": true
+      },
+      {
+        "input": "flag = \"false\"",
+        "expectedOutput": "\"true\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = \"true\"",
+        "output": "\"false\"",
+        "explanation": "Inverting \"true\" gives \"false\"."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input string is either \"true\" or \"false\"."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6293,
+    "title": "Invert Boolean String",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "java",
+    "description": "Given a string flag containing 'true' or 'false', return the inverted value.",
+    "starterCode": {
+      "Java": "public class Solution {\n  public String invertBooleanString(String flag) {\n    \n  }\n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = \"true\"",
+        "expectedOutput": "\"false\"",
+        "isSample": true
+      },
+      {
+        "input": "flag = \"false\"",
+        "expectedOutput": "\"true\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = \"true\"",
+        "output": "\"false\"",
+        "explanation": "Inverting \"true\" gives \"false\"."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input string is either \"true\" or \"false\"."
+      }
+    ]
+  },
+  {
+    "leetcodeId": 6294,
+    "title": "Invert Boolean String",
+    "difficulty": "Basic",
+    "isCustom": true,
+    "languageId": "cpp",
+    "description": "Given a string flag containing 'true' or 'false', return the inverted value.",
+    "starterCode": {
+      "C++": "string invertBooleanString(string flag) {\n  \n}"
+    },
+    "testCases": [
+      {
+        "input": "flag = \"true\"",
+        "expectedOutput": "\"false\"",
+        "isSample": true
+      },
+      {
+        "input": "flag = \"false\"",
+        "expectedOutput": "\"true\"",
+        "isSample": false
+      }
+    ],
+    "examples": [
+      {
+        "input": "flag = \"true\"",
+        "output": "\"false\"",
+        "explanation": "Inverting \"true\" gives \"false\"."
+      }
+    ],
+    "constraints": [
+      {
+        "constraintText": "Input string is either \"true\" or \"false\"."
+      }
+    ]
+  }
+]

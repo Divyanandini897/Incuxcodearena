@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
+import { isAdminEmail } from '@/src/lib/admin'
 
 const LANG_MAP: Record<string, string> = {
   Cpp: 'C++',
@@ -9,8 +10,13 @@ const LANG_MAP: Record<string, string> = {
   Go: 'Go',
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Admin can see all problems; students only see published ones
+  const adminEmail = request.headers.get('x-admin-email') || ''
+  const isAdmin = isAdminEmail(adminEmail)
+
   const problems = await prisma.problem.findMany({
+    where: isAdmin ? {} : { isPublished: true },
     include: {
       problemTags: { include: { tag: true } },
       problemCompanies: { include: { company: true } },

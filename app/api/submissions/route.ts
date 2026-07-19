@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
 
+const STATUS_MAP: Record<string, any> = {
+  'Accepted': 'Accepted',
+  'Wrong Answer': 'Wrong_Answer',
+  'Compile Error': 'Compile_Error',
+  'Runtime Error': 'Runtime_Error',
+  'Time Limit Exceeded': 'Time_Limit_Exceeded',
+}
+
+const LANG_MAP: Record<string, any> = {
+  'JavaScript': 'JavaScript',
+  'Python': 'Python',
+  'C++': 'Cpp',
+  'Java': 'Java',
+  'Go': 'Go',
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json()
   const { problemId, language, code, status, runtime, memory, testResults, userId } = body
@@ -19,13 +35,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
+  const mappedStatus = STATUS_MAP[status]
+  if (!mappedStatus) {
+    return NextResponse.json({ error: `Invalid status: ${status}` }, { status: 400 })
+  }
+
+  const mappedLanguage = LANG_MAP[language]
+  if (!mappedLanguage) {
+    return NextResponse.json({ error: `Invalid language: ${language}` }, { status: 400 })
+  }
+
   const submission = await prisma.submission.create({
     data: {
       userId,
       problemId: problem.id,
-      language,
+      language: mappedLanguage,
       code,
-      status,
+      status: mappedStatus,
       runtime: runtime ?? null,
       memory: memory ?? null,
       testResults: testResults ?? null,

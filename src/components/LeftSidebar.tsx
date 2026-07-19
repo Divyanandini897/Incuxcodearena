@@ -24,6 +24,8 @@ import {
 import { useGameState } from '@/src/lib/gameState';
 import { supabase } from '@/src/utils/supabaseClient';
 
+const ADMIN_EMAIL = 'deepika.tiwari.1408@gmail.com';
+
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -41,6 +43,7 @@ export default function LeftSidebar({
   const { userName } = useGameState();
   const [profileName, setProfileName] = useState(userName || 'User');
   const [profileEmail, setProfileEmail] = useState('Premium Student');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     async function fetchSession() {
@@ -59,7 +62,9 @@ export default function LeftSidebar({
           } else {
             setProfileName(session.user.email?.split('@')[0] || userName || 'User');
           }
-          setProfileEmail(session.user.email || 'Premium Student');
+          const email = session.user.email || 'Premium Student';
+          setProfileEmail(email);
+          setIsAdmin(email === ADMIN_EMAIL);
         }
       } catch (err) {
         console.error('Error fetching LeftSidebar session:', err);
@@ -68,7 +73,7 @@ export default function LeftSidebar({
     fetchSession();
   }, [userName]);
 
-  const menuItems = [
+  const allMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Code Smash', icon: Gamepad2, path: '/code-smash' },
     { name: 'Practice Arena', icon: Swords, path: '/practice-arena' },
@@ -78,6 +83,8 @@ export default function LeftSidebar({
     { name: 'Profile', icon: User, path: '/profile' },
     { name: 'Admin', icon: Settings, path: '/admin/contests' }
   ];
+
+  const menuItems = allMenuItems.filter((item) => item.name !== 'Admin' || isAdmin);
 
   return (
     <>
