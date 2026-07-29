@@ -9,14 +9,18 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    cpus: 1,
-    workerThreads: false,
-  },
+  serverExternalPackages: ['motion-dom'],
   webpack: (config) => {
-    config.cache = false;
+    if (config.optimization?.splitChunks?.cacheGroups) {
+      const groups = config.optimization.splitChunks.cacheGroups as Record<string, { [key: string]: unknown }>;
+      for (const key of Object.keys(groups)) {
+        if (groups[key].test && groups[key].test instanceof RegExp && groups[key].test.source?.includes('motion')) {
+          delete groups[key];
+        }
+      }
+    }
     return config;
-  }
+  },
 };
 
 export default nextConfig;

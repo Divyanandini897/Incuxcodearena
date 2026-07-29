@@ -71,7 +71,7 @@ export default function LeftSidebar({
       }
     }
     fetchSession();
-  }, [userName]);
+  }, []);
 
   const allMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },

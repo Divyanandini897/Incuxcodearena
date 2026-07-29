@@ -36,15 +36,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       MAX_MAX_PROCESSES_AND_OR_THREADS: "300"
-      JAVA_TOOL_OPTIONS: "-Xmx64m -Xms32m -XX:MaxMetaspaceSize=32m -XX:+UseSerialGC -XX:CICompilerCount=2"
+      JAVA_TOOL_OPTIONS: "-Xmx64m -Xms16m -Xss256k -XX:MaxMetaspaceSize=48m -XX:ReservedCodeCacheSize=48m -XX:+UseSerialGC -XX:CICompilerCount=2 -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1"
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - judge0-server-data:/tmp
+      - ./isolate_job.rb:/api/app/jobs/isolate_job.rb
     networks:
       - judge0-network
     restart: unless-stopped
@@ -62,15 +62,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       MAX_MAX_PROCESSES_AND_OR_THREADS: "300"
-      JAVA_TOOL_OPTIONS: "-Xmx64m -Xms32m -XX:MaxMetaspaceSize=32m -XX:+UseSerialGC -XX:CICompilerCount=2"
+      JAVA_TOOL_OPTIONS: "-Xmx64m -Xms16m -Xss256k -XX:MaxMetaspaceSize=48m -XX:ReservedCodeCacheSize=48m -XX:+UseSerialGC -XX:CICompilerCount=2 -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1"
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - judge0-workers-data:/tmp
+      - ./isolate_job.rb:/api/app/jobs/isolate_job.rb
     networks:
       - judge0-network
     restart: unless-stopped

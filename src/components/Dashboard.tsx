@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Search, 
   CheckCircle2, 
@@ -102,12 +102,18 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
   }, []);
 
   // Consume gamified state context
-  const { theme, userName, level, xp, gold, streak, updateUserName } = useGameState();
+  const { theme, userName, level, xp, gold, streak, updateUserName, toggleProblemCompletion } = useGameState();
 
   const [displayName, setDisplayName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState('All Topics');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<'title' | 'difficulty' | 'acceptance'>('title');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     setDisplayName(userProfile?.name || userName || 'Coder');
@@ -147,6 +153,48 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
   const activeQuest = useMemo(() => {
     return PROBLEMS_DATA.find(p => !solvedProblemIds.includes(p.id)) || PROBLEMS_DATA[0];
   }, [solvedProblemIds]);
+
+  const handleSort = useCallback((column: 'title' | 'difficulty' | 'acceptance') => {
+    setSortBy((prev) => {
+      if (prev === column) {
+        setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+        return column;
+      }
+      setSortOrder('asc');
+      return column;
+    });
+  }, []);
+
+  const filteredProblems = useMemo(() => {
+    let filtered = PROBLEMS_DATA;
+
+    if (selectedCategory !== 'All Topics') {
+      filtered = filtered.filter((p) => p.category === selectedCategory);
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter((p) => p.title.toLowerCase().includes(term));
+    }
+
+    const difficultyOrder: Record<string, number> = { Easy: 0, Medium: 1, Hard: 2 };
+    filtered = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'title') cmp = a.title.localeCompare(b.title);
+      else if (sortBy === 'difficulty') cmp = (difficultyOrder[a.difficulty] ?? 0) - (difficultyOrder[b.difficulty] ?? 0);
+      else cmp = parseFloat(a.acceptance) - parseFloat(b.acceptance);
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+
+    return filtered;
+  }, [selectedCategory, searchTerm, sortBy, sortOrder]);
+
+  const totalPages = Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE);
+
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    return filteredProblems.slice(start, start + PROBLEMS_PER_PAGE);
+  }, [filteredProblems, currentPage]);
 
 
   // Charts Mock Data

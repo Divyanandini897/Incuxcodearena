@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Code, Brain, Swords, Star, ArrowRight, Zap, Menu, X } from 'lucide-react';
-import { Waves } from '@/src/components/ui/wave-background';
+import { ShaderAnimation } from '@/src/components/ui/shader-animation';
 
 const features = [
   {
@@ -35,14 +35,16 @@ export default function HomePage() {
     <div className="min-h-screen bg-black text-text-main font-sans">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 w-full bg-[var(--color-bg-nav)] backdrop-blur-md border-b border-border-card/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/incux_logo.jpg" alt="IncuxAI" className="w-8 h-8 rounded-lg object-cover" />
-              <span className="font-bold text-lg tracking-tight">Incux<span className="text-primary">AI</span></span>
+              <div className="w-8 h-8 rounded-lg overflow-hidden border border-border-card flex items-center justify-center shrink-0">
+                <img src="/incux_logo.jpg" alt="Logo" className="w-full h-full object-cover select-none pointer-events-none" />
+              </div>
+              <span className="font-black text-[17px] tracking-tight text-text-main">Incuxai Code <span className="text-primary">Arena</span></span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4 ml-auto">
               <Link href="/auth/login">
                 <span className="px-4 py-2 text-sm text-text-muted hover:text-white transition-colors cursor-pointer">Log in</span>
               </Link>
@@ -76,12 +78,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[90vh] flex items-center bg-black">
-        <Waves
-          className="z-0"
-          strokeColor="#00EA64"
-          backgroundColor="#000000"
-          pointerSize={0.6}
-        />
+        <ShaderAnimation />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative z-30 w-full">
           <div className="max-w-3xl mx-auto text-center">
@@ -90,7 +87,7 @@ export default function HomePage() {
               AI-Powered Coding Platform
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold tracking-tight leading-[1.1] mb-6 text-white">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-sans font-bold tracking-tight leading-[1.1] mb-6 text-white">
               Master Coding with{' '}
               <span className="text-primary">AI-Powered</span>{' '}
               Practice
@@ -122,7 +119,7 @@ export default function HomePage() {
       <section className="py-20 sm:py-28 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight mb-4 text-white">
+            <h2 className="text-3xl sm:text-4xl font-sans font-bold tracking-tight mb-4 text-white">
               Everything you need to level up
             </h2>
             <p className="text-neutral-400 text-lg max-w-xl mx-auto">
@@ -151,7 +148,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 border-t border-zinc-800/40 bg-black">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight mb-4 text-white">
+          <h2 className="text-3xl sm:text-4xl font-sans font-bold tracking-tight mb-4 text-white">
             Ready to start coding?
           </h2>
           <p className="text-neutral-400 text-lg mb-8">

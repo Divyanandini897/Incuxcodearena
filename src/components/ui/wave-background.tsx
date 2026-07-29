@@ -47,6 +47,7 @@ export function Waves({
     const noiseRef = useRef<((x: number, y: number) => number) | null>(null)
     const rafRef = useRef<number | null>(null)
     const boundingRef = useRef<DOMRect | null>(null)
+    const frameCountRef = useRef<number>(0)
 
     useEffect(() => {
         if (!containerRef.current || !svgRef.current) return
@@ -58,7 +59,7 @@ export function Waves({
 
         window.addEventListener('resize', onResize)
         window.addEventListener('mousemove', onMouseMove)
-        containerRef.current.addEventListener('touchmove', onTouchMove, { passive: false })
+        containerRef.current.addEventListener('touchmove', onTouchMove, { passive: true })
 
         rafRef.current = requestAnimationFrame(tick)
 
@@ -91,8 +92,8 @@ export function Waves({
         })
         pathsRef.current = []
 
-        const xGap = 8
-        const yGap = 8
+        const xGap = 40
+        const yGap = 35
 
         const oWidth = width + 200
         const oHeight = height + 30
@@ -144,7 +145,6 @@ export function Waves({
     }
 
     const onTouchMove = (e: TouchEvent) => {
-        e.preventDefault()
         const touch = e.touches[0]
         updateMousePosition(touch.clientX, touch.clientY)
     }
@@ -268,8 +268,11 @@ export function Waves({
             containerRef.current.style.setProperty('--y', `${mouse.sy}px`)
         }
 
-        movePoints(time)
-        drawLines()
+        frameCountRef.current++
+        if (frameCountRef.current % 2 === 0) {
+            movePoints(time)
+            drawLines()
+        }
 
         rafRef.current = requestAnimationFrame(tick)
     }

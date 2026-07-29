@@ -30,7 +30,7 @@ export default function ThemeWrapper({ children }: { children: React.ReactNode }
   const currentTheme = mounted ? theme : 'theme-dark';
   
   return (
-    <body className={`${currentTheme} min-h-screen bg-bg-base text-text-main transition-colors duration-300 antialiased relative overflow-x-hidden`}>
+    <body suppressHydrationWarning className={`${currentTheme} min-h-screen bg-bg-base text-text-main transition-colors duration-300 antialiased relative overflow-x-hidden`}>
       <div className="flex flex-col min-h-screen">
         {children}
       </div>

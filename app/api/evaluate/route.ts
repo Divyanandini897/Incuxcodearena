@@ -6,12 +6,28 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { prisma } from '@/src/lib/prisma';
 import { cacheKey, cacheGet, cacheSet } from './cache';
+import { PROBLEMS_DATA } from '@/src/data/data';
 
 const execFileAsync = promisify(execFile);
 const execAsync = promisify(exec);
 const TIMEOUT_MS = 10000;
 const JUDGE0_TIMEOUT_MS = 25000;
 const OVERALL_TIMEOUT_MS = 60000;
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+  for (let i = 0; i <= retries; i++) {
+    try { return await fn(); }
+    catch (err: any) {
+      const msg = err?.message || '';
+      if (i < retries && (msg.includes('closed the connection') || msg.includes('ECONNRESET') || msg.includes('pool'))) {
+        await new Promise(r => setTimeout(r, 200 * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('unreachable');
+}
 
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || '';
@@ -106,6 +122,38 @@ function extractFunction(code: string, language: string): ExtractedFn | null {
     if (sig) paramTypes = extractParamTypes(sig, language);
   }
 
+  const codeClean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  const hasListNodeDef = /\bfunction\s+ListNode\b/.test(codeClean) || /\bclass\s+ListNode\b/.test(codeClean);
+  const hasTreeNodeDef = /\bfunction\s+TreeNode\b/.test(codeClean) || /\bclass\s+TreeNode\b/.test(codeClean);
+  const hasListNodeRef = /\bnew\s+ListNode\b/.test(codeClean) || /\bListNode\s*\(/.test(codeClean);
+  const hasTreeNodeRef = /\bnew\s+TreeNode\b/.test(codeClean) || /\bTreeNode\s*\(/.test(codeClean);
+  const usesListNode = hasListNodeDef || hasListNodeRef;
+  const usesTreeNode = hasTreeNodeDef || hasTreeNodeRef;
+  const hasTreeProps = /\.\s*(left|right)\b/.test(codeClean) || /\bnull\b.*\.\s*(left|right)\b/.test(codeClean);
+
+  if (paramTypes.every(t => t === 'string') && (usesListNode || usesTreeNode || hasTreeProps)) {
+    const sig = extractSignature(code, language, name);
+    if (sig) {
+      const paramsMatch = sig.match(/\(([^)]*)\)/);
+      if (paramsMatch) {
+        const paramNames = paramsMatch[1].split(',').map(p => {
+          const parts = p.trim().split(/[\s:=]/).filter(Boolean);
+          return parts[0] || '';
+        }).filter(n => n && n !== 'self' && n !== 'cls');
+        const listNodeNames = ['head', 'l1', 'l2', 'list', 'lists', 'node', 'p', 'q', 'a', 'b', 'n1', 'n2'];
+        const treeNodeNames = ['root', 'p', 'q', 'n1', 'n2'];
+        if (usesTreeNode && paramNames.some(n => treeNodeNames.includes(n))) {
+          paramTypes = paramNames.map(n => treeNodeNames.includes(n) ? 'treenode' : 'string');
+        } else if (hasTreeProps && paramNames.some(n => treeNodeNames.includes(n))) {
+          paramTypes = paramNames.map(n => treeNodeNames.includes(n) ? 'treenode' : 'string');
+        } else if (usesListNode && paramNames.some(n => listNodeNames.includes(n))) {
+          paramTypes = paramNames.map(n => listNodeNames.includes(n) ? 'listnode' : 'string');
+          if (returnType === 'string') returnType = 'listnode';
+        }
+      }
+    }
+  }
+
   return { name, isClassMethod, paramTypes, returnType };
 }
 
@@ -197,13 +245,16 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
     if (language === 'Java') return `new String[]{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
     if (language === 'Go') return `[]string{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`;
   }
-  if (type === 'listnode') {
+  if (type === 'listnode' || type === 'treenode') {
     return jsonStr;
   }
   if (type === 'int') return String(val);
   if (type === 'double') return String(val);
   if (type === 'boolean') return val ? 'true' : 'false';
-  if (type === 'string') return `"${(val as string).replace(/"/g, '\\"')}"`;
+  if (type === 'string') {
+    if (typeof val === 'string') return `"${val.replace(/"/g, '\\"')}"`;
+    return JSON.stringify(val);
+  }
   return jsonStr;
 }
 
@@ -212,13 +263,22 @@ function jsonToLiteral(jsonStr: string, type: string, language: string): string 
 function buildWrapperCode(code: string, language: string, fn: ExtractedFn, inputStr: string): string {
 
   if (language === 'Python') {
-    // Inject ListNode class if not defined in user code
-    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/#.*$/gm, ''));
+    const codeNoCommentsPy = code.replace(/#.*$/gm, '');
+    const hasListNode = /\bclass\s+ListNode\b/.test(codeNoCommentsPy);
+    const hasTreeNode = /\bclass\s+TreeNode\b/.test(codeNoCommentsPy);
+    const needsTreeNode = fn.paramTypes.includes('treenode') || fn.returnType === 'treenode';
+    const needsListNode = fn.paramTypes.includes('listnode') || fn.returnType === 'listnode';
     const listNodeDef = hasListNode ? '' : `
 class ListNode:
     def __init__(self, val=0, next=None):
         self.val = val
         self.next = next`;
+    const treeNodeDef = (hasTreeNode || !needsTreeNode) ? '' : `
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right`;
 
     const rawArgs = inputStr.split('\n').filter(l => l.trim());
 
@@ -235,28 +295,35 @@ __lines = [l for l in __judge_input.split('\\n') if l.strip()]
 __args = [json.loads(l) for l in __lines]
 `;
 
-    // Convert listnode params from arrays to ListNode objects
+    // Convert listnode/treenode params from arrays to objects
     rawArgs.forEach((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       if (t === 'listnode') {
         wrapper += `__args[${i}] = __makeList(__args[${i}])\n`;
+      } else if (t === 'treenode') {
+        wrapper += `__args[${i}] = __makeTree(__args[${i}])\n`;
       }
     });
 
     // Serialize result
-    const serialize = fn.returnType === 'listnode'
-      ? `print(__listToStr(__result))`
-      : fn.returnType === 'string'
-      ? `print(__result)`
-      : `print(json.dumps(__result, separators=(',', ':')))`;
+    let serialize: string;
+    if (fn.returnType === 'listnode') {
+      serialize = `print(__listToStr(__result))`;
+    } else if (fn.returnType === 'treenode') {
+      serialize = `print(__treeToStr(__result))`;
+    } else if (fn.returnType === 'string') {
+      serialize = `print(json.dumps(__result, separators=(',', ':')) if not isinstance(__result, str) else __result)`;
+    } else {
+      serialize = `print(json.dumps(__result, separators=(',', ':')))`;
+    }
 
     wrapper += `__result = ${call}
 ${serialize}
 `;
 
-    // Prepend helper functions and ListNode def (with Optional import before user code)
+    // Prepend helper functions and class defs
     wrapper = `from typing import List, Optional
-${listNodeDef}
+${listNodeDef}${treeNodeDef}
 # --- ListNode helpers ---
 def __makeList(arr):
     dummy = ListNode(0)
@@ -272,6 +339,41 @@ def __listToStr(head):
         r.append(str(cur.val))
         cur = cur.next
     return '[' + ','.join(r) + ']'
+# --- TreeNode helpers ---
+from collections import deque
+def __makeTree(arr):
+    if not arr:
+        return None
+    root = TreeNode(arr[0])
+    queue = deque([root])
+    i = 1
+    while i < len(arr):
+        node = queue.popleft()
+        if i < len(arr) and arr[i] is not None:
+            node.left = TreeNode(arr[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(arr) and arr[i] is not None:
+            node.right = TreeNode(arr[i])
+            queue.append(node.right)
+        i += 1
+    return root
+def __treeToStr(root):
+    if not root:
+        return '[]'
+    r = []
+    queue = deque([root])
+    while queue:
+        node = queue.popleft()
+        if node:
+            r.append(node.val)
+            queue.append(node.left)
+            queue.append(node.right)
+        else:
+            r.append(None)
+    while r and r[-1] is None:
+        r.pop()
+    return json.dumps(r, separators=(',', ':'))
 ` + wrapper;
 
     return wrapper;
@@ -292,14 +394,16 @@ process.stdout.write(JSON.stringify(${fn.name}()));
     });
     const callArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
-      return t === 'listnode' ? `__arg${i}` : typedArgs[i];
+      return (t === 'listnode' || t === 'treenode') ? `__arg${i}` : typedArgs[i];
     }).join(', ');
 
-    // Build arg defs for listnode
+    // Build arg defs for listnode/treenode
     const argDefs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
       if (t === 'listnode')
         return `const __arg${i} = __makeList(${typedArgs[i]});`;
+      if (t === 'treenode')
+        return `const __arg${i} = __makeTree(${typedArgs[i]});`;
       return '';
     }).filter(Boolean).join('\n');
 
@@ -308,6 +412,9 @@ process.stdout.write(JSON.stringify(${fn.name}()));
     if (fn.returnType === 'listnode') {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(__listToStr(__result));`;
+    } else if (fn.returnType === 'treenode') {
+      resultLine = `const __result = ${fn.name}(${callArgs});
+process.stdout.write(__treeToStr(__result));`;
     } else if (fn.returnType === 'string') {
       resultLine = `const __result = ${fn.name}(${callArgs});
 process.stdout.write(typeof __result === 'string' ? __result : JSON.stringify(__result));`;
@@ -316,16 +423,25 @@ process.stdout.write(typeof __result === 'string' ? __result : JSON.stringify(__
 process.stdout.write(JSON.stringify(__result));`;
     }
 
-    // Inject ListNode constructor if not in user code (strip comments first)
+    // Inject ListNode/TreeNode constructors if not in user code (strip comments first)
     const jsCodeClean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
     const hasListNode = /\bfunction\s+ListNode\b/.test(jsCodeClean);
+    const hasTreeNode = /\bfunction\s+TreeNode\b/.test(jsCodeClean);
+    const needsTreeNode = fn.paramTypes.includes('treenode') || fn.returnType === 'treenode';
+    const needsListNode = fn.paramTypes.includes('listnode') || fn.returnType === 'listnode';
     const listNodeDef = hasListNode ? '' : `
 function ListNode(val, next) {
   this.val = (val===undefined ? 0 : val);
   this.next = (next===undefined ? null : next);
 }`;
+    const treeNodeDef = (hasTreeNode || !needsTreeNode) ? '' : `
+function TreeNode(val, left, right) {
+  this.val = (val===undefined ? 0 : val);
+  this.left = (left===undefined ? null : left);
+  this.right = (right===undefined ? null : right);
+}`;
 
-    return `${listNodeDef}
+    return `${listNodeDef}${treeNodeDef}
 // --- ListNode helpers ---
 function __makeList(arr) {
     let dummy = new ListNode(0), tail = dummy;
@@ -335,6 +451,44 @@ function __makeList(arr) {
 function __listToStr(head) {
     let r = [];
     for (let cur = head; cur; cur = cur.next) r.push(cur.val);
+    return JSON.stringify(r);
+}
+// --- TreeNode helpers ---
+function __makeTree(arr) {
+    if (!arr || arr.length === 0) return null;
+    let root = new TreeNode(arr[0]);
+    let queue = [root];
+    let i = 1;
+    while (i < arr.length) {
+        let node = queue.shift();
+        if (i < arr.length && arr[i] !== null) {
+            node.left = new TreeNode(arr[i]);
+            queue.push(node.left);
+        }
+        i++;
+        if (i < arr.length && arr[i] !== null) {
+            node.right = new TreeNode(arr[i]);
+            queue.push(node.right);
+        }
+        i++;
+    }
+    return root;
+}
+function __treeToStr(root) {
+    if (!root) return '[]';
+    let r = [];
+    let queue = [root];
+    while (queue.length > 0) {
+        let node = queue.shift();
+        if (node) {
+            r.push(node.val);
+            queue.push(node.left);
+            queue.push(node.right);
+        } else {
+            r.push(null);
+        }
+    }
+    while (r.length > 0 && r[r.length - 1] === null) r.pop();
     return JSON.stringify(r);
 }
 ${code}
@@ -455,11 +609,18 @@ ${argDefs}
         const vals = arr.map(v => String(v)).join(',');
         return `__makeList(new int[]{${vals}})`;
       }
+      if (t === 'treenode') {
+        const arr = JSON.parse(a) as (number | null)[];
+        return `__makeTree(new Integer[]{${arr.map(v => v === null ? 'null' : String(v)).join(',')}})`;
+      }
       return '';
     }).filter(Boolean);
 
-    // Inject ListNode class if not defined in user code
-    const hasListNode = /\bclass\s+ListNode\b/.test(code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+    const codeClean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hasListNode = /\bclass\s+ListNode\b/.test(codeClean);
+    const hasTreeNode = /\bclass\s+TreeNode\b/.test(codeClean);
+    const needsTreeNode = fn.paramTypes.includes('treenode') || fn.returnType === 'treenode';
+    const needsListNode = fn.paramTypes.includes('listnode') || fn.returnType === 'listnode';
     const listNodeDef = hasListNode ? '' : `
   static class ListNode {
     int val;
@@ -468,6 +629,15 @@ ${argDefs}
     ListNode(int val) { this.val = val; }
     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
   }`;
+    const treeNodeDef = (hasTreeNode || !needsTreeNode) ? '' : `
+  static class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) { this.val = val; this.left = left; this.right = right; }
+  }`;
 
     // Strip import statements (we already have import java.util.*)
     const codeWithoutImports = code.replace(/^import\s+.*;$/gm, '');
@@ -475,12 +645,11 @@ ${argDefs}
 
     const callArgs = rawArgs.map((a, i) => {
       const t = i < fn.paramTypes.length ? fn.paramTypes[i] : 'string';
-      if (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode')
+      if (t === 'vector<int>' || t === 'int[]' || t === 'vector<string>' || t === 'listnode' || t === 'treenode')
         return argDefs[i] || typedArgs[i];
       return typedArgs[i];
     }).join(', ');
 
-    // Add ListNode result serialization
     let resultStrOverload = '';
     if (fn.returnType === 'listnode') {
       resultStrOverload = `  static String __resultStr(ListNode head) {
@@ -493,12 +662,33 @@ ${argDefs}
   }
 `;
     }
+    if (fn.returnType === 'treenode') {
+      resultStrOverload += `  static String __resultStr(TreeNode root) {
+    if (root == null) return "[]";
+    java.util.List<String> r = new java.util.ArrayList<>();
+    java.util.Queue<TreeNode> q = new java.util.LinkedList<>();
+    q.add(root);
+    while (!q.isEmpty()) {
+      TreeNode node = q.poll();
+      if (node != null) {
+        r.add(String.valueOf(node.val));
+        q.add(node.left);
+        q.add(node.right);
+      } else {
+        r.add("null");
+      }
+    }
+    while (!r.isEmpty() && r.get(r.size()-1).equals("null")) r.remove(r.size()-1);
+    return "[" + String.join(",", r) + "]";
+  }
+`;
+    }
 
     return `import java.util.*;
 import java.util.stream.*;
 
 public class Main {
-${listNodeDef}${patchedCode}
+${listNodeDef}${treeNodeDef}${patchedCode}
 
   // --- ListNode helpers ---
   static ListNode __makeList(int[] vals) {
@@ -506,6 +696,29 @@ ${listNodeDef}${patchedCode}
     for (int v : vals) { tail.next = new ListNode(v); tail = tail.next; }
     return dummy.next;
   }
+${needsTreeNode ? `  // --- TreeNode helpers ---
+  static TreeNode __makeTree(Integer[] vals) {
+    if (vals == null || vals.length == 0 || vals[0] == null) return null;
+    TreeNode root = new TreeNode(vals[0]);
+    java.util.Queue<TreeNode> q = new java.util.LinkedList<>();
+    q.add(root);
+    int i = 1;
+    while (!q.isEmpty() && i < vals.length) {
+      TreeNode node = q.poll();
+      if (i < vals.length && vals[i] != null) {
+        node.left = new TreeNode(vals[i]);
+        q.add(node.left);
+      }
+      i++;
+      if (i < vals.length && vals[i] != null) {
+        node.right = new TreeNode(vals[i]);
+        q.add(node.right);
+      }
+      i++;
+    }
+    return root;
+  }
+` : ''}
 ${resultStrOverload}  static String __resultStr(int[] v) {
     return Arrays.stream(v).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
   }
@@ -683,7 +896,7 @@ async function runViaJudge0(code: string, language: string, inputStr = ''): Prom
       stdout: data.stdout || '',
       stderr: data.stderr || '',
       compileOutput: data.compile_output || '',
-      statusId: data.status?.id || 0,
+      statusId: data.status?.id ?? 0,
       time: data.time || '0',
       memory: data.memory || '0',
     };
@@ -721,8 +934,14 @@ function judge0StatusToResult(statusId: number, stdout: string, stderr: string, 
   if (statusId === 3) {
     return { status: 'Accepted', actual };
   }
+  if (statusId === 0) {
+    return { status: 'Runtime Error', error: 'Judge0 did not return a valid status. The execution service may be misconfigured.', actual };
+  }
+  if (statusId === 13) {
+    return { status: 'Runtime Error', error: stderr || compileOutput || 'Judge0 internal error — the sandbox (isolate) could not run. Ensure Docker has cgroups support or use a remote Judge0 instance.', actual };
+  }
 
-  return { status: 'Runtime Error', error: `Unknown status: ${statusId}`, actual };
+  return { status: 'Runtime Error', error: `Unknown Judge0 status: ${statusId}`, actual };
 }
 
 // --------------- EXAMPLES → TESTCASES ---------------
@@ -798,10 +1017,7 @@ export async function POST(req: NextRequest) {
 async function handleEvaluate(req: NextRequest): Promise<Response> {
   const { problemId, language, code, action, customInput, customExpected } = await req.json();
 
-  const dbProblem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } });
-  if (!dbProblem) {
-    return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
-  }
+  const dbProblem = await withRetry(() => prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } }));
 
   if (!JUDGE0_LANG_IDS[language]) {
     return NextResponse.json({
@@ -816,14 +1032,42 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
   let testcasesToRun: { input: string; expectedOutput: string }[];
   if (customInput) {
     testcasesToRun = [{ input: customInput, expectedOutput: customExpected !== undefined ? customExpected : 'N/A' }];
+  } else if (!dbProblem) {
+    const frontendProblem = PROBLEMS_DATA.find(p => p.id === Number(problemId));
+    if (frontendProblem && frontendProblem.testcases?.length > 0) {
+      testcasesToRun = frontendProblem.testcases.map(tc => ({
+        input: tc.input,
+        expectedOutput: tc.expectedOutput,
+      }));
+    } else if (frontendProblem && frontendProblem.examples?.length > 0) {
+      testcasesToRun = frontendProblem.examples.map(ex => ({
+        input: parseExampleInput(ex.input).join('\n'),
+        expectedOutput: ex.output,
+      }));
+    } else {
+      testcasesToRun = [{ input: '[]', expectedOutput: 'N/A' }];
+    }
   } else {
-    const dbTestCases = await prisma.testCase.findMany({
-      where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
-      orderBy: { sortOrder: 'asc' },
-    });
-    testcasesToRun = dbTestCases.length > 0
-      ? dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
-      : [{ input: '[]', expectedOutput: 'N/A' }];
+      const dbTestCases = await withRetry(() => prisma.testCase.findMany({
+        where: { problemId: dbProblem.id, ...(action === 'run' ? { isSample: true } : {}) },
+        orderBy: { sortOrder: 'asc' },
+      }));
+    if (dbTestCases.length > 0) {
+      testcasesToRun = dbTestCases.map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }));
+    } else {
+      const dbExamples = await withRetry(() => prisma.problemExample.findMany({
+        where: { problemId: dbProblem.id },
+        orderBy: { sortOrder: 'asc' },
+      }));
+      if (dbExamples.length > 0) {
+        testcasesToRun = dbExamples.map((ex) => ({
+          input: parseExampleInput(ex.input).join('\n'),
+          expectedOutput: ex.output,
+        }));
+      } else {
+        testcasesToRun = [{ input: '[]', expectedOutput: 'N/A' }];
+      }
+    }
   }
 
   if (!code || code.trim() === '') {

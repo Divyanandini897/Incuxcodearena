@@ -17,6 +17,21 @@ const LANG_MAP: Record<string, any> = {
   'Go': 'Go',
 }
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+  for (let i = 0; i <= retries; i++) {
+    try { return await fn(); }
+    catch (err: any) {
+      const msg = err?.message || '';
+      if (i < retries && (msg.includes('closed the connection') || msg.includes('ECONNRESET') || msg.includes('pool'))) {
+        await new Promise(r => setTimeout(r, 200 * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('unreachable');
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json()
   const { problemId, language, code, status, runtime, memory, testResults, userId } = body
@@ -25,12 +40,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields: problemId, language, code, status, userId' }, { status: 400 })
   }
 
-  const problem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } })
+  const problem = await withRetry(() => prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } }))
   if (!problem) {
     return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
   }
 
-  const profile = await prisma.profile.findUnique({ where: { id: userId } })
+  const profile = await withRetry(() => prisma.profile.findUnique({ where: { id: userId } }))
   if (!profile) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
@@ -45,7 +60,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Invalid language: ${language}` }, { status: 400 })
   }
 
-  const submission = await prisma.submission.create({
+  const submission = await withRetry(() => prisma.submission.create({
     data: {
       userId,
       problemId: problem.id,
@@ -56,10 +71,10 @@ export async function POST(request: NextRequest) {
       memory: memory ?? null,
       testResults: testResults ?? null,
     },
-  })
+  }))
 
   const isAccepted = status === 'Accepted'
-  await prisma.userProblemProgress.upsert({
+  await withRetry(() => prisma.userProblemProgress.upsert({
     where: { userId_problemId: { userId, problemId: problem.id } },
     update: {
       status: isAccepted ? 'solved' : 'in_progress',
@@ -73,7 +88,7 @@ export async function POST(request: NextRequest) {
       lastSubmissionId: submission.id,
       solvedAt: isAccepted ? new Date() : null,
     },
-  })
+  }))
 
   return NextResponse.json({ submission }, { status: 201 })
 }
@@ -89,18 +104,18 @@ export async function GET(request: NextRequest) {
 
   const where: any = { userId }
   if (problemId) {
-    const problem = await prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } })
+    const problem = await withRetry(() => prisma.problem.findUnique({ where: { leetcodeId: Number(problemId) } }))
     if (!problem) {
-      return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+      return NextResponse.json({ submissions: [] })
     }
     where.problemId = problem.id
   }
 
-  const submissions = await prisma.submission.findMany({
+  const submissions = await withRetry(() => prisma.submission.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     take: 50,
-  })
+  }))
 
   return NextResponse.json({ submissions })
 }

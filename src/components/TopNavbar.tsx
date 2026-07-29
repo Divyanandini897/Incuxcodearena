@@ -50,7 +50,7 @@ export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
       }
     }
     fetchSession();
-  }, [userName]);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
