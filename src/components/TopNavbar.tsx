@@ -50,7 +50,7 @@ export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
       }
     }
     fetchSession();
-  }, [userName]);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -78,8 +78,11 @@ export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
 
   const xpNeeded = getXpForNextLevel(level);
 
-  // Avatar emoji lookup
-  const avatarEmoji = avatar === 'sherlock' ? '🦊' : avatar === 'neo' ? '🐈' : avatar === 'yoda' ? '🐸' : '🦁';
+  // Initials from profile name
+  const getInitials = (name: string) => {
+    if (!name || name === '') return '?';
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-30 h-14 w-full bg-[var(--color-bg-nav)] backdrop-blur-md border-b border-border-card/50 flex items-center justify-between px-6 select-none font-sans">
@@ -122,8 +125,8 @@ export default function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
             onClick={() => setIsDropdownOpen(prev => !prev)}
             className="flex items-center gap-2 pl-1 cursor-pointer group border-0 bg-transparent p-0 focus:outline-none"
           >
-            <div className="w-7.5 h-7.5 rounded-full bg-hover flex items-center justify-center text-sm shadow-sm border border-border-card/45 group-hover:scale-105 transition-transform duration-200">
-              {avatarEmoji}
+            <div className="w-7.5 h-7.5 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-xs font-bold text-primary shadow-sm group-hover:scale-105 transition-transform duration-200">
+              {getInitials(profileName)}
             </div>
             <div className="hidden lg:flex flex-col text-left leading-none">
               <span className="text-xs font-semibold text-text-main group-hover:text-primary transition-colors">{profileName}</span>

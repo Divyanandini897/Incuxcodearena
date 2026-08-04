@@ -48,7 +48,7 @@ function LoginContent() {
       return;
     }
 
-    router.push('/');
+    router.push('/practice-arena');
   };
 
   const handleGoogleLogin = async () => {

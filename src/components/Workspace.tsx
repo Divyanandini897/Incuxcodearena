@@ -43,6 +43,148 @@ import { cpp } from '@codemirror/lang-cpp';
 import { go } from '@codemirror/lang-go';
 import { oneDark } from '@codemirror/theme-one-dark';
 
+// ---------- Client-side Judge0 fallback ----------
+// When the server's Judge0 runner is unreachable (rate-limited / down), the server
+// returns a `fallback` payload. The browser then submits each pre-wrapped test case
+// directly to ce.judge0.com (CORS is open) and grades the results locally.
+
+interface FallbackTestCase {
+  input: string;
+  expectedOutput: string;
+  code: string;
+  stdin: string;
+}
+
+interface Judge0FallbackPayload {
+  fallback: true;
+  judge0Url: string;
+  language: string;
+  languageId: number;
+  testCases: FallbackTestCase[];
+}
+
+async function judge0Submit(url: string, languageId: number, code: string, stdin: string): Promise<string> {
+  const res = await fetch(`${url}/submissions?base64_encoded=false&wait=false`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      source_code: code,
+      language_id: languageId,
+      stdin,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Judge0 submit failed (${res.status}): ${text.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  if (!data?.token) throw new Error('Judge0 did not return a submission token');
+  return data.token;
+}
+
+async function judge0Poll(url: string, token: string): Promise<any> {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const res = await fetch(
+      `${url}/submissions/${token}?base64_encoded=false&fields=stdout,stderr,compile_output,status,time,memory`,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Judge0 poll failed (${res.status}): ${text.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    const statusId = data?.status?.id ?? 0;
+    if (statusId >= 3) return data; // finished (accepted or errored)
+    await new Promise(r => setTimeout(r, 200));
+  }
+  throw new Error('Judge0 polling timed out after 30 attempts');
+}
+
+function normalizeOutputFallback(raw: string): string {
+  return raw.trim().replace(/\r\n/g, '\n').replace(/ +/g, ' ').replace(/\n+$/g, '');
+}
+
+function matchOutputFallback(actual: string, expected: string): boolean {
+  const a = normalizeOutputFallback(actual);
+  const e = normalizeOutputFallback(expected);
+  if (a === e) return true;
+  const an = Number(a);
+  const en = Number(e);
+  return !isNaN(an) && !isNaN(en) && an === en;
+}
+
+function judge0StatusToStatusFallback(statusId: number): EvaluationResult['status'] {
+  switch (statusId) {
+    case 6: return 'Compile Error';
+    case 5: return 'Time Limit Exceeded';
+    case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14:
+      return 'Runtime Error';
+    default:
+      return 'Accepted';
+  }
+}
+
+async function runFallbackEvaluate(
+  payload: Judge0FallbackPayload,
+): Promise<EvaluationResult> {
+  const url = payload.judge0Url || 'https://ce.judge0.com';
+  const testResults: EvaluationResult['testResults'] = [];
+  let overallStatus: EvaluationResult['status'] = 'Accepted';
+  let compileError: string | undefined;
+  let totalRuntime = 0;
+  let peakMemoryKB = 0;
+
+  for (const tc of payload.testCases) {
+    let entry: NonNullable<EvaluationResult['testResults']>[number];
+    try {
+      const token = await judge0Submit(url, payload.languageId, tc.code, tc.stdin);
+      const jr = await judge0Poll(url, token);
+
+      const statusId = jr?.status?.id ?? 0;
+      const stdout = (jr?.stdout || '') as string;
+      const actual = stdout.split('\n').filter(l => l.trim()).pop()?.trim() || '';
+      const runtimeMs = Math.round(parseFloat(jr?.time || '0') * 1000);
+      const memKB = parseInt(jr?.memory || '0') || 0;
+      totalRuntime += runtimeMs;
+      if (memKB > peakMemoryKB) peakMemoryKB = memKB;
+
+      const st = judge0StatusToStatusFallback(statusId);
+      if (st === 'Compile Error') {
+        overallStatus = 'Compile Error';
+        compileError = compileError || (jr?.compile_output || jr?.stderr || 'Compilation failed');
+        entry = { input: tc.input, expected: tc.expectedOutput, actual: 'Compile error', passed: false };
+      } else if (st === 'Time Limit Exceeded') {
+        if (overallStatus === 'Accepted') overallStatus = 'Time Limit Exceeded';
+        entry = { input: tc.input, expected: tc.expectedOutput, actual: 'Time limit exceeded', passed: false };
+      } else if (st === 'Runtime Error') {
+        if (overallStatus === 'Accepted') overallStatus = 'Runtime Error';
+        compileError = compileError || (jr?.stderr || 'Runtime error');
+        entry = { input: tc.input, expected: tc.expectedOutput, actual: 'Runtime error', passed: false };
+      } else {
+        const passed = matchOutputFallback(actual, tc.expectedOutput);
+        if (!passed && overallStatus === 'Accepted') overallStatus = 'Wrong Answer';
+        entry = { input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: stdout.split('\n').filter(l => l.trim()).slice(0, -1).join('\n') || undefined };
+      }
+      testResults.push(entry);
+    } catch (err: any) {
+      if (overallStatus === 'Accepted') overallStatus = 'Runtime Error';
+      compileError = compileError || err?.message || 'Judge0 execution failed';
+      testResults.push({ input: tc.input, expected: tc.expectedOutput, actual: err?.message || 'Failed', passed: false });
+    }
+  }
+
+  const memoryMB = peakMemoryKB > 0 ? `${(peakMemoryKB / 1024).toFixed(1)}MB` : '0MB';
+  return {
+    status: overallStatus,
+    compileError,
+    runtime: `${totalRuntime}ms`,
+    memory: memoryMB,
+    passedCount: testResults.filter(t => t.passed).length,
+    totalCount: testResults.length,
+    testResults,
+  };
+}
+
 interface WorkspaceProps {
   problemId: number;
   problems: Problem[];
@@ -114,6 +256,7 @@ export default function Workspace({
   const [language, setLanguage] = useState('JavaScript');
   const [userCode, setUserCode] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
 
   // CodeMirror: language extension mapping
   const getLangExt = (lang: string) => {
@@ -189,6 +332,7 @@ export default function Workspace({
     language: string;
   }[]>([]);
 
+
   // Fetch submission history from DB on mount
   useEffect(() => {
     if (userId) {
@@ -206,7 +350,7 @@ export default function Workspace({
             const combined = [...dbSubs, ...prev];
             const seen = new Set();
             return combined.filter((s) => {
-              const key = `${s.timestamp}-${s.status}-${s.runtime}`;
+              const key = `${s.language}-${s.status}-${s.runtime}-${s.memory}`;
               if (seen.has(key)) return false;
               seen.add(key);
               return true;
@@ -279,6 +423,55 @@ export default function Workspace({
     cmViewRef.current = new EditorView({ state, parent: editorContainerRef.current });
     setUserCode(initialCode);
 
+    // Contest mode anti-cheat: block paste, copy, cut, select-all, right-click, drag-drop
+    const contestMode = typeof window !== 'undefined' ? localStorage.getItem('codenode_contest_mode') : null;
+    const cleanups: (() => void)[] = [];
+    if (contestMode && editorContainerRef.current) {
+      const el = editorContainerRef.current;
+      // Block paste
+      const pasteHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('paste', pasteHandler, true);
+      cleanups.push(() => el.removeEventListener('paste', pasteHandler, true));
+      // Block cut
+      const cutHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('cut', cutHandler, true);
+      cleanups.push(() => el.removeEventListener('cut', cutHandler, true));
+      // Block copy
+      const copyHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('copy', copyHandler, true);
+      cleanups.push(() => el.removeEventListener('copy', copyHandler, true));
+      // Block drag-drop
+      const dragHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('drop', dragHandler, true);
+      el.addEventListener('dragover', dragHandler, true);
+      cleanups.push(() => { el.removeEventListener('drop', dragHandler, true); el.removeEventListener('dragover', dragHandler, true); });
+      // Block right-click context menu
+      const contextHandler = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('contextmenu', contextHandler, true);
+      cleanups.push(() => el.removeEventListener('contextmenu', contextHandler, true));
+      // Block keyboard shortcuts: Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A
+      const keyHandler = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      el.addEventListener('keydown', keyHandler, true);
+      cleanups.push(() => el.removeEventListener('keydown', keyHandler, true));
+      // Show contest-mode badge
+      const badge = document.createElement('div');
+      badge.id = 'contest-cheat-block';
+      badge.textContent = 'Contest Mode — Copy/Paste disabled';
+      Object.assign(badge.style, {
+        position: 'absolute', top: '4px', right: '8px',
+        background: 'rgba(239,68,68,0.9)', color: '#fff',
+        fontSize: '10px', padding: '2px 8px', borderRadius: '4px',
+        fontFamily: 'monospace', zIndex: '10', pointerEvents: 'none',
+      });
+      el.appendChild(badge);
+      cleanups.push(() => { const b = el.querySelector('#contest-cheat-block'); if (b) b.remove(); });
+    }
+
     // Set default testcase input
     if (problem.testcases && problem.testcases.length > 0) {
       setCustomTestcaseInput(problem.testcases[0].input);
@@ -289,6 +482,7 @@ export default function Workspace({
     return () => {
       cmViewRef.current?.destroy();
       cmViewRef.current = null;
+      cleanups.forEach((fn) => fn());
     };
   }, [problemId, language, problem]);
 
@@ -426,8 +620,7 @@ export default function Workspace({
 
   // Code Execution (Run / Submit)
   const handleEvaluate = async (action: 'run' | 'submit') => {
-    if (isEvaluating) return;
-    setIsEvaluating(true);
+    if (isEvaluating) return;    setIsEvaluating(true);
     setIsTerminalExpanded(true);
     setActiveConsoleTab('Test Result');
     setEvaluationResult(null);
@@ -457,9 +650,12 @@ export default function Workspace({
       }
 
       const result: EvaluationResult = await res.json();
-      setEvaluationResult(result);
+      const finalResult = (result as any).fallback
+        ? await runFallbackEvaluate(result as any)
+        : result;
+      setEvaluationResult(finalResult);
 
-      if (action === 'submit' && result.status === 'Accepted') {
+      if (action === 'submit' && finalResult.status === 'Accepted') {
         onMarkSolved(problem.id);
       }
 
@@ -467,28 +663,36 @@ export default function Workspace({
       if (action === 'submit') {
         const subEntry = {
           timestamp: new Date().toLocaleTimeString(),
-          status: result.status,
-          runtime: result.runtime || '4ms',
-          memory: result.memory || '10.2MB',
+          status: finalResult.status,
+          runtime: finalResult.runtime || '4ms',
+          memory: finalResult.memory || '10.2MB',
           language
         };
         setSubmissionHistory(prev => [subEntry, ...prev]);
 
         if (userId) {
-          fetch('/api/submissions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              problemId: problem.id,
-              language,
-              code: userCode,
-              status: result.status,
-              runtime: result.runtime || '4ms',
-              memory: result.memory || '10.2MB',
-              testResults: result.testResults || null,
-              userId,
-            }),
-          }).catch((err) => console.error('Failed to save submission:', err));
+          try {
+            const subRes = await fetch('/api/submissions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                problemId: problem.id,
+                language,
+                code: userCode,
+                status: finalResult.status,
+                runtime: finalResult.runtime || '4ms',
+                memory: finalResult.memory || '10.2MB',
+                testResults: finalResult.testResults || null,
+                userId,
+              }),
+            });
+            if (!subRes.ok) {
+              const subErr = await subRes.json().catch(() => ({ error: 'Unknown' }));
+              console.error('Failed to save submission:', subErr);
+            }
+          } catch (err) {
+            console.error('Failed to save submission:', err);
+          }
         }
       }
     } catch (err: any) {
@@ -537,7 +741,7 @@ export default function Workspace({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col flex-1 select-none bg-page overflow-hidden"
+      className="flex flex-col flex-1 h-0 select-none bg-page overflow-hidden"
     >
       
       {/* Mini Workspace Header Bar */}
@@ -575,7 +779,7 @@ export default function Workspace({
       </div>
 
       {/* Workspace Split Body */}
-      <div className="flex flex-1 w-full relative overflow-hidden">
+      <div className="flex flex-1 h-0 w-full relative overflow-hidden">
         
         {/* Left Column: Problem Specification Workspace */}
         <div 
@@ -628,13 +832,13 @@ export default function Workspace({
                         className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border"
                         style={{
                           backgroundColor: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy-bg)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium-bg)' : 'var(--color-hard-bg)',
                           color: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium)' : 'var(--color-hard)',
                           borderColor: 
-                            problem.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
+                            problem.difficulty === 'Basic' || problem.difficulty === 'Easy' ? 'var(--color-easy-border)' : 
                             problem.difficulty === 'Medium' ? 'var(--color-medium-border)' : 'var(--color-hard-border)',
                         }}
                       >

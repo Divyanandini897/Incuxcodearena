@@ -337,7 +337,7 @@ function findMax(arr) {
                       <Gamepad2 className="w-4 h-4 fill-white" /> Quick Match
                     </Button>
                     <Badge variant="hard" className="py-2.5 px-3 bg-black/45 text-[10px] font-mono border-white/10 text-white backdrop-blur-md">
-                      ⚔️ 3,428 Players Online
+                      3,428 Players Online
                     </Badge>
                   </div>
                 </div>
@@ -365,7 +365,7 @@ function findMax(arr) {
                       </div>
                     </div>
                     <div className="flex items-center justify-between border-t border-border-card/45 pt-4 mt-2">
-                      <span className="text-[10px] text-text-muted font-mono font-bold">⏱️ 20 MINS</span>
+                      <span className="text-[10px] text-text-muted font-mono font-bold">20 MINS</span>
                       <Button variant="primary" size="sm" onClick={() => handleStartLobby('code')} className="flex items-center gap-0.5 text-[11px] font-bold cursor-pointer">
                         Battle <ChevronRight className="w-3 h-3" />
                       </Button>
@@ -389,7 +389,7 @@ function findMax(arr) {
                       </div>
                     </div>
                     <div className="flex items-center justify-between border-t border-border-card/45 pt-4 mt-2">
-                      <span className="text-[10px] text-text-muted font-mono font-bold">⏱️ 10 MINS</span>
+                      <span className="text-[10px] text-text-muted font-mono font-bold">10 MINS</span>
                       <Button variant="secondary" size="sm" onClick={() => handleStartLobby('quiz')} className="flex items-center gap-0.5 text-[11px] font-bold cursor-pointer">
                         Battle <ChevronRight className="w-3 h-3" />
                       </Button>
@@ -413,7 +413,7 @@ function findMax(arr) {
                       </div>
                     </div>
                     <div className="flex items-center justify-between border-t border-border-card/45 pt-4 mt-2">
-                      <span className="text-[10px] text-text-muted font-mono font-bold">⏱️ 15 MINS</span>
+                      <span className="text-[10px] text-text-muted font-mono font-bold">15 MINS</span>
                       <Button variant="secondary" size="sm" onClick={() => handleStartLobby('debug')} className="flex items-center gap-0.5 text-[11px] font-bold cursor-pointer">
                         Battle <ChevronRight className="w-3 h-3" />
                       </Button>
@@ -480,8 +480,8 @@ function findMax(arr) {
                 {/* Self Card */}
                 <div className="bg-bg-base/40 border border-border-card rounded-xl p-5 flex flex-col gap-4 items-center justify-between text-center relative overflow-hidden">
                   <div className="flex flex-col items-center gap-2.5">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl select-none">
-                      🦁
+                    <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-base font-bold text-primary select-none">
+                      {(userName || 'You').charAt(0).toUpperCase()}
                     </div>
                     <div className="leading-tight">
                       <h4 className="text-sm font-black text-text-main">{userName || 'You'}</h4>
@@ -503,8 +503,8 @@ function findMax(arr) {
                 {/* Opponent Card */}
                 <div className="bg-bg-base/40 border border-border-card rounded-xl p-5 flex flex-col gap-4 items-center justify-between text-center relative overflow-hidden">
                   <div className="flex flex-col items-center gap-2.5">
-                    <div className="w-14 h-14 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-2xl select-none">
-                      🦊
+                    <div className="w-14 h-14 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-base font-bold text-orange-500 select-none">
+                      {(opponentName || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="leading-tight">
                       <h4 className="text-sm font-black text-text-main">{opponentName}</h4>
@@ -704,7 +704,7 @@ function findMax(arr) {
                   <div className="bg-bg-card border border-border-card rounded-2xl p-6 md:p-8 flex flex-col gap-6">
                     <div className="flex justify-between items-center text-xs font-mono text-text-muted border-b border-border-card/45 pb-3">
                       <span>QUESTION {currentQuizIndex + 1} OF {quizQuestions.length}</span>
-                      {quizLockout && <span className="text-red-500 font-bold animate-pulse">⚠️ Wrong! 2s lockout</span>}
+                      {quizLockout && <span className="text-red-500 font-bold animate-pulse">Wrong! 2s lockout</span>}
                     </div>
 
                     <h3 className="text-sm md:text-base font-black text-text-main leading-relaxed">

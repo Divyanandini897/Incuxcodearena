@@ -24,6 +24,8 @@ import {
 import { useGameState } from '@/src/lib/gameState';
 import { supabase } from '@/src/utils/supabaseClient';
 
+const ADMIN_EMAIL = 'deepika.tiwari.1408@gmail.com';
+
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -41,6 +43,7 @@ export default function LeftSidebar({
   const { userName } = useGameState();
   const [profileName, setProfileName] = useState(userName || 'User');
   const [profileEmail, setProfileEmail] = useState('Premium Student');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     async function fetchSession() {
@@ -59,17 +62,19 @@ export default function LeftSidebar({
           } else {
             setProfileName(session.user.email?.split('@')[0] || userName || 'User');
           }
-          setProfileEmail(session.user.email || 'Premium Student');
+          const email = session.user.email || 'Premium Student';
+          setProfileEmail(email);
+          setIsAdmin(email === ADMIN_EMAIL);
         }
       } catch (err) {
         console.error('Error fetching LeftSidebar session:', err);
       }
     }
     fetchSession();
-  }, [userName]);
+  }, []);
 
-  const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  const allMenuItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Code Smash', icon: Gamepad2, path: '/code-smash' },
     { name: 'Practice Arena', icon: Swords, path: '/practice-arena' },
     { name: 'Test Arena', icon: Trophy, path: '/test-arena' },
@@ -78,6 +83,8 @@ export default function LeftSidebar({
     { name: 'Profile', icon: User, path: '/profile' },
     { name: 'Admin', icon: Settings, path: '/admin/contests' }
   ];
+
+  const menuItems = allMenuItems.filter((item) => item.name !== 'Admin' || isAdmin);
 
   return (
     <>
@@ -183,8 +190,8 @@ export default function LeftSidebar({
 
         {/* Sidebar Footer */}
         <div className="p-3.5 border-t border-border-card/50 flex gap-2.5 items-center select-none shrink-0 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-hover flex items-center justify-center text-xs font-bold shrink-0">
-            🕵️‍♂️
+          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+            {profileName.charAt(0).toUpperCase()}
           </div>
           <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out origin-left ${
             isCollapsed && !isMobileOpen ? 'opacity-0 max-w-0 pointer-events-none' : 'opacity-100 max-w-[160px]'

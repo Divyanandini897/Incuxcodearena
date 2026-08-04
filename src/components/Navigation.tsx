@@ -22,11 +22,11 @@ interface NavigationProps {
   userProfile?: UserProfile | null;
 }
 
-const AVATARS: Record<string, { emoji: string; gradient: string }> = {
-  sherlock: { emoji: '🕵️‍♂️', gradient: 'from-amber-600 to-orange-700' },
-  neo:      { emoji: '🕶️',    gradient: 'from-slate-700 to-slate-900' },
-  yoda:     { emoji: '🧙‍♂️',   gradient: 'from-emerald-600 to-teal-700' },
-  stark:    { emoji: '🦾',    gradient: 'from-red-600 to-yellow-600' },
+const AVATARS: Record<string, { gradient: string }> = {
+  sherlock: { gradient: 'from-amber-600 to-orange-700' },
+  neo:      { gradient: 'from-slate-700 to-slate-900' },
+  yoda:     { gradient: 'from-emerald-600 to-teal-700' },
+  stark:    { gradient: 'from-red-600 to-yellow-600' },
 };
 
 export default function Navigation({ streakCount = 0, userProfile = null }: NavigationProps) {
@@ -106,7 +106,7 @@ export default function Navigation({ streakCount = 0, userProfile = null }: Navi
             </span>
           </Link>
 
-          <Link href="/" className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors">
+          <Link href="/dashboard" className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors">
             <Home className="w-3.5 h-3.5" />
             <span>Dashboard</span>
           </Link>
@@ -147,7 +147,7 @@ export default function Navigation({ streakCount = 0, userProfile = null }: Navi
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-2 p-1 rounded-lg hover:bg-hover/30 transition-colors focus:outline-none"
             >
-              <div className={`w-7 h-7 rounded-full bg-gradient-to-tr ${avatarInfo.gradient} flex items-center justify-center text-xs shadow-inner`}>
+              <div className={`w-7 h-7 rounded-full bg-gradient-to-tr ${avatarInfo.gradient} flex items-center justify-center text-xs font-bold text-white shadow-inner`}>
                 {userProfile?.avatar_url ? (
                   <img
                     src={userProfile.avatar_url}
@@ -156,7 +156,7 @@ export default function Navigation({ streakCount = 0, userProfile = null }: Navi
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span>{avatarInfo.emoji}</span>
+                  <span>{displayName.charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <span className="text-xs font-semibold text-text-main hidden sm:inline-block max-w-[100px] truncate">

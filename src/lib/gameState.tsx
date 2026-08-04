@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 export interface GameState {
   xp: number;
@@ -134,7 +134,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
     localStorage.setItem('leetcode_solved_ids', JSON.stringify(solvedIds)); // Keep in sync with existing code
-  }, [xp, level, gold, streak, solvedIds, avatar, title, unlockedTitles, unlockedAchievements, petName, petAccessories, activeAccessories, theme, userName, isLoaded]);
+  }, [xp, level, gold, streak, solvedIds, avatar, title, unlockedTitles, unlockedAchievements, petName, petAccessories, activeAccessories, theme, userName, profilePicture, isLoaded]);
 
   const addXp = (amount: number) => {
     setXp((prevXp) => {
@@ -182,11 +182,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const addGold = (amount: number) => {
+  const addGold = useCallback((amount: number) => {
     setGold((prev) => prev + amount);
-  };
+  }, []);
 
-  const solveProblem = (id: number, difficulty: 'Easy' | 'Medium' | 'Hard') => {
+  const solveProblem = useCallback((id: number, difficulty: 'Easy' | 'Medium' | 'Hard') => {
     setSolvedIds((prev) => {
       if (prev.includes(id)) return prev;
       const updated = [...prev, id];
@@ -217,9 +217,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       return updated;
     });
-  };
+  }, [addXp, addGold, unlockedAchievements]);
   
-  const toggleProblemCompletion = (problemId: number) => {
+  const toggleProblemCompletion = useCallback((problemId: number) => {
     let updatedSolvedIds: number[];
 
     if (solvedIds.includes(problemId)) {
@@ -248,19 +248,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setUnlockedAchievements(newAchievements);
       }
     }
-  };
+  }, [solvedIds, streak, unlockedAchievements]);
 
-  const updateAvatar = (newAvatar: string) => {
+  const updateAvatar = useCallback((newAvatar: string) => {
     setAvatar(newAvatar);
-  };
+  }, []);
 
-  const updateTitle = (newTitle: string) => {
+  const updateTitle = useCallback((newTitle: string) => {
     if (unlockedTitles.includes(newTitle)) {
       setTitle(newTitle);
     }
-  };
+  }, [unlockedTitles]);
 
-  const buyAccessory = (accessory: string, cost: number) => {
+  const buyAccessory = useCallback((accessory: string, cost: number) => {
     if (gold >= cost && !petAccessories.includes(accessory)) {
       setGold((prev) => prev - cost);
       setPetAccessories((prev) => [...prev, accessory]);
@@ -274,9 +274,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
     return false;
-  };
+  }, [gold, petAccessories, unlockedAchievements]);
 
-  const toggleAccessory = (accessory: string) => {
+  const toggleAccessory = useCallback((accessory: string) => {
     setActiveAccessories((prev) => {
       if (prev.includes(accessory)) {
         return prev.filter((a) => a !== accessory);
@@ -284,25 +284,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return [...prev, accessory];
       }
     });
-  };
+  }, []);
 
-  const updateTheme = (newTheme: string) => {
+  const updateTheme = useCallback((newTheme: string) => {
     setTheme(newTheme);
-  };
+  }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'theme-light' ? 'theme-dark' : 'theme-light'));
-  };
+  }, []);
 
-  const updateUserName = (name: string) => {
+  const updateUserName = useCallback((name: string) => {
     setUserName(name);
-  };
+  }, []);
 
-  const updateProfilePicture = (dataUrl: string) => {
+  const updateProfilePicture = useCallback((dataUrl: string) => {
     setProfilePicture(dataUrl);
-  };
+  }, []);
 
-  const incrementStreak = () => {
+  const incrementStreak = useCallback(() => {
     setStreak((prev) => {
       const next = prev + 1;
       if (next >= 7 && !unlockedAchievements.includes('Streak Legend')) {
@@ -310,9 +310,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
       return next;
     });
-  };
+  }, [unlockedAchievements]);
 
-  const resetGame = () => {
+  const resetGame = useCallback(() => {
     setXp(0);
     setLevel(1);
     setGold(0);
@@ -328,42 +328,50 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUserName('');
     setProfilePicture('');
     localStorage.removeItem(LOCAL_STORAGE_KEY);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    xp,
+    level,
+    gold,
+    streak,
+    solvedIds,
+    avatar,
+    title,
+    unlockedTitles,
+    unlockedAchievements,
+    petName,
+    petAccessories,
+    activeAccessories,
+    theme,
+    userName,
+    profilePicture,
+    addXp,
+    addGold,
+    solveProblem,
+    toggleProblemCompletion,
+    updateAvatar,
+    updateTitle,
+    buyAccessory,
+    toggleAccessory,
+    updateTheme,
+    toggleTheme,
+    updateUserName,
+    updateProfilePicture,
+    incrementStreak,
+    resetGame,
+  }), [
+    xp, level, gold, streak, solvedIds, avatar, title, unlockedTitles,
+    unlockedAchievements, petName, petAccessories, activeAccessories,
+    theme, userName, profilePicture,
+    addXp, addGold, solveProblem, toggleProblemCompletion,
+    updateAvatar, updateTitle, buyAccessory, toggleAccessory,
+    updateTheme, toggleTheme, updateUserName, updateProfilePicture,
+    incrementStreak, resetGame,
+  ]);
 
   return (
-    <GameContext.Provider
-      value={{
-        xp,
-        level,
-        gold,
-        streak,
-        solvedIds,
-        avatar,
-        title,
-        unlockedTitles,
-        unlockedAchievements,
-        petName,
-        petAccessories,
-        activeAccessories,
-        theme,
-        userName,
-        profilePicture,
-        addXp,
-        addGold,
-        solveProblem,
-        toggleProblemCompletion,
-        updateAvatar,
-        updateTitle,
-        buyAccessory,
-        toggleAccessory,
-        updateTheme,
-        toggleTheme,
-        updateUserName,
-        updateProfilePicture,
-        incrementStreak,
-        resetGame,
-      }}
-    >
+    <GameContext.Provider value={value}>
       {children}
     </GameContext.Provider>
   );

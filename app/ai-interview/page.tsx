@@ -273,8 +273,8 @@ export default function AiInterviewPage() {
                         <Bot className="w-4 h-4 text-primary" />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0 text-xs font-bold select-none">
-                        🧑‍💻
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0 text-xs font-bold text-primary select-none">
+                        U
                       </div>
                     )}
                     <div className="flex flex-col gap-1">

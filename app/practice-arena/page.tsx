@@ -13,7 +13,7 @@ const PROBLEMS_PER_PAGE = 25;
 
 export default function PracticeArenaPage() {
   const router = useRouter();
-  const { solvedIds, toggleProblemCompletion } = useGameState();
+  const { solvedIds, solveProblem } = useGameState();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
@@ -42,6 +42,20 @@ export default function PracticeArenaPage() {
     }
     setBookmarks(current);
     localStorage.setItem('codenode_bookmarks', JSON.stringify(current));
+  };
+
+  /**
+   * Called after a successful code submission API response.
+   * Wire this to your submission flow — the shared game context
+   * automatically propagates the update so the table re-renders
+   * from empty circle to green checkmark without a refresh.
+   *
+   * Usage example after API returns { status: "Accepted" }:
+   *
+   *   handleSubmissionSuccess(probId, probDifficulty);
+   */
+  const handleSubmissionSuccess = (problemId: number, difficulty: 'Easy' | 'Medium' | 'Hard') => {
+    solveProblem(problemId, difficulty);
   };
 
   const solvedProblemIds = useMemo(() => solvedIds || [], [solvedIds]);
@@ -190,18 +204,12 @@ export default function PracticeArenaPage() {
                         onClick={() => onSelectProblem(prob.id)} 
                         className="hover:bg-hover/20 border-b border-border-card/20 last:border-0 transition-all duration-100 group cursor-pointer"
                       >
-                        <td 
-                          className="py-3.5 px-4 text-center"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleProblemCompletion(prob.id);
-                          }}
-                        >
-                          <div className="flex items-center justify-center cursor-pointer">
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center">
                             {isSolved ? (
                               <CheckCircle2 className="w-4 h-4 text-primary" />
                             ) : (
-                              <div className="w-4 h-4 rounded-full border border-border-card hover:border-primary transition-colors" />
+                              <div className="w-4 h-4 rounded-full border border-border-card" />
                             )}
                           </div>
                         </td>

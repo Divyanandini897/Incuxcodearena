@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Search, 
   CheckCircle2, 
@@ -43,6 +43,7 @@ import { useRouter } from 'next/navigation';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
+import CodingHeroBackground from './dashboard/CodingHeroBackground';
 
 // Recharts components imported dynamically on client side
 import {
@@ -101,12 +102,18 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
   }, []);
 
   // Consume gamified state context
-  const { theme, userName, level, xp, gold, streak, updateUserName } = useGameState();
+  const { theme, userName, level, xp, gold, streak, updateUserName, toggleProblemCompletion } = useGameState();
 
   const [displayName, setDisplayName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState('All Topics');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<'title' | 'difficulty' | 'acceptance'>('title');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     setDisplayName(userProfile?.name || userName || 'Coder');
@@ -147,6 +154,49 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
     return PROBLEMS_DATA.find(p => !solvedProblemIds.includes(p.id)) || PROBLEMS_DATA[0];
   }, [solvedProblemIds]);
 
+  const handleSort = useCallback((column: 'title' | 'difficulty' | 'acceptance') => {
+    setSortBy((prev) => {
+      if (prev === column) {
+        setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+        return column;
+      }
+      setSortOrder('asc');
+      return column;
+    });
+  }, []);
+
+  const filteredProblems = useMemo(() => {
+    let filtered = PROBLEMS_DATA;
+
+    if (selectedCategory !== 'All Topics') {
+      filtered = filtered.filter((p) => p.category === selectedCategory);
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter((p) => p.title.toLowerCase().includes(term));
+    }
+
+    const difficultyOrder: Record<string, number> = { Easy: 0, Medium: 1, Hard: 2 };
+    filtered = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'title') cmp = a.title.localeCompare(b.title);
+      else if (sortBy === 'difficulty') cmp = (difficultyOrder[a.difficulty] ?? 0) - (difficultyOrder[b.difficulty] ?? 0);
+      else cmp = parseFloat(a.acceptance) - parseFloat(b.acceptance);
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+
+    return filtered;
+  }, [selectedCategory, searchTerm, sortBy, sortOrder]);
+
+  const totalPages = Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE);
+
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    return filteredProblems.slice(start, start + PROBLEMS_PER_PAGE);
+  }, [filteredProblems, currentPage]);
+
+
   // Charts Mock Data
   const weeklyData = [
     { day: 'Mon', solved: 2 }, { day: 'Tue', solved: 4 }, { day: 'Wed', solved: 1 },
@@ -160,11 +210,11 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
   ];
 
   const leaderboard = [
-    { rank: 1, name: 'algo_sorcerer', score: 3480, country: '🇺🇸', streak: 42 },
-    { rank: 2, name: 'callback_hero', score: 2950, country: '🇬🇧', streak: 18 },
-    { rank: 3, name: displayName || 'You', score: 1000 + xp, country: '🇮🇳', streak: streak, isUser: true },
-    { rank: 4, name: 'byte_cruncher', score: 940, country: '🇨🇦', streak: 9 },
-    { rank: 5, name: 'kernel_guru', score: 810, country: '🇩🇪', streak: 4 }
+    { rank: 1, name: 'algo_sorcerer', score: 3480, streak: 42 },
+    { rank: 2, name: 'callback_hero', score: 2950, streak: 18 },
+    { rank: 3, name: displayName || 'You', score: 1000 + xp, streak: streak, isUser: true },
+    { rank: 4, name: 'byte_cruncher', score: 940, streak: 9 },
+    { rank: 5, name: 'kernel_guru', score: 810, streak: 4 }
   ];
 
   const achievements = [
@@ -200,19 +250,8 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Welcome Hero (2/3 width) */}
         <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-border-card/25 p-8 flex flex-col justify-between gap-6 shadow-card-custom min-h-[320px] lg:h-[340px] group cursor-default transition-all duration-300 hover:shadow-lg">
-          {/* Landscape Background Illustration with smooth zoom effect */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <img 
-              src="/scenic_sunset.png" 
-              alt="Backdrop" 
-              loading="lazy"
-              className="w-full h-full object-cover opacity-65 brightness-110 contrast-110 group-hover:scale-103 transition-transform duration-700 ease-out select-none pointer-events-none"
-            />
-            {/* Dynamic themed overlays & vignette */}
-            <div className="absolute inset-0 bg-[var(--color-hero-overlay)]" />
-            <div className="absolute inset-0 bg-[var(--color-hero-gradient)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.3)_100%)] mix-blend-multiply" />
-          </div>
+          {/* Coding & AI Background Illustration with interactive canvas */}
+          <CodingHeroBackground />
 
           <div className="flex flex-col gap-2.5 relative z-10 text-white text-left w-full">
             <span className="text-[10px] font-bold font-mono uppercase text-primary tracking-wider flex items-center gap-1.5 drop-shadow-sm select-none">
@@ -256,7 +295,7 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
               </div>
             ) : (
               <h2 className="text-3xl font-black tracking-tight leading-none drop-shadow-md select-none flex items-center gap-2 group/name">
-                <span>Welcome back, {displayName}! 👋</span>
+                <span>Welcome back, {displayName}!</span>
                 <button
                   onClick={() => {
                     setTempName(displayName === 'Coder' ? '' : displayName);
@@ -425,23 +464,154 @@ export default function Dashboard({ userProfile = null, solvedProblemIds, onSele
         </div>
       </div>
 
-      {/* 5. Weekly Practice Output */}
-      <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-xs flex flex-col gap-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5">
-          <TrendingUp className="w-4 h-4 text-primary" /> Weekly Coding Activity
-        </h4>
-        <div className="w-full h-56 mt-2">
-          {isMounted && (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-card)" vertical={false} />
-                <XAxis dataKey="day" tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-card)', fontSize: '10px' }} />
-                <Bar dataKey="solved" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+      {/* 5. Contests & Leaderboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
+        <Link href="/test-arena" className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs hover:border-primary/20 transition-all">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Trophy className="w-4 h-4 text-primary" /> Upcoming Contests</h4>
+          <div className="flex flex-col gap-2.5">
+            {upcomingContests.map((c, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="font-bold text-text-main truncate">{c.name}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-text-muted font-mono">{c.time}</span>
+                  {c.reward && <Badge variant="hard">+{c.reward}</Badge>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-[10px] font-mono font-bold text-primary flex items-center gap-1">View all contests <ArrowRight className="w-3 h-3" /></div>
+        </Link>
+
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5 mb-3"><Award className="w-4 h-4 text-primary" /> Global Leaderboard</h4>
+          <div className="flex flex-col gap-2">
+            {leaderboard.map((entry) => (
+              <div key={entry.rank} className={`flex items-center justify-between text-xs py-1 px-2 rounded ${entry.isUser ? 'bg-primary/10 border border-primary/20' : ''}`}>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-text-muted w-4">#{entry.rank}</span>
+                  <span className="font-bold text-text-main">{entry.name}</span>
+                  {entry.isUser && <Badge variant="easy">You</Badge>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-text-muted">{entry.country}</span>
+                  <span className="font-mono font-bold text-text-main">{entry.score.toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 6. Core Library Filters & Table View */}
+      <div className="flex flex-col gap-4 border-t border-border-card/65 pt-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-card p-4 rounded-xl border border-border-card shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {['All Topics', 'Algorithms', 'Data Structures', 'Database'].map((category) => (
+              <button
+                key={category}
+                onClick={() => { setSelectedCategory(category); setCurrentPage(1); }}
+                className={`text-[11px] font-mono font-bold uppercase tracking-wider py-1.5 px-3.5 rounded-lg border transition-all ${
+                  selectedCategory === category ? 'bg-primary text-white border-primary' : 'bg-bg-base text-text-muted border-border-card/70'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+            <input 
+              type="text" 
+              placeholder="Search challenges..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-bg-base border border-border-card focus:border-primary/45 focus:outline-none rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-main"
+            />
+          </div>
+        </div>
+
+        {/* Problems Table Rendering */}
+        <div className="bg-bg-card border border-border-card rounded-xl overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs font-semibold">
+              <thead>
+                <tr className="border-b border-border-card bg-bg-base/30 text-text-muted text-[10px] font-mono font-bold uppercase select-none">
+                  <th className="py-3.5 px-4 w-14 text-center">Status</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('title')}>Title</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('difficulty')}>Difficulty</th>
+                  <th className="py-3.5 px-4 cursor-pointer" onClick={() => handleSort('acceptance')}>Acceptance</th>
+                  <th className="py-3.5 px-4 w-28 text-center">Category</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-card/30">
+                {paginatedProblems.map((prob) => {
+                  const isSolved = solvedProblemIds.includes(prob.id);
+                  return (
+                    <tr key={prob.id} onClick={() => onSelectProblem(prob.id)} className="hover:bg-hover/20 border-b border-border-card/20 last:border-0 transition-all duration-100 group cursor-pointer">
+                      <td 
+                        className="py-3.5 px-4 text-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleProblemCompletion(prob.id);
+                        }}
+                      >
+                        <div className="flex items-center justify-center cursor-pointer">
+                          {isSolved ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <div className="w-4 h-4 rounded-full border border-border-card" />}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="text-[12.5px] font-bold text-text-main group-hover:text-primary transition-colors">{prob.id}. {prob.title}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant={prob.difficulty === 'Basic' ? 'easy' : prob.difficulty === 'Easy' ? 'easy' : prob.difficulty === 'Medium' ? 'medium' : 'hard'}>{prob.difficulty}</Badge>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-text-muted">{prob.acceptance}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="text-[9.5px] font-mono font-bold text-text-muted bg-hover/40 px-2 py-0.5 rounded border border-border-card/45">{prob.category}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Metrics Visualization */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border-card/65 pt-5">
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs flex flex-col gap-4">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5"><TrendingUp className="w-4 h-4" /> Weekly Practice Output</h4>
+          <div className="w-full h-48 mt-2">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-card)" vertical={false} />
+                  <XAxis dataKey="day" tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-card)', fontSize: '10px' }} />
+                  <Bar dataKey="solved" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-bg-card border border-border-card rounded-xl p-5 shadow-xs flex flex-col gap-4">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-text-main flex items-center gap-1.5"><Award className="w-4 h-4" /> Distribution by Difficulty</h4>
+          <div className="w-full h-48 mt-2 flex items-center justify-center">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={difficultyDistribution} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value">
+                    {difficultyDistribution.map((entry, idx) => <Cell key={`cell-${idx}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
       </div>
 

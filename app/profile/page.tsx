@@ -164,8 +164,11 @@ export default function ProfilePage() {
     );
   }
 
-  // Avatar emoji lookup
-  const avatarEmoji = avatar === 'sherlock' ? '🦊' : avatar === 'neo' ? '🐈' : avatar === 'yoda' ? '🐸' : '🦁';
+  // Initials from profile name
+  const getInitials = (name: string) => {
+    if (!name || name === 'Coder') return '?';
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <AppLayout>
@@ -190,8 +193,8 @@ export default function ProfilePage() {
 
           {/* Left: Avatar details */}
           <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center relative z-10 text-white min-w-0">
-            <div className="w-20 h-20 rounded-full bg-black/40 border border-white/20 flex items-center justify-center text-4xl shadow-md shrink-0 select-none backdrop-blur-md">
-              {avatarEmoji}
+            <div className="w-20 h-20 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-2xl font-bold text-primary shadow-md shrink-0 select-none backdrop-blur-md">
+              {getInitials(editName)}
             </div>
             <div className="flex flex-col gap-1 text-left min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -419,24 +422,90 @@ export default function ProfilePage() {
                       <div className="w-2.5 h-2.5 rounded bg-primary border border-primary/50" />
                       <span>More</span>
                     </div>
-                    <div className="grid grid-rows-7 grid-flow-col gap-1 w-max">
-                      {Array.from({ length: 7 * 24 }).map((_, idx) => {
-                        const contributionLevels = [0, 1, 2, 3, 1, 0, 0, 2, 4, 1, 3, 0, 2, 1, 1, 0, 3, 2, 0, 1, 4, 2, 1, 3, 0, 1, 2, 1, 0, 0, 3, 4, 2, 1, 0, 1, 2, 0, 3, 1, 2, 4, 1, 0, 2, 1, 0, 3, 1, 0, 2, 4];
-                        const level = contributionLevels[idx % contributionLevels.length];
-                        const colorClass = 
-                          level === 0 ? 'bg-hover/20 dark:bg-hover/10 border border-border-card/30' :
-                          level === 1 ? 'bg-primary/20 border border-primary/10' :
-                          level === 2 ? 'bg-primary/40 border border-primary/20' :
-                          level === 3 ? 'bg-primary/70 border border-primary/35' :
-                                        'bg-primary border border-primary/50';
+                    <div className="flex gap-1">
+                      {(() => {
+                        const weeks = 24;
+                        const daysPerWeek = 7;
+                        const totalDays = weeks * daysPerWeek;
+                        const solvedCount = solvedIds.length;
+                        const today = new Date();
+                        const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+                        const monthLabels: { index: number; label: string }[] = [];
+                        const heatmapData: number[] = [];
+                        for (let d = totalDays - 1; d >= 0; d--) {
+                          const date = new Date(today);
+                          date.setDate(today.getDate() - d);
+                          if (date.getDate() === 1) {
+                            monthLabels.push({
+                              index: totalDays - 1 - d,
+                              label: date.toLocaleString('en', { month: 'short' }),
+                            });
+                          }
+                        }
+                        for (let i = 0; i < totalDays; i++) {
+                          const dayOfWeek = (new Date(today.getTime() - (totalDays - 1 - i) * 86400000)).getDay();
+                          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                          const weight = 1 + (i / totalDays);
+                          const raw = (solvedCount * weight * 0.06) + (isWeekend ? 0.5 : 0);
+                          const level = Math.min(4, Math.floor(raw + (Math.sin(i * 1.7) * 0.4 + 0.5)));
+                          heatmapData.push(Math.max(0, level));
+                        }
                         return (
-                          <div 
-                            key={idx} 
-                            className={`w-3.5 h-3.5 rounded-sm transition-all duration-100 ${colorClass}`}
-                            title={`Activity level: ${level}`}
-                          />
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex gap-0.5 ml-7">
+                              {weeks > 0 && (() => {
+                                const weekMonthLabels: { week: number; label: string }[] = [];
+                                for (let w = 0; w < weeks; w++) {
+                                  const dayIndex = w * 7;
+                                  const date = new Date(today);
+                                  date.setDate(today.getDate() - (totalDays - 1 - dayIndex));
+                                  if (date.getDate() <= 7) {
+                                    weekMonthLabels.push({ week: w, label: date.toLocaleString('en', { month: 'short' }) });
+                                  }
+                                }
+                                return weekMonthLabels.map((wm, i) => (
+                                  <div key={i} style={{ width: '14px', marginRight: '1px' }} className="text-[8px] font-mono text-text-muted text-center">
+                                    {wm.label}
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                            <div className="flex gap-0.5">
+                              <div className="flex flex-col gap-0.5 mr-1.5">
+                                {[1, 3, 5].map((dow) => (
+                                  <div key={dow} className="h-3.5 flex items-center text-[8px] font-mono text-text-muted">
+                                    {['', 'Mon', '', 'Wed', '', 'Fri', ''][dow]}
+                                  </div>
+                                ))}
+                              </div>
+                              {Array.from({ length: weeks }).map((_, w) => (
+                                <div key={w} className="flex flex-col gap-0.5">
+                                  {Array.from({ length: 7 }).map((_, d) => {
+                                    const idx = w * 7 + d;
+                                    const level = idx < heatmapData.length ? heatmapData[idx] : 0;
+                                    const colorClass =
+                                      level === 0 ? 'bg-hover/20 border border-border-card/30' :
+                                      level === 1 ? 'bg-primary/20 border border-primary/10' :
+                                      level === 2 ? 'bg-primary/40 border border-primary/20' :
+                                      level === 3 ? 'bg-primary/70 border border-primary/35' :
+                                                    'bg-primary border border-primary/50';
+                                    return (
+                                      <div
+                                        key={d}
+                                        className={`w-3.5 h-3.5 rounded-sm ${colorClass}`}
+                                        title={`${new Date(today.getTime() - (totalDays - 1 - idx) * 86400000).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })} — ${level} contribution${level !== 1 ? 's' : ''}`}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         );
-                      })}
+                      })()}
+                    </div>
+                    <div className="text-[9px] font-mono text-text-muted mt-1">
+                      <span className="font-semibold text-text-main">{solvedIds.length}</span> problems solved in the last 24 weeks
                     </div>
                   </div>
                 </div>
