@@ -864,7 +864,8 @@ async function runViaJudge0(code: string, language: string, inputStr = ''): Prom
   const timeoutId = setTimeout(() => controller.abort(), JUDGE0_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${JUDGE0_API_URL}/submissions?wait=true`, {
+    // 1) Submit asynchronously (wait=false), get a token
+    const submitResponse = await fetch(`${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=false`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -879,27 +880,51 @@ async function runViaJudge0(code: string, language: string, inputStr = ''): Prom
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw { type: 'Compile Error', message: `Judge0 API error (${response.status}): ${text}` };
+    if (!submitResponse.ok) {
+      const text = await submitResponse.text();
+      const isServiceDown = submitResponse.status === 429 || submitResponse.status >= 500;
+      throw isServiceDown
+        ? { type: 'Judge0Unavailable', status: submitResponse.status, message: `Judge0 unavailable (${submitResponse.status})` }
+        : { type: 'Compile Error', message: `Judge0 API error (${submitResponse.status}): ${text}` };
     }
 
-    const data = await response.json();
-
-    // Judge0 may return status 1 (In Queue) or 2 (Processing) despite ?wait=true
-    // in rare race conditions. Treat these as internal errors.
-    if (data.status?.id === 1 || data.status?.id === 2) {
-      throw { type: 'Runtime Error', message: 'Judge0 did not process the submission. Try again.' };
+    const { token } = await submitResponse.json();
+    if (!token) {
+      throw { type: 'Judge0Unavailable', message: 'Judge0 did not return a submission token. The free service may be busy — try again.' };
     }
 
-    return {
-      stdout: data.stdout || '',
-      stderr: data.stderr || '',
-      compileOutput: data.compile_output || '',
-      statusId: data.status?.id ?? 0,
-      time: data.time || '0',
-      memory: data.memory || '0',
-    };
+    // 2) Poll until the result is ready (status.id >= 3)
+    const MAX_POLLS = 60; // 60 * 300ms = 18s
+    for (let i = 0; i < MAX_POLLS; i++) {
+      const pollResponse = await fetch(
+        `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false&fields=stdout,stderr,compile_output,status,time,memory`,
+        { headers, signal: controller.signal },
+      );
+
+      if (!pollResponse.ok) {
+        const isServiceDown = pollResponse.status === 429 || pollResponse.status >= 500;
+        throw isServiceDown
+          ? { type: 'Judge0Unavailable', status: pollResponse.status, message: `Judge0 unavailable (${pollResponse.status})` }
+          : { type: 'Runtime Error', message: `Judge0 poll error (${pollResponse.status})` };
+      }
+
+      const data = await pollResponse.json();
+
+      if (data.status?.id >= 3) {
+        return {
+          stdout: data.stdout || '',
+          stderr: data.stderr || '',
+          compileOutput: data.compile_output || '',
+          statusId: data.status?.id ?? 0,
+          time: data.time || '0',
+          memory: data.memory || '0',
+        };
+      }
+
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    throw { type: 'Judge0Unavailable', message: 'Judge0 polling timed out. The free service may be busy — try again.' };
   } catch (err: any) {
     if (err.name === 'AbortError') {
       throw { type: 'Time Limit Exceeded', message: 'Judge0 did not respond within the time limit' };
@@ -908,6 +933,13 @@ async function runViaJudge0(code: string, language: string, inputStr = ''): Prom
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+// Errors with type === 'Judge0Unavailable' mean the hosted service is down/rate-limited.
+// When they happen for a non-local language, we hand execution to the client, which
+// calls ce.judge0.com directly from the browser (CORS is fully open).
+function isJudge0Unavailable(err: any): boolean {
+  return !!err && err.type === 'Judge0Unavailable';
 }
 
 function judge0StatusToResult(statusId: number, stdout: string, stderr: string, compileOutput: string): {
@@ -942,6 +974,38 @@ function judge0StatusToResult(statusId: number, stdout: string, stderr: string, 
   }
 
   return { status: 'Runtime Error', error: `Unknown Judge0 status: ${statusId}`, actual };
+}
+
+// --------------- CLIENT-SIDE FALLBACK ---------------
+
+// When the hosted Judge0 service is unreachable/rate-limited, we return this payload
+// instead of failing. The client then submits each (already-wrapped) test case directly
+// to ce.judge0.com from the browser (CORS is open), grades locally, and shows results.
+function buildFallbackResponse(
+  language: string,
+  code: string,
+  fn: ExtractedFn | null,
+  testcasesToRun: { input: string; expectedOutput: string }[],
+): Response {
+  const isStandalone = !fn;
+  const languageId = JUDGE0_LANG_IDS[language] ?? 0;
+
+  const testCases = testcasesToRun.map((tc) => ({
+    input: tc.input,
+    expectedOutput: tc.expectedOutput,
+    // Wrapper mode embeds the input into the code, so stdin stays empty.
+    // Standalone mode pipes the input via stdin.
+    code: isStandalone ? code : buildWrapperCode(code, language, fn!, tc.input),
+    stdin: isStandalone ? tc.input : '',
+  }));
+
+  return NextResponse.json({
+    fallback: true,
+    judge0Url: JUDGE0_API_URL,
+    language,
+    languageId,
+    testCases,
+  });
 }
 
 // --------------- EXAMPLES → TESTCASES ---------------
@@ -1228,6 +1292,11 @@ async function handleEvaluate(req: NextRequest): Promise<Response> {
       results.push({ input: tc.input, expected: tc.expectedOutput, actual, passed, stdout: debugOut });
       if (!passed) overallStatus = 'Wrong Answer';
     } catch (err: any) {
+      // If the hosted Judge0 service is down/rate-limited and we can't run locally,
+      // hand execution off to the browser instead of failing the run.
+      if (isJudge0Unavailable(err) && !['JavaScript', 'Python'].includes(language)) {
+        return buildFallbackResponse(language, code, fn, testcasesToRun);
+      }
       const errType = err.type || 'Runtime Error';
       if (errType === 'Compile Error') { overallStatus = 'Compile Error'; compileError = err.message; }
       else if (overallStatus === 'Accepted') overallStatus = errType;

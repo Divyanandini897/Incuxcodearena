@@ -71,7 +71,7 @@ export default function ProblemPage() {
         problemId={problemId}
         problems={PROBLEMS_DATA}
         solvedProblemIds={solvedProblemIds}
-        onBackToDashboard={() => router.push('/')}
+        onBackToDashboard={() => router.push('/dashboard')}
         onMarkSolved={handleMarkSolved}
         userId={userId}
       />

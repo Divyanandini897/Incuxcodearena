@@ -17,6 +17,22 @@ const LANG_MAP: Record<string, any> = {
   'Go': 'Go',
 }
 
+const DISPLAY_STATUS_MAP: Record<string, string> = {
+  'Accepted': 'Accepted',
+  'Wrong_Answer': 'Wrong Answer',
+  'Compile_Error': 'Compile Error',
+  'Runtime_Error': 'Runtime Error',
+  'Time_Limit_Exceeded': 'Time Limit Exceeded',
+}
+
+const DISPLAY_LANG_MAP: Record<string, string> = {
+  'Cpp': 'C++',
+  'Python': 'Python',
+  'Java': 'Java',
+  'JavaScript': 'JavaScript',
+  'Go': 'Go',
+}
+
 async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
   for (let i = 0; i <= retries; i++) {
     try { return await fn(); }
@@ -117,5 +133,11 @@ export async function GET(request: NextRequest) {
     take: 50,
   }))
 
-  return NextResponse.json({ submissions })
+  const mapped = submissions.map(s => ({
+    ...s,
+    status: DISPLAY_STATUS_MAP[s.status] || s.status,
+    language: DISPLAY_LANG_MAP[s.language] || s.language,
+  }))
+
+  return NextResponse.json({ submissions: mapped })
 }
