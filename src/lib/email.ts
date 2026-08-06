@@ -102,7 +102,7 @@ async function sendMail(
       return { success: false, error: 'SMTP credentials not configured' }
     }
 
-    const transporter = await withTimeout(createSmtpTransport(), SEND_TIMEOUT_MS, 'SMTP connect')
+    const transporter = createSmtpTransport()
     const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@codenode.app'
 
     const info = await withTimeout(
