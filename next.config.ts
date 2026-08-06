@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   serverExternalPackages: ['motion-dom'],
+  turbopack: {},
   webpack: (config) => {
     if (config.optimization?.splitChunks?.cacheGroups) {
       const groups = config.optimization.splitChunks.cacheGroups as Record<string, { [key: string]: unknown }>;
