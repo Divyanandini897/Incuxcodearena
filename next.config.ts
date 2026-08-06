@@ -6,9 +6,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ['motion-dom'],
   webpack: (config) => {
     if (config.optimization?.splitChunks?.cacheGroups) {
