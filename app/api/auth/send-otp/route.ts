@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: true, dev_otp: otp, warning: 'Email delivery failed, but using dev mode OTP.' },
+        { success: true, dev_otp: otp, warning: 'Email delivery failed, but using dev mode OTP.', emailError: result.error },
         { status: 200 }
       );
     }
