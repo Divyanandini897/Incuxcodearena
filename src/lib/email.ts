@@ -1,9 +1,4 @@
-import { Resend } from 'resend'
 import nodemailer from 'nodemailer'
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
-
-const FROM = process.env.RESEND_FROM ?? 'onboarding@resend.dev'
 
 const CONNECT_TIMEOUT_MS = 15000
 const SEND_TIMEOUT_MS = 25000
@@ -52,74 +47,6 @@ function createSmtpTransport() {
   })
 }
 
-async function createEtherealTransport() {
-  const testAccount = await nodemailer.createTestAccount()
-  return nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: { user: testAccount.user, pass: testAccount.pass },
-    connectionTimeout: CONNECT_TIMEOUT_MS,
-    greetingTimeout: CONNECT_TIMEOUT_MS,
-    socketTimeout: SEND_TIMEOUT_MS,
-  })
-}
-
-interface MailPayload {
-  to: string
-  subject: string
-  text: string
-  html: string
-}
-
-async function sendViaSmtp(payload: MailPayload): Promise<{ ok: true } | { ok: false; error: string }> {
-  try {
-    const transporter = await withTimeout(createSmtpTransport(), SEND_TIMEOUT_MS, 'SMTP connect')
-    const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@codenode.app'
-    await withTimeout(transporter.sendMail({ from: FROM_EMAIL, ...payload }), SEND_TIMEOUT_MS, 'SMTP send')
-    return { ok: true }
-  } catch (err: any) {
-    return { ok: false, error: err?.message || String(err) }
-  }
-}
-
-async function sendViaResend(payload: MailPayload): Promise<{ ok: true; id?: string } | { ok: false; error: string }> {
-  if (!resend) return { ok: false, error: 'RESEND_API_KEY not set' }
-  try {
-    const { data, error } = await withTimeout(
-      resend.emails.send({
-        from: FROM,
-        to: payload.to,
-        subject: payload.subject,
-        text: payload.text,
-        html: payload.html,
-      }),
-      SEND_TIMEOUT_MS,
-      'Resend API',
-    )
-    if (error) return { ok: false, error: error.message }
-    return { ok: true, id: data?.id }
-  } catch (err: any) {
-    return { ok: false, error: err?.message || String(err) }
-  }
-}
-
-async function sendViaEthereal(payload: MailPayload): Promise<{ ok: true; previewUrl?: string } | { ok: false; error: string }> {
-  try {
-    const transporter = await withTimeout(createEtherealTransport(), SEND_TIMEOUT_MS, 'Ethereal connect')
-    const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@codenode.app'
-    const info = await withTimeout(
-      transporter.sendMail({ from: FROM_EMAIL, ...payload }),
-      SEND_TIMEOUT_MS,
-      'Ethereal send',
-    )
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined
-    return { ok: true, previewUrl }
-  } catch (err: any) {
-    return { ok: false, error: err?.message || String(err) }
-  }
-}
-
 function buildOtpEmailHtml(otp: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -160,40 +87,39 @@ function buildWelcomeEmailHtml(name: string): string {
   `
 }
 
-async function deliverMail(
+interface MailPayload {
+  to: string
+  subject: string
+  text: string
+  html: string
+}
+
+async function sendMail(
   payload: MailPayload,
-  kind: 'OTP' | 'welcome',
 ): Promise<{ success: true; previewUrl?: string } | { success: false; error: string }> {
-  if (hasRealCredentials()) {
-    const smtp = await sendViaSmtp(payload)
-    if (smtp.ok) {
-      console.log(`[EMAIL] ${kind} email sent to ${payload.to} via SMTP`)
-      return { success: true }
+  try {
+    if (!hasRealCredentials()) {
+      return { success: false, error: 'SMTP credentials not configured' }
     }
-    console.error(`[EMAIL] SMTP failed, falling back to Resend: ${smtp.error}`)
-  }
 
-  const resendResult = await sendViaResend(payload)
-  if (resendResult.ok) {
-    console.log(
-      `[EMAIL] ${kind} email sent to ${payload.to} via Resend${resendResult.id ? ` (id: ${resendResult.id})` : ''}`,
+    const transporter = await withTimeout(createSmtpTransport(), SEND_TIMEOUT_MS, 'SMTP connect')
+    const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@codenode.app'
+
+    const info = await withTimeout(
+      transporter.sendMail({ from: FROM_EMAIL, ...payload }),
+      SEND_TIMEOUT_MS,
+      'SMTP send',
     )
-    return { success: true }
-  }
-  console.error(`[EMAIL] Resend failed: ${resendResult.error}`)
 
-  if (process.env.NODE_ENV === 'production') {
-    console.error(`[EMAIL] All delivery paths failed for ${payload.to} in production`)
-    return { success: false, error: 'Email delivery failed. SMTP and Resend are both unavailable.' }
+    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined
+    return { success: true, previewUrl }
+  } catch (err: any) {
+    console.error('[EMAIL] SMTP error:', err?.message || err)
+    if (err?.code) console.error('[EMAIL] SMTP error code:', err.code)
+    if (err?.command) console.error('[EMAIL] SMTP failed command:', err.command)
+    if (err?.response) console.error('[EMAIL] SMTP server response:', err.response)
+    return { success: false, error: err?.message || 'SMTP delivery failed' }
   }
-
-  const ethereal = await sendViaEthereal(payload)
-  if (ethereal.ok) {
-    console.log(`[EMAIL] ${kind} email sent to ${payload.to} via Ethereal test account`)
-    return { success: true, previewUrl: ethereal.previewUrl }
-  }
-  console.error(`[EMAIL] All delivery paths failed for ${payload.to}: ${ethereal.error}`)
-  return { success: false, error: ethereal.error || 'Unknown email error' }
 }
 
 export async function sendOtpEmail(
@@ -206,7 +132,14 @@ export async function sendOtpEmail(
     text: `Your verification code is: ${otp}\n\nThis code expires in 5 minutes.`,
     html: buildOtpEmailHtml(otp),
   }
-  return deliverMail(payload, 'OTP')
+
+  const result = await sendMail(payload)
+  if (result.success) {
+    console.log(`[EMAIL] OTP sent to ${email} via SMTP`)
+  } else {
+    console.error(`[EMAIL] OTP delivery failed for ${email}: ${result.error}`)
+  }
+  return result
 }
 
 export async function sendWelcomeEmail(
@@ -219,5 +152,12 @@ export async function sendWelcomeEmail(
     text: `Hi ${name},\n\nYour account has been created successfully. You can now sign in and start solving coding challenges.\n\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`,
     html: buildWelcomeEmailHtml(name),
   }
-  return deliverMail(payload, 'welcome')
+
+  const result = await sendMail(payload)
+  if (result.success) {
+    console.log(`[EMAIL] Welcome email sent to ${email} via SMTP`)
+  } else {
+    console.error(`[EMAIL] Welcome email delivery failed for ${email}: ${result.error}`)
+  }
+  return result
 }
