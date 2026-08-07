@@ -182,7 +182,10 @@ async function deliverMail(
 
   if (process.env.NODE_ENV === 'production') {
     console.error(`[EMAIL] All delivery paths failed for ${payload.to} in production`)
-    return { success: false, error: 'Email delivery failed. Resend and SMTP are both unavailable.' }
+    return {
+      success: false,
+      error: `Email delivery failed. Resend: ${resendResult.error}; SMTP: ${smtp.error}`,
+    }
   }
 
   const ethereal = await sendViaEthereal(payload)
