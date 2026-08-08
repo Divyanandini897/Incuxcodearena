@@ -9,6 +9,83 @@ Evaluate answers based on technical accuracy, completeness, and clarity.
 Provide constructive feedback and model answers.
 Keep responses concise — this is a spoken interview format.`;
 
+const QUESTION_LIST_SCHEMA = {
+  type: 'object',
+  properties: {
+    questions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          topic: { type: 'string' },
+          difficulty: { type: 'string' },
+          modelAnswer: { type: 'string' },
+          keyPoints: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['text', 'topic', 'difficulty', 'modelAnswer', 'keyPoints'],
+      },
+    },
+  },
+  required: ['questions'],
+};
+
+const EVALUATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    isCorrect: { type: 'boolean' },
+    score: { type: 'number' },
+    technicalAccuracy: { type: 'number' },
+    completeness: { type: 'number' },
+    communication: { type: 'number' },
+    confidence: { type: 'number' },
+    feedback: { type: 'string' },
+    modelAnswer: { type: 'string' },
+    improvementTips: { type: 'array', items: { type: 'string' } },
+    missedPoints: { type: 'array', items: { type: 'string' } },
+    strengths: { type: 'array', items: { type: 'string' } },
+  },
+  required: [
+    'isCorrect',
+    'score',
+    'technicalAccuracy',
+    'completeness',
+    'communication',
+    'confidence',
+    'feedback',
+    'modelAnswer',
+    'improvementTips',
+    'missedPoints',
+    'strengths',
+  ],
+};
+
+const SUMMARY_SCHEMA = {
+  type: 'object',
+  properties: {
+    overallScore: { type: 'number' },
+    technicalScore: { type: 'number' },
+    communicationScore: { type: 'number' },
+    confidenceScore: { type: 'number' },
+    accuracyScore: { type: 'number' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    weaknesses: { type: 'array', items: { type: 'string' } },
+    topicsToImprove: { type: 'array', items: { type: 'string' } },
+    learningRecommendations: { type: 'array', items: { type: 'string' } },
+  },
+  required: [
+    'overallScore',
+    'technicalScore',
+    'communicationScore',
+    'confidenceScore',
+    'accuracyScore',
+    'strengths',
+    'weaknesses',
+    'topicsToImprove',
+    'learningRecommendations',
+  ],
+};
+
 function getBaseUrl(): string {
   const url = process.env.OLLAMA_BASE_URL;
   return url && url.trim() ? url.trim().replace(/\/+$/, '') : DEFAULT_BASE_URL;
@@ -24,9 +101,14 @@ function extractJson(text: string): string {
   return candidate.slice(start, end + 1);
 }
 
-async function chatJson<T>(prompt: string, temperature: number, maxTokens: number): Promise<T> {
+async function chatJson<T>(
+  prompt: string,
+  temperature: number,
+  maxTokens: number,
+  format: Record<string, unknown>
+): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), 120000);
 
   try {
     const res = await fetch(`${getBaseUrl()}/api/chat`, {
@@ -40,7 +122,7 @@ async function chatJson<T>(prompt: string, temperature: number, maxTokens: numbe
           { role: 'user', content: prompt },
         ],
         stream: false,
-        format: 'json',
+        format,
         options: {
           temperature,
           num_predict: maxTokens,
@@ -61,7 +143,7 @@ async function chatJson<T>(prompt: string, temperature: number, maxTokens: numbe
     return JSON.parse(extractJson(text)) as T;
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Ollama request timed out after 60s. Is Ollama running with the gemma3:4b model pulled?');
+      throw new Error('Ollama request timed out after 120s. Is Ollama running with the gemma3:4b model pulled?');
     }
     throw err;
   } finally {
@@ -124,13 +206,15 @@ For each question, return a JSON object with:
   - "keyPoints": 3-5 key points a good answer should cover
 
 Make questions realistic for a ${dynamicDifficulty}-level technical interview.
-Each question should be answerable verbally in 30-60 seconds.`;
+Each question should be answerable verbally in 30-60 seconds.
+Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
   try {
     const parsed = await chatJson<{ questions?: { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[] }>(
       prompt,
       0.7,
-      2000
+      2500,
+      QUESTION_LIST_SCHEMA
     );
 
     const questionsList = parsed.questions || parsed as unknown as { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[];
@@ -195,10 +279,11 @@ If the answer is correct:
 - Explain why it is correct
 - Suggest how to make the answer even stronger (add technical depth, examples, edge cases)
 
-Be encouraging but honest. Score accurately relative to what a good interviewer would expect.`;
+Be encouraging but honest. Score accurately relative to what a good interviewer would expect.
+Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
   try {
-    return await chatJson<AnswerEvaluation>(prompt, 0.5, 1500);
+    return await chatJson<AnswerEvaluation>(prompt, 0.5, 1500, EVALUATION_SCHEMA);
   } catch (err) {
     console.error('Failed to evaluate answer:', err);
     throw err;
@@ -251,7 +336,8 @@ Return a JSON object:
   "learningRecommendations": ["recommendation1", "recommendation2"]
 }
 
-Base the scores on actual answers. Be honest and accurate.`;
+Base the scores on actual answers. Be honest and accurate.
+Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
   try {
     return await chatJson<{
@@ -264,7 +350,7 @@ Base the scores on actual answers. Be honest and accurate.`;
       weaknesses: string[];
       topicsToImprove: string[];
       learningRecommendations: string[];
-    }>(prompt, 0.5, 1500);
+    }>(prompt, 0.5, 1500, SUMMARY_SCHEMA);
   } catch (err) {
     console.error('Failed to generate summary:', err);
     throw err;
