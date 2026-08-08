@@ -78,7 +78,7 @@ export default function LeftSidebar({
     { name: 'Code Smash', icon: Gamepad2, path: '/code-smash' },
     { name: 'Practice Arena', icon: Swords, path: '/practice-arena' },
     { name: 'Test Arena', icon: Trophy, path: '/test-arena' },
-    { name: 'AI Interview Prep', icon: Bot, path: '/ai-interview', isAi: true },
+    { name: 'AI Interview Prep', icon: Bot, path: '/interview', isAi: true },
     { name: 'Learn', icon: BookOpen, path: '/journey/frontend' },
     { name: 'Profile', icon: User, path: '/profile' },
     { name: 'Admin', icon: Settings, path: '/admin/contests' }
