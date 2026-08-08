@@ -23,6 +23,7 @@ export function useInterviewSession() {
   const phaseRef = useRef<SessionPhase>('init');
   const currentIndexRef = useRef(0);
   const stopFnRef = useRef<(() => void) | null>(null);
+  const initializingRef = useRef(false);
 
   const [phase, setPhase] = useState<SessionPhase>('init');
   const [error, setError] = useState<string | null>(null);
@@ -348,6 +349,8 @@ export function useInterviewSession() {
       setError('You must be logged in to start an interview');
       return;
     }
+    if (initializingRef.current) return;
+    initializingRef.current = true;
     setPhase('init');
     setError(null);
     try {
@@ -376,6 +379,8 @@ export function useInterviewSession() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize');
       setPhase('init');
+    } finally {
+      initializingRef.current = false;
     }
   }, [userId, config]);
 

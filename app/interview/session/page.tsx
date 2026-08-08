@@ -1,14 +1,21 @@
 'use client';
 
-import React, { Suspense, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { AlertCircle, Loader2, XCircle, Brain, ArrowRight, SkipForward } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AlertCircle, Loader2, XCircle, Brain, ArrowRight, SkipForward, Sparkles } from 'lucide-react';
 import AppLayout from '@/src/components/AppLayout';
 import { useInterviewSession } from '@/src/hooks/useInterviewSession';
 import SessionHeader from '@/src/components/interview/SessionHeader';
 import QuestionDisplay from '@/src/components/interview/QuestionDisplay';
 import ActiveListening from '@/src/components/interview/ActiveListening';
 import FeedbackDisplay from '@/src/components/interview/FeedbackDisplay';
+import {
+  categoryLabels,
+  programmingLanguages,
+  categoryTopics,
+  languageTopics,
+} from '@/src/lib/interview/data';
+import { InterviewCategory, ProgrammingLanguage } from '@/src/lib/interview/types';
 
 export default function InterviewSessionPage() {
   return (
@@ -26,6 +33,7 @@ export default function InterviewSessionPage() {
 
 function InterviewSession() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const session = useInterviewSession();
   const {
     phase,
@@ -44,11 +52,29 @@ function InterviewSession() {
     DURATION,
   } = session;
 
-  useEffect(() => {
-    if (phase === 'init' && authChecked && userId) {
-      initializeInterview();
-    }
-  }, [phase, authChecked, userId, initializeInterview]);
+  const [started, setStarted] = useState(false);
+
+  const category = (searchParams.get('category') || '') as InterviewCategory;
+  const language = (searchParams.get('language') || '') as ProgrammingLanguage;
+  const topics = (searchParams.get('topics') || '').split(',').filter(Boolean);
+  const difficulty = searchParams.get('difficulty') || 'mixed';
+
+  const categoryLabel = categoryLabels[category] || category || 'General';
+  const languageLabel = language
+    ? programmingLanguages.find((l) => l.id === language)?.label || language
+    : null;
+  const topicsSource = category === 'programming-languages' && language
+    ? languageTopics[language] || []
+    : categoryTopics[category] || [];
+  const topicLabels = topics.length > 0
+    ? topics.map((t) => topicsSource.find((x) => x.id === t)?.label || t)
+    : ['General Topics'];
+  const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+
+  const handleStart = () => {
+    setStarted(true);
+    initializeInterview();
+  };
 
   if (browserSupported === false) {
     return (
@@ -116,9 +142,67 @@ function InterviewSession() {
             )}
 
             {phase === 'init' && authChecked && userId && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-4">
-                <Brain className="w-16 h-16 text-primary/40" />
-                <p className="text-sm text-text-muted font-semibold">Ready to start your interview</p>
+              <div className="flex-1 flex flex-col items-center justify-center gap-6 p-6">
+                {!started ? (
+                  <>
+                    <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center">
+                      <Brain className="w-8 h-8 text-primary" />
+                    </div>
+
+                    <div className="text-center flex flex-col gap-1.5">
+                      <h3 className="text-2xl font-black text-text-main">Ready to Start Your Interview</h3>
+                      <p className="text-sm text-text-muted font-semibold max-w-[460px]">
+                        Your questions will be generated from the selections below and asked aloud.
+                        Make sure your microphone is ready before you begin.
+                      </p>
+                    </div>
+
+                    <div className="bg-bg-base border border-border-card/50 rounded-xl p-5 w-full max-w-[460px] flex flex-col gap-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[10px] font-mono font-bold uppercase text-text-muted tracking-wider">Category</span>
+                        <span className="text-xs font-bold text-text-main">{categoryLabel}</span>
+                      </div>
+                      {languageLabel && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-mono font-bold uppercase text-text-muted tracking-wider">Language</span>
+                          <span className="text-xs font-bold text-text-main">{languageLabel}</span>
+                        </div>
+                      )}
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-[10px] font-mono font-bold uppercase text-text-muted tracking-wider pt-0.5">Topics</span>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {topicLabels.map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-1 rounded-md bg-bg-card border border-border-card/50 text-[10px] font-bold text-primary"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[10px] font-mono font-bold uppercase text-text-muted tracking-wider">Difficulty</span>
+                        <span className="text-xs font-bold text-text-main">{difficultyLabel}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleStart}
+                      className="flex items-center gap-2.5 px-10 py-3.5 rounded-2xl text-sm font-black uppercase tracking-wide font-mono bg-primary text-black shadow-[0_8px_32px_-8px_rgba(0,234,100,0.35)] hover:shadow-[0_8px_40px_-6px_rgba(0,234,100,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer select-none"
+                    >
+                      <Sparkles className="w-4 h-4" /> Start Interview
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <p className="text-sm text-text-muted font-semibold">Generating your questions...</p>
+                    <p className="text-xs text-text-muted/60 max-w-[360px] text-center">
+                      The AI is preparing questions for your selected topics. This may take about a minute.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
