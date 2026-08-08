@@ -103,12 +103,20 @@ function InterviewSession() {
           <XCircle className="w-12 h-12 text-red-400" />
           <h2 className="text-lg font-bold text-text-main">Failed to Start Interview</h2>
           <p className="text-sm text-text-muted text-center">{error}</p>
-          <button
-            onClick={() => router.push('/interview')}
-            className="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary text-black transition-all cursor-pointer select-none"
-          >
-            Back to Dashboard
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={handleStart}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-primary text-black hover:bg-primary/90 transition-all cursor-pointer select-none"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Try Again
+            </button>
+            <button
+              onClick={() => router.push('/interview')}
+              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-bg-base text-text-muted hover:bg-bg-base/80 hover:text-text-main transition-all cursor-pointer select-none border border-border-card/60"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </AppLayout>
     );

@@ -1,34 +1,15 @@
 import { InterviewConfig, Question, AnswerEvaluation, Difficulty } from './types';
 
-const MODEL = 'gemma3:4b';
+const DEFAULT_MODEL = 'gemma3:4b';
 const DEFAULT_BASE_URL = 'http://localhost:11434';
+const VERIFY_TIMEOUT_MS = 8000;
+const DEFAULT_TIMEOUT_MS = 180000;
 
 const SYSTEM_PROMPT = `You are an expert technical interviewer conducting a live voice interview.
 Ask clear, conversational questions as if speaking aloud.
 Evaluate answers based on technical accuracy, completeness, and clarity.
 Provide constructive feedback and model answers.
 Keep responses concise — this is a spoken interview format.`;
-
-const QUESTION_LIST_SCHEMA = {
-  type: 'object',
-  properties: {
-    questions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-          topic: { type: 'string' },
-          difficulty: { type: 'string' },
-          modelAnswer: { type: 'string' },
-          keyPoints: { type: 'array', items: { type: 'string' } },
-        },
-        required: ['text', 'topic', 'difficulty', 'modelAnswer', 'keyPoints'],
-      },
-    },
-  },
-  required: ['questions'],
-};
 
 const EVALUATION_SCHEMA = {
   type: 'object',
@@ -86,6 +67,11 @@ const SUMMARY_SCHEMA = {
   ],
 };
 
+function getModel(): string {
+  const model = process.env.OLLAMA_MODEL;
+  return model && model.trim() ? model.trim() : DEFAULT_MODEL;
+}
+
 function getBaseUrl(): string {
   const url = process.env.OLLAMA_BASE_URL;
   return url && url.trim() ? url.trim().replace(/\/+$/, '') : DEFAULT_BASE_URL;
@@ -101,49 +87,92 @@ function extractJson(text: string): string {
   return candidate.slice(start, end + 1);
 }
 
+export async function verifyOllama(): Promise<void> {
+  const model = getModel();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), VERIFY_TIMEOUT_MS);
+
+  let data: { models?: { name?: string }[] } | null = null;
+  try {
+    const res = await fetch(`${getBaseUrl()}/api/tags`, { signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Ollama API responded with HTTP ${res.status}`);
+    }
+    data = await res.json();
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Ollama is not responding. Please start Ollama.');
+    }
+    throw new Error('Ollama is not running. Please start Ollama.');
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const installed = (data?.models ?? []).some((m) => {
+    const name = m?.name ?? '';
+    return name === model || name === model.split(':')[0];
+  });
+
+  if (!installed) {
+    throw new Error(`The configured Ollama model "${model}" is not installed.`);
+  }
+}
+
 async function chatJson<T>(
   prompt: string,
   temperature: number,
   maxTokens: number,
-  format: Record<string, unknown>
+  format?: Record<string, unknown>,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<T> {
+  const model = getModel();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
 
   try {
+    const payload: Record<string, unknown> = {
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      stream: false,
+      options: {
+        temperature,
+        num_predict: maxTokens,
+      },
+    };
+    if (format) payload.format = format;
+
     const res = await fetch(`${getBaseUrl()}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-        stream: false,
-        format,
-        options: {
-          temperature,
-          num_predict: maxTokens,
-        },
-      }),
+      body: JSON.stringify(payload),
     });
 
+    const durationMs = Date.now() - startedAt;
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       const detail = body ? ` - ${body}` : '';
+      console.error(`[ollama] request failed model=${model} status=${res.status} durationMs=${durationMs}${detail}`);
       throw new Error(`Ollama request failed (${res.status} ${res.statusText})${detail}`);
     }
 
+    console.log(`[ollama] request ok model=${model} status=${res.status} durationMs=${durationMs}`);
     const data = await res.json();
     const text: string | undefined = data?.message?.content;
     if (!text) throw new Error('Empty response from Ollama');
 
-    return JSON.parse(extractJson(text)) as T;
+    try {
+      return JSON.parse(extractJson(text)) as T;
+    } catch {
+      throw new Error('Ollama returned an invalid or incomplete response. Please try again.');
+    }
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Ollama request timed out after 120s. Is Ollama running with the gemma3:4b model pulled?');
+      throw new Error(`Ollama request timed out after ${Math.round(timeoutMs / 1000)}s. The model "${model}" is too slow right now. Please try again.`);
     }
     throw err;
   } finally {
@@ -157,85 +186,135 @@ export async function generateQuestions(
   count: number = 5,
   previousQuestionTexts: string[] = []
 ): Promise<Question[]> {
-  const categoryLabel = config.category === 'programming-languages'
-    ? config.language || 'Programming'
-    : config.category;
+  const model = getModel();
+  const startedAt = Date.now();
+  console.log(
+    `[interview:generate-questions] start model=${model} category=${config.category} language=${config.language || 'none'} topics=${JSON.stringify(config.topics)} difficulty=${config.difficulty} count=${count} prevQuestions=${previousQuestionTexts.length}`
+  );
 
-  const topicList = config.topics.length > 0 ? config.topics.join(', ') : 'general topics';
+  try {
+    await verifyOllama();
 
-  const languageInstruction = config.language
-    ? `All questions MUST be specific to ${config.language} programming language. Do not ask about other languages.`
-    : '';
+    const categoryLabel = config.category === 'programming-languages'
+      ? config.language || 'Programming'
+      : config.category;
 
-  const previousPerformance = previousAnswers.length > 0
-    ? `\nPrevious answers performance (scores out of 100):\n${previousAnswers.map((a, i) => `Q${i + 1}: score=${a.score}, difficulty=${a.difficulty}`).join('\n')}`
-    : '';
+    const topicList = config.topics.length > 0 ? config.topics.join(', ') : 'general topics';
 
-  const excludeInstruction = previousQuestionTexts.length > 0
-    ? `\nDO NOT repeat any of these previously asked questions:\n${previousQuestionTexts.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
-    : '';
+    const languageInstruction = config.language
+      ? `All questions MUST be specifically about ${config.language} programming (syntax, idioms, and features of ${config.language}). Do NOT ask about any other programming language.`
+      : '';
 
-  const dynamicDifficulty: Difficulty = (() => {
-    if (previousAnswers.length === 0) {
-      if (config.difficulty === 'mixed') return 'medium';
+    const difficultyInstruction = config.difficulty === 'mixed'
+      ? `Use a mix of easy, medium, and hard questions.`
+      : `Every question MUST be at ${config.difficulty} difficulty. Do not make them harder or easier than ${config.difficulty}.`;
+
+    const previousPerformance = previousAnswers.length > 0
+      ? `\nPrevious answers performance (scores out of 100):\n${previousAnswers.map((a, i) => `Q${i + 1}: score=${a.score}, difficulty=${a.difficulty}`).join('\n')}`
+      : '';
+
+    const excludeInstruction = previousQuestionTexts.length > 0
+      ? `\nDO NOT repeat any of these previously asked questions:\n${previousQuestionTexts.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
+      : '';
+
+    const dynamicDifficulty: Difficulty = (() => {
+      if (previousAnswers.length === 0) {
+        if (config.difficulty === 'mixed') return 'medium';
+        return config.difficulty as Difficulty;
+      }
+      const avg = previousAnswers.reduce((s, a) => s + a.score, 0) / previousAnswers.length;
+      if (config.difficulty === 'mixed') {
+        if (avg < 40) return 'easy';
+        if (avg < 70) return 'medium';
+        return 'hard';
+      }
       return config.difficulty as Difficulty;
-    }
-    const avg = previousAnswers.reduce((s, a) => s + a.score, 0) / previousAnswers.length;
-    if (config.difficulty === 'mixed') {
-      if (avg < 40) return 'easy';
-      if (avg < 70) return 'medium';
-      return 'hard';
-    }
-    return config.difficulty as Difficulty;
-  })();
+    })();
 
-  const prompt = `Generate ${count} technical interview questions at ${dynamicDifficulty} difficulty.
-
-Category: ${categoryLabel}
-Topics to cover: ${topicList}
+    const prompt = `Generate ${count} technical interview questions.
+You MUST ask questions ONLY about these exact topics: ${topicList}.
 ${languageInstruction}
+${difficultyInstruction}
 ${excludeInstruction}
 ${previousPerformance}
+
+All questions must be unique. Do not repeat a question.
+Keep answers to a verbal format: each question should be answerable aloud in 30-60 seconds.
+Keep model answers CONCISE (2-3 sentences max) so the total output stays short.
 
 For each question, return a JSON object with:
 - "questions": an array of question objects, each with:
   - "text": a clear, conversational question (as if an interviewer is speaking aloud)
-  - "topic": the topic name this question belongs to
+  - "topic": one of the topics listed above
   - "difficulty": "${dynamicDifficulty}"
-  - "modelAnswer": a comprehensive model answer with technical depth
-  - "keyPoints": 3-5 key points a good answer should cover
+  - "modelAnswer": a concise model answer with the essential technical points
+  - "keyPoints": 3 key points a good answer should cover
 
-Make questions realistic for a ${dynamicDifficulty}-level technical interview.
-Each question should be answerable verbally in 30-60 seconds.
 Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
-  try {
-    const parsed = await chatJson<{ questions?: { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[] }>(
-      prompt,
-      0.7,
-      2500,
-      QUESTION_LIST_SCHEMA
-    );
+    const parsed = await chatJson<
+      { questions?: { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[] }
+      | { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[]
+      | { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[][]
+    >(prompt, 0.7, 900);
 
-    const questionsList = parsed.questions || parsed as unknown as { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[];
-
-    if (!Array.isArray(questionsList)) {
-      throw new Error('Response is not an array');
+    let raw: { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }[];
+    if (Array.isArray(parsed)) {
+      const first = parsed[0];
+      if (first && Array.isArray((first as { questions?: unknown }).questions)) {
+        raw = (first as { questions: typeof raw }).questions;
+      } else {
+        raw = parsed as typeof raw;
+      }
+    } else if (parsed && Array.isArray((parsed as { questions?: unknown }).questions)) {
+      raw = (parsed as { questions: typeof raw }).questions;
+    } else {
+      raw = [];
     }
 
-    return questionsList.map(
-      (q: { text?: string; topic?: string; difficulty?: string; modelAnswer?: string; keyPoints?: string[] }, i: number) => ({
-        id: `q_${Date.now()}_${i}`,
-        text: q.text || 'No question text',
-        difficulty: (q.difficulty || dynamicDifficulty) as Difficulty,
+    if (raw.length === 0) {
+      throw new Error('Ollama returned no questions. Please try again.');
+    }
+
+    const existing = new Set(previousQuestionTexts.map((t) => t.trim().toLowerCase()));
+    const seen = new Set<string>();
+    const questions: Question[] = [];
+
+    for (const q of raw) {
+      const text = q?.text?.trim();
+      if (!text) continue;
+      const key = text.toLowerCase();
+      if (existing.has(key) || seen.has(key)) continue;
+      seen.add(key);
+
+      questions.push({
+        id: `q_${Date.now()}_${questions.length}`,
+        text,
+        difficulty: (q.difficulty === 'easy' || q.difficulty === 'medium' || q.difficulty === 'hard'
+          ? q.difficulty
+          : dynamicDifficulty) as Difficulty,
         topic: q.topic || 'General',
         category: config.category,
         modelAnswer: q.modelAnswer || '',
-        keyPoints: q.keyPoints || [],
-      })
+        keyPoints: Array.isArray(q.keyPoints) ? q.keyPoints.filter((k): k is string => typeof k === 'string') : [],
+      });
+    }
+
+    if (questions.length === 0) {
+      throw new Error('Ollama returned invalid questions. Please try again.');
+    }
+
+    const durationMs = Date.now() - startedAt;
+    console.log(
+      `[interview:generate-questions] complete model=${model} category=${config.category} language=${config.language || 'none'} topics=${JSON.stringify(config.topics)} difficulty=${config.difficulty} returned=${questions.length} durationMs=${durationMs}`
     );
+
+    return questions;
   } catch (err) {
-    console.error('Failed to generate questions:', err);
+    const message = err instanceof Error ? err.message : 'Failed to generate questions';
+    console.error(
+      `[interview:generate-questions] error model=${model} category=${config.category} language=${config.language || 'none'} topics=${JSON.stringify(config.topics)} difficulty=${config.difficulty} message=${message} durationMs=${Date.now() - startedAt}`
+    );
     throw err;
   }
 }
@@ -280,10 +359,11 @@ If the answer is correct:
 - Suggest how to make the answer even stronger (add technical depth, examples, edge cases)
 
 Be encouraging but honest. Score accurately relative to what a good interviewer would expect.
+Keep all text fields CONCISE.
 Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
   try {
-    return await chatJson<AnswerEvaluation>(prompt, 0.5, 1500, EVALUATION_SCHEMA);
+    return await chatJson<AnswerEvaluation>(prompt, 0.5, 800, EVALUATION_SCHEMA);
   } catch (err) {
     console.error('Failed to evaluate answer:', err);
     throw err;
@@ -337,6 +417,7 @@ Return a JSON object:
 }
 
 Base the scores on actual answers. Be honest and accurate.
+Keep all text fields CONCISE.
 Output ONLY the JSON object. Do not wrap it in markdown code fences or add any commentary.`;
 
   try {
@@ -350,7 +431,7 @@ Output ONLY the JSON object. Do not wrap it in markdown code fences or add any c
       weaknesses: string[];
       topicsToImprove: string[];
       learningRecommendations: string[];
-    }>(prompt, 0.5, 1500, SUMMARY_SCHEMA);
+    }>(prompt, 0.5, 800, SUMMARY_SCHEMA);
   } catch (err) {
     console.error('Failed to generate summary:', err);
     throw err;

@@ -354,14 +354,16 @@ export function useInterviewSession() {
     setPhase('init');
     setError(null);
     try {
-      const sessionRes = await fetch('/api/interview/create-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, config }),
-      });
-      if (!sessionRes.ok) throw new Error('Failed to create session');
-      const sessionData = await sessionRes.json() as { session: { id: string } };
-      setSessionId(sessionData.session.id);
+      if (!sessionId) {
+        const sessionRes = await fetch('/api/interview/create-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, config }),
+        });
+        if (!sessionRes.ok) throw new Error('Failed to create session');
+        const sessionData = await sessionRes.json() as { session: { id: string } };
+        setSessionId(sessionData.session.id);
+      }
 
       const res = await fetch('/api/interview/generate-questions', {
         method: 'POST',
@@ -382,7 +384,7 @@ export function useInterviewSession() {
     } finally {
       initializingRef.current = false;
     }
-  }, [userId, config]);
+  }, [userId, config, sessionId]);
 
   useEffect(() => {
     if (phase === 'ready' && questions.length > 0 && !currentQuestion?.evaluation) {
